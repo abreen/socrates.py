@@ -1,6 +1,6 @@
 {
     "assignment_name": "Problem Set 0",
-    "point_total": 35,
+    "total_points": 35,
     "modules": [
         {
             "module_name": "ps0",
@@ -49,88 +49,88 @@
                 }
             ],
 
-            tests: [
+            "tests": [
                 {
-                    'type': 'eval',
-                    'target': 'function',
-                    'name': 'double',
+                    "type": "eval",
+                    "target": "function",
+                    "name": "double",
 
-                    'arguments': [ 0 ],
-                    'expected': 0,
+                    "arguments": [ 0 ],
+                    "expected": 0,
 
-                    'deduction': 1,
-                    'description': "Doubling zero does not produce zero"
+                    "deduction": 1,
+                    "description": "Doubling zero does not produce zero"
                 },
                 {
-                    'type': 'eval',
-                    'target': 'function',
-                    'name': 'double',
+                    "type": "eval",
+                    "target": "function",
+                    "name": "double",
 
-                    'arguments': [ 10 ],
-                    'expected': 20,
+                    "arguments": [ 10 ],
+                    "expected": 20,
 
-                    'deduction': 1,
-                    'description': "Doubling non-zero does not produce correct value"
+                    "deduction": 1,
+                    "description": "Doubling non-zero does not produce correct value"
                 },
                 {
-                    'type': 'output',
-                    'target': 'function',
-                    'name': 'greetings',
+                    "type": "output",
+                    "target": "function",
+                    "name": "greetings",
 
-                    'arguments': [ "Dave" ],
-                    'expected': "Greetings, Dave!\n",
+                    "arguments": [ "Dave" ],
+                    "expected": "Greetings, Dave!\n",
 
-                    'deduction': 3,
-                    'description': "Doesn't work with 'Dave'"
+                    "deduction": 3,
+                    "description": "Doesn't work with 'Dave' as argument"
                 },
                 {
-                    'type': 'output',
-                    'target': 'function',
-                    'name': 'hello',
+                    "type": "output",
+                    "target": "function",
+                    "name": "hello",
 
-                    'arguments': [ ],
-                    'expected': "Hello, world!\n",
+                    "arguments": [ ],
+                    "expected": "Hello, world!\n",
 
-                    'deduction': 3,
-                    'description': "Doesn't produce 'Hello, world!'"
+                    "deduction": 3,
+                    "description": "Doesn't produce 'Hello, world!'"
                 },
                 {
-                    'type': 'eval',
-                    'target': 'function',
-                    'name': 'series_sum',
+                    "type": "eval",
+                    "target": "function",
+                    "name": "series_sum",
 
-                    'arguments': [ 0 ],
-                    'expected': 0,
+                    "arguments": [ 0 ],
+                    "expected": 0,
 
-                    'deduction': 1,
-                    'description': "series_sum(): base case of 0"
+                    "deduction": 1,
+                    "description": "series_sum(): base case of 0"
                 },
                 {
-                    'type': 'eval',
-                    'target': 'function',
-                    'name': 'series_sum',
+                    "type": "eval",
+                    "target": "function",
+                    "name": "series_sum",
 
-                    'arguments': [ 3 ],
-                    'expected': 6,
+                    "arguments": [ 3 ],
+                    "expected": 6,
 
-                    'deduction': 1,
-                    'description': "series_sum(3)"
+                    "deduction": 1,
+                    "description": "series_sum(3)"
                 },
                 {
-                    'type': 'eval',
-                    'target': 'function',
-                    'name': 'series_sum',
+                    "type": "eval",
+                    "target": "function",
+                    "name": "series_sum",
 
-                    'arguments': [ -1 ],
-                    'expected': 0,
+                    "arguments": [ -1 ],
+                    "expected": 0,
 
-                    'deduction': 1,
-                    'description': "series_sum(): negative argument"
+                    "deduction": 1,
+                    "description": "series_sum(): negative argument"
                 },
                 {
-                    'type': 'review',
-                    'target': 'function',
-                    'name': 'series_sum',
+                    "type": "review",
+                    "target": "function",
+                    "name": "series_sum"
                 }
             ]
         }

@@ -38,7 +38,7 @@ points, and an array of module objects.
 
     {
       "assignment_name": <assignment_name>,
-      "point_total": <total>,
+      "total_points": <total>,
       "modules": [ module_0, ..., module_n ]
     }
 

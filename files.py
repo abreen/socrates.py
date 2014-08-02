@@ -81,8 +81,36 @@ def _from_dict(d):
     """
 
     crit = criteria.Criteria(d['assignment_name'])
+    crit.total_points = d['total_points']
+
+    for m in d['modules']:
+        em = criteria.ExpectedModule(m['module_name'])
+
+        for f in m['required_functions']:
+            fname = f['function_name']
+            params = f['formal_parameters']
+            points = f['point_value']
+
+            func = criteria.ExpectedFunction(fname, params, points)
+
+            em.add_function(func)
+
+        for t in m['tests']:
+            test = criteria.Test(test_type=t['type'],
+                                 target=t['target'],
+                                 name=t['name'],
+                                 args=t['arguments'] if 'arguments' in t else None,
+                                 expected=t['expected'] if 'expected' in t else None,
+                                 deduction=t['deduction'] if 'deduction' in t else None,
+                                 desc=t['description'] if 'description' in t else None)
+
+            em.add_test(test)
+
+
+        crit.add_module(em)
 
     return crit
+
 
 
 class SocratesEncoder(json.JSONEncoder):

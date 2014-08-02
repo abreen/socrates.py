@@ -18,6 +18,10 @@ class Criteria:
         self.modules = []
 
 
+    def add_module(self, module):
+        self.modules.append(module)
+
+
 
 class ExpectedModule:
     """Represents a module that should be part of a student's submission.
@@ -25,9 +29,13 @@ class ExpectedModule:
     the behavior of those functions, and take any necessary deductions.
     """
 
-    def __init__(self, name=None, funcs=None, tests=None):
+    def __init__(self, name, funcs=None, tests=None):
         self.module_name = name
-        self.tests = tests
+
+        if not tests:
+            self.tests = []
+        else:
+            self.tests = tests
 
         if not funcs:
             self.required_functions = []
@@ -39,10 +47,25 @@ class ExpectedModule:
         self.required_functions.append(func)
 
 
+    def has_function(self, func):
+        for f in self.required_functions:
+            if f.function_name == func:
+                return True
+
+        return False
+
+
+    def add_test(self, test):
+        if test.target == 'function' and not self.has_function(test.name):
+            raise ValueError("test target not in module's required functions")
+
+        self.tests.append(test)
+
+
 
 class ExpectedFunction:
 
-    def __init__(self, name=None, params=None, value=None):
+    def __init__(self, name, params=None, value=None):
         self.function_name = name
         self.point_value = value
 
@@ -55,15 +78,22 @@ class ExpectedFunction:
 
 class Test:
 
-    def __init__(self, test_type, args, expected_value, points, description):
+    def __init__(self, test_type, target, name, args=None, expected=None,
+                 deduction=None, desc=None):
+
         if test_type not in VALID_TEST_TYPES:
             raise ValueError("test type '" + str(test_type) + "' invalid")
 
+        if test_type != 'review' and not deduction:
+            raise ValueError("a non-review test must have a deduction")
+
         self.test_type = test_type
-        self.actual_arguments = args
-        self.expected_value = expected_value
+        self.target = target
+        self.name = name
 
-        self.deduction = points
-        self.description = description
+        self.arguments= args
+        self.expected = expected
 
+        self.deduction = deduction
+        self.description = desc
 
