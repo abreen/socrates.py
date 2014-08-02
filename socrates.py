@@ -20,12 +20,12 @@ def _handle_args():
     sol_opts = { 'help': "Python file for which to generate criteria" }
     gen_mode_parser.add_argument('solution_file', **sol_opts)
 
-    # parser for normal mode
+    # parser for grading mode
     norm_mode_opts = { 'description': "Start an interactive grading session" }
     norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
 
     criteria_opts = { 'help': "criteria file in JSON format" }
-    norm_mode_parser.add_argument('criteria', **criteria_opts)
+    norm_mode_parser.add_argument('criteria_file', **criteria_opts)
 
     input_opts = { 'help': "Python file(s) to grade",
                    'nargs': '+' }
@@ -60,8 +60,8 @@ if __name__ == '__main__':
     if args.mode == 'grade':
         import grader
 
-        session = GradingSession(criteria_file=args.criteria_file,
-                                 submissions=args.submission_file)
+        session = grader.GradingSession(criteria_file=args.criteria_file,
+                                        submissions=args.submission_file)
 
         session.start()
 
