@@ -1,5 +1,11 @@
 """A grading toolkit for programming assignments in Python."""
 
+import os
+import sys
+
+from util import *
+import files
+
 
 def _handle_args():
     import argparse
@@ -36,32 +42,43 @@ def _handle_args():
 
     if not args.mode:
         top_parser.parse_args(['-h'])
-        return False
+        system.exit(1)
 
     return args
 
 
-if __name__ == '__main__':
-    import sys
 
+if __name__ == '__main__':
     args = _handle_args()
 
-    if not args:
-        sys.exit(1)
+    # add the current directory to Python's path; this will allow us to
+    # do imports of modules from where socrates is invoked
+    sys.path.append(os.getcwd())
 
     if args.mode in ['generate', 'gen']:
-        import files
+        # add path to enclosing directory of solution module
+        # (we do this because files.generate() will try to import the module)
+        sys.path.append(os.path.split(args.solution_file)[0])
 
-        crit = files.generate(args.solution_file)
+        # generate Criteria object from Python solution
+        try:
+            crit = files.generate(args.solution_file)
+        except ImportError as err:
+            sprint("error importing module: {}".format(err), error=True)
+            sys.exit(1)
+        except Exception as exc:
+            sprint("bug in solution: {}".format(exc), error=True)
+            sys.exit(1)
+
+        # convert Criteria object to JSON format and write to file
         out_filename = files.to_json(crit)
-
-        print("Wrote criteria to {}.".format(out_filename))
 
     if args.mode == 'grade':
         import grader
 
-        session = grader.GradingSession(criteria_file=args.criteria_file,
-                                        submissions=args.submission_file)
+        # decode JSON criteria file into Criteria object
+        criteria = files.from_json(args.criteria_file)
 
-        session.start()
+        # interactively grade submissions using criteria and write grade file
+        grader.grade(criteria, args.submission_file)
 

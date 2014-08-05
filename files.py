@@ -1,21 +1,13 @@
 """Tools to encode Criteria objects into JSON files and back."""
 
 import json
-import criteria
+import os
 
-_ALLOWED_CHARS = '-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+from util import *
+from criteria import *
 
 
-def generate(path):
-    """Given a path to a Python file, create a new Criteria object based on
-    the Python file, requiring the existence of any and all functions in the
-    Python file. All point values are initialized to zero and no tests are
-    added.
-    """
-
-    import inspect
-    import os
-
+def module_name_from_path(path):
     py_file = os.path.split(path)[1]
 
     if '.py' in py_file:
@@ -23,12 +15,27 @@ def generate(path):
     else:
         module_name = py_file
 
+    return module_name
+
+
+
+def generate(path):
+    """Given a path to a Python file, create a new Criteria object based on
+    the Python file, requiring the presence of all functions in the Python
+    module. All point values are initialized to zero and no tests are added.
+    """
+
+    import inspect
+
+    module_name = module_name_from_path(path)
 
     solution = __import__(module_name)
 
-    crit = criteria.Criteria(module_name)
+    crit = Criteria(assignment_name="assignment based on " + module_name,
+                    short_name=module_name,
+                    total_points=0)
 
-    em = criteria.ExpectedModule(module_name)
+    m = Module(module_name=module_name)
 
     for f in inspect.getmembers(solution, inspect.isfunction):
         func_name = f[0]
@@ -36,23 +43,23 @@ def generate(path):
         sig = inspect.signature(f[1])
         param_names = [p for p in sig.parameters]
 
-        ef = criteria.ExpectedFunction(func_name, param_names)
-        em.add_function(ef)
+        f_obj = Function(function_name=func_name,
+                         parameters=param_names,
+                         point_value=0)
+        m.add_function(f_obj)
 
-    crit.modules.append(em)
+    crit.modules.append(m)
 
     return crit
 
 
 
-def to_json(crit, filename=None):
+def to_json(crit):
     """Writes a .criteria.json file containing the contents of the specified
     Criteria object, returning the name of the new file.
     """
 
-    if not filename:
-        safe_name = ''.join([c for c in crit.assignment_name if c in _ALLOWED_CHARS])
-        filename = safe_name + ".criteria.json"
+    filename = crit.short_name + ".criteria.json"
 
     f = open(filename, 'w')
     json.dump(crit, f, indent=4, cls=SocratesEncoder)
@@ -66,9 +73,6 @@ def from_json(path):
     object matching the specifications of the JSON file.
     """
 
-    if not path:
-        raise ValueError("invalid path specified")
-
     f = open(path, 'r')
     crit_dict = json.load(f)
     return _from_dict(crit_dict)
@@ -80,34 +84,32 @@ def _from_dict(d):
     Criteria object with the contents of the dict.
     """
 
-    crit = criteria.Criteria(d['assignment_name'])
-    crit.total_points = d['total_points']
+    crit = Criteria(assignment_name=d['assignment_name'],
+                    short_name=d['short_name'],
+                    total_points=d['total_points'])
 
     for m in d['modules']:
-        em = criteria.ExpectedModule(m['module_name'])
+        m_obj = Module(module_name=m['module_name'])
 
-        for f in m['required_functions']:
-            fname = f['function_name']
-            params = f['formal_parameters']
-            points = f['point_value']
+        # add required functions
+        for f in m['functions']:
+            f_obj = Function(function_name=f['function_name'],
+                             parameters=f['parameters'],
+                             point_value=f['point_value'])
 
-            func = criteria.ExpectedFunction(fname, params, points)
+            # add function-level tests
+            if 'tests' in f:
+                for func_test in f['tests']:
+                    f_obj.add_test(Test.from_dict(func_test, f_obj))
 
-            em.add_function(func)
+            m_obj.add_function(f_obj)
 
-        for t in m['tests']:
-            test = criteria.Test(test_type=t['type'],
-                                 target=t['target'],
-                                 name=t['name'],
-                                 args=t['arguments'] if 'arguments' in t else None,
-                                 expected=t['expected'] if 'expected' in t else None,
-                                 deduction=t['deduction'] if 'deduction' in t else None,
-                                 desc=t['description'] if 'description' in t else None)
+        # add module-level tests
+        if 'tests' in m:
+            for mod_test in m['tests']:
+                m_obj.add_test(Test.from_dict(mod_test, m_obj))
 
-            em.add_test(test)
-
-
-        crit.add_module(em)
+        crit.add_module(m_obj)
 
     return crit
 
@@ -116,25 +118,8 @@ def _from_dict(d):
 class SocratesEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        if type(obj) is not criteria.Criteria:
+        if type(obj) is not Criteria:
             raise ValueError()
 
-        crit_dict = { 'assignment_name': obj.assignment_name,
-                      'point_total': 0,
-                      'modules': [] }
-
-        for m in obj.modules:
-            mod_dict = { 'module_name': m.module_name,
-                         'required_functions': [] }
-
-            for f in m.required_functions:
-                func_dict = { 'function_name': f.function_name,
-                              'formal_parameters': f.parameters,
-                              'point_value': 0 }
-
-                mod_dict['required_functions'].append(func_dict)
-
-            crit_dict['modules'].append(mod_dict)
-
-
-        return crit_dict
+        # see Criteria.to_dict
+        return obj.to_dict()
