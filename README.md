@@ -1,6 +1,8 @@
 socrates
 ========
 
+![The man himself](https://raw.githubusercontent.com/abreen/socrates/master/socrates.jpg)
+
 `socrates` is a grading toolkit written in Python, for assignments in Python.
 As a standalone script, its main function is to generate grading criteria files
 from existing Python files (the *generate* mode) and provide an interactive
