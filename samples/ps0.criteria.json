@@ -17,6 +17,10 @@
                           "expected": 0,
                           "deduction": 2,
                           "description": "double(0) should equal 0"
+                        },
+                        { "action": "review",
+                          "deduction": 2,
+                          "description": "should not use any variables"
                         }
                     ],
                     "parameters": [

@@ -1,4 +1,5 @@
 import sys
+import inspect
 from io import StringIO         # for capturing standard out
 
 from criteria import *
@@ -108,6 +109,22 @@ class Test:
             # TODO implement testing for modules
             return True
 
+        if self.action in ['eval', 'output']:
+            return self.__run_eval_output(actual_target, context)
+        elif self.action == 'review':
+            return self.__run_review(actual_target)
+        elif self.action == 'recursive':
+            return True
+        else:
+            raise ValueError("test has invalid action")
+
+
+    def __run_eval_output(self, actual_target, context):
+        """Perform an 'eval' or 'output' test by creating a function call
+        string and passing it to eval() with the local module context.
+        Return True iff the expected value or output is produced.
+        """
+
         mod_name = self.target.parent_module.name
         name = self.target.name
         formatted_args = Test.__format_args(self.arguments)
@@ -127,3 +144,24 @@ class Test:
             sys.stdout = old_stdout
 
             return output.getvalue() == self.expected
+
+
+    def __run_review(self, actual_target):
+        """Perform a 'review' test by acquring the source code of the function
+        and printing it. A human is asked to confirm the deduction.
+        """
+
+        print(inspect.getsource(actual_target))
+        print("Deduction description: {}".format(self.description))
+        print("Deduction value: {}".format(self.deduction))
+
+        while True:
+            ans = input("Should this deduction be taken (yes/no)? ")
+
+            if ans in ['yes', 'no']:
+                break
+
+        if ans == 'yes':
+            return False
+        else:
+            return True
