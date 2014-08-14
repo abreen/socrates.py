@@ -13,41 +13,38 @@ class Criteria:
     which are used by socrates in grading mode to automate grading tasks.
     """
 
-    def __init__(self, assignment_name, short_name, total_points):
+    def __init__(self, assignment_name, short_name, course_name):
         self.assignment_name = assignment_name      # nice name ("PS 0")
         self.short_name = short_name                # safe for filename ("ps0")
-        self.total_points = total_points
-        self.modules = []
+        self.course_name = course_name
+
+        # (<module_name>, <Module object>)
+        self.modules = dict()
+
+
+    def __str__(self):
+        return "criteria for {}".format(self.assignment_name)
 
 
     def add_module(self, module):
-        self.modules.append(module)
+        if module.name in self.modules:
+            raise ValueError("a module by this name is already included")
 
+        self.modules[module.name] = module
 
-    def has_module(self, module):
-        """Given a module name or a Module object, return True if the
-        module is included in the grading criteria.
-        """
+    def get_total_points(self):
+        s = 0
+        for m in self.modules.values():
+            s += m.get_total_points()
 
-        if type(module) is str:
-            pred = lambda x: x.module_name == module
-        elif type(module) is Module:
-            pred = lambda x: x == module
-        else:
-            raise ValueError("invalid argument type")
-
-        for m in self.modules:
-            if pred(m):
-                return True
-
-        return False
+        return s
 
 
     def to_dict(self):
         return {'assignment_name': self.assignment_name,
                 'short_name': self.short_name,
-                'total_points': self.total_points,
-                'modules': [m.to_dict() for m in self.modules]}
+                'course_name': self.course_name,
+                'modules': [m.to_dict() for m in self.modules.values()]}
 
 
 
@@ -57,22 +54,44 @@ class Module:
     """
 
     def __init__(self, module_name, functions=None, tests=None):
-        self.module_name = module_name
-        self.functions = [] if not functions else functions
+        self.name = module_name
+
+        # (<function_name>, <Function object>)
+        self.functions = dict() if not functions else functions
+
+        # module-level tests
         self.tests = [] if not tests else tests
 
 
+    def __str__(self):
+        return "module {}".format(self.name)
+
+
     def add_function(self, func):
-        self.functions.append(func)
+        if func.name in self.functions:
+            raise ValueError("a function by this name is already included")
+
+        self.functions[func.name] = func
 
 
     def add_test(self, test):
+        if type(test.target) is not Module:
+            raise ValueError("cannot add test for non-module to module")
+
         self.tests.append(test)
 
 
+    def get_total_points(self):
+        s = 0
+        for f in self.functions.values():
+            s += f.point_value
+
+        return s
+
+
     def to_dict(self):
-        return {'module_name': self.module_name,
-                'functions': [f.to_dict() for f in self.functions],
+        return {'module_name': self.name,
+                'functions': [f.to_dict() for f in self.functions.values()],
                 'tests': [t.to_dict() for t in self.tests]}
 
 
@@ -82,19 +101,32 @@ class Function:
     of a student's submission.
     """
 
-    def __init__(self, function_name, parameters, point_value, tests=None):
-        self.function_name = function_name
+    def __init__(self, function_name, parent_module, parameters,
+                 point_value, tests=None):
+        self.name = function_name
+        self.parent_module = parent_module
         self.point_value = point_value
         self.parameters = parameters                # list of strings
+
+        # function-level tests
         self.tests = [] if not tests else tests
 
 
+    def __str__(self):
+        params = ', '.join(self.parameters)
+        name = "{}({})".format(self.name, params)
+        return "function {}".format(name)
+
+
     def add_test(self, test):
+        if type(test.target) is not Function:
+            raise ValueError("cannot add test for non-function to function")
+
         self.tests.append(test)
 
 
     def to_dict(self):
-        return {'function_name': self.function_name,
+        return {'function_name': self.name,
                 'parameters': self.parameters,
                 'point_value': self.point_value,
                 'tests': [t.to_dict() for t in self.tests]}
@@ -124,6 +156,11 @@ class Test:
         # depend on the human grader
         self.arguments = arguments      # for function, what arguments to pass
         self.expected = expected        # expected return value or output
+
+
+    def __str__(self):
+        return "test of {}: {} ({} points)".format(self.target,
+               self.description, self.deduction)
 
 
     def to_dict(self):

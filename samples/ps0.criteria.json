@@ -1,0 +1,89 @@
+{
+    "modules": [
+        {
+            "tests": [],
+            "module_name": "ps0",
+            "functions": [
+                {
+                    "tests": [
+                        { "action": "eval",
+                          "arguments": { "x": 1 },
+                          "expected": 2,
+                          "deduction": 2,
+                          "description": "double(1) should equal 2"
+                        },
+                        { "action": "eval",
+                          "arguments": { "x": 0 },
+                          "expected": 0,
+                          "deduction": 2,
+                          "description": "double(0) should equal 0"
+                        }
+                    ],
+                    "parameters": [
+                        "x"
+                    ],
+                    "function_name": "double",
+                    "point_value": 10
+                },
+                {
+                    "tests": [
+                        { "action": "output",
+                          "arguments": { "name": "'Dave'" },
+                          "expected": "Greetings, Dave!\n",
+                          "deduction": 10,
+                          "description": "greetings(\"Dave\") should print \"Greetings, Dave!\""
+                        }
+                    ],
+                    "parameters": [
+                        "name"
+                    ],
+                    "function_name": "greetings",
+                    "point_value": 10
+                },
+                {
+                    "tests": [],
+                    "parameters": [],
+                    "function_name": "hello",
+                    "point_value": 10
+                },
+                {
+                    "tests": [
+                        { "action": "eval",
+                          "arguments": { "a": 1,
+                                         "b": 1 },
+                          "expected": 2,
+                          "deduction": 2,
+                          "description": "simple case of 1 + 1"
+                        }
+                    ],
+                    "parameters": [
+                        "a",
+                        "b"
+                    ],
+                    "function_name": "my_add",
+                    "point_value": 10
+                },
+                {
+                    "tests": [],
+                    "parameters": [
+                        "a",
+                        "b"
+                    ],
+                    "function_name": "my_mult",
+                    "point_value": 10
+                },
+                {
+                    "tests": [],
+                    "parameters": [
+                        "x"
+                    ],
+                    "function_name": "series_sum",
+                    "point_value": 20
+                }
+            ]
+        }
+    ],
+    "short_name": "ps0",
+    "assignment_name": "Problem Set 0",
+    "course_name": "CS 111 at Boston University"
+}

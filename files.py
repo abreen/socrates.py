@@ -2,21 +2,10 @@
 
 import json
 import os
+import sys
 
 from util import *
 from criteria import *
-
-
-def module_name_from_path(path):
-    py_file = os.path.split(path)[1]
-
-    if '.py' in py_file:
-        module_name = py_file[:py_file.index('.py')]
-    else:
-        module_name = py_file
-
-    return module_name
-
 
 
 def generate(path):
@@ -27,13 +16,17 @@ def generate(path):
 
     import inspect
 
-    module_name = module_name_from_path(path)
+    directory, name = os.path.split(path)
+    module_name = name[:name.index('.py')] if '.py' in name else name
+
+    if directory not in sys.path:
+        sys.path.append(directory)
 
     solution = __import__(module_name)
 
     crit = Criteria(assignment_name="assignment based on " + module_name,
                     short_name=module_name,
-                    total_points=0)
+                    course_name="CS 101 at Acme University")
 
     m = Module(module_name=module_name)
 
@@ -44,11 +37,12 @@ def generate(path):
         param_names = [p for p in sig.parameters]
 
         f_obj = Function(function_name=func_name,
+                         parent_module=m,
                          parameters=param_names,
                          point_value=0)
         m.add_function(f_obj)
 
-    crit.modules.append(m)
+    crit.modules[module_name] = m
 
     return crit
 
@@ -86,7 +80,7 @@ def _from_dict(d):
 
     crit = Criteria(assignment_name=d['assignment_name'],
                     short_name=d['short_name'],
-                    total_points=d['total_points'])
+                    course_name=d['course_name'])
 
     for m in d['modules']:
         m_obj = Module(module_name=m['module_name'])
@@ -94,6 +88,7 @@ def _from_dict(d):
         # add required functions
         for f in m['functions']:
             f_obj = Function(function_name=f['function_name'],
+                             parent_module=m_obj,
                              parameters=f['parameters'],
                              point_value=f['point_value'])
 
