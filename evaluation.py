@@ -115,7 +115,7 @@ class Evaluation:
 
                 f.write("-{}\tfailed test: {}\n".format(ded, desc))
 
-                return points_lost
+            return points_lost
         else:
             return 0
 
