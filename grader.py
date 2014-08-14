@@ -40,10 +40,9 @@ def grade(criteria, submissions):
 
             try:
                 module = __import__(module_name)
-                globals()[module_name] = module
-
-            except ImportError:
-                sprint("importing '{}' failed".format(module_name), error=True)
+            except:
+                sprint("importing '{}' failed".format(module_name),
+                       color=COLOR_YELLOW)
             else:
                 ev.add_module(module)
 
