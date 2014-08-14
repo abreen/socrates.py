@@ -15,26 +15,33 @@ class Evaluation:
     def __init__(self, criteria):
         self.criteria = criteria
 
-        # all Test objects from the specified criteria
-        self.tests = []
+        # all Test objects from the specified criteria associated with the
+        # imported module object from the student submission (so that the
+        # test can be run within the context of a student's submission)
+        # dict key: Test object
+        # dict value: imported module object
+        self.tests = dict()
 
-        # (<Function or Module object>, [failed Tests]|None)
+        # dict keys: Function or Module object
+        # dict values: list of failed Tests or None
+        # only functions or modules that failed any tests are present
         self.failed_tests = dict()
 
-        # (<Function or Module object>, <actual imported object>|None)
+        # dict keys: Function or Module object
+        # dict values: actual imported object or None
         self.submission = dict()
 
         for module in criteria.modules.values():
             self.submission[module] = None
 
             for module_test in module.tests:
-                self.tests.append(module_test)
+                self.tests[module_test] = None
 
             for func in module.functions.values():
                 self.submission[func] = None
 
                 for func_test in func.tests:
-                    self.tests.append(func_test)
+                    self.tests[func_test] = None
 
 
     def add_module(self, module):
@@ -55,6 +62,14 @@ class Evaluation:
         # should be overwriting None here
         self.submission[expected_module] = module
 
+        # find tests in this Evaluation that have this module as a target;
+        # we will add the imported module so that tests can be run with
+        # the student's actual code
+        for test in self.tests:
+            if type(test.target) is Module and \
+               test.target.name == module.__name__:
+                self.tests[test] = module
+
         # find functions in this module that are specified by the criteria
         for memb in inspect.getmembers(module, inspect.isfunction):
             func_name = memb[0]
@@ -67,6 +82,14 @@ class Evaluation:
             exp_function = expected_module.functions[func_name]
             if func_name in expected_module.functions:
                 self.submission[exp_function] = func_obj
+
+                # we also add the function's parent module to any tests
+                # for this function, so that tests on this function can be
+                # run with the student's code
+                for test in self.tests:
+                    if type(test.target) is Function and \
+                       test.target.name == func_name:
+                        self.tests[test] = module
 
 
     def __handle_deductions(self, f, target):

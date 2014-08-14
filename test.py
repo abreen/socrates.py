@@ -1,3 +1,6 @@
+import sys
+from io import StringIO         # for capturing standard out
+
 from criteria import *
 
 VALID_TEST_ACTIONS = ['eval',         # evaluate an expression
@@ -48,6 +51,7 @@ class Test:
         return test_dict
 
 
+    @staticmethod
     def from_dict(dict_obj, test_target):
         """Given a dict representing a Test object (perhaps from decoding
         a JSON file), and the actual Function or Module object that is the
@@ -76,3 +80,50 @@ class Test:
             args['expected'] = None
 
         return Test(**args)
+
+
+    @staticmethod
+    def __format_args(args):
+        """Return a string that, when placed inside of calling parentheses
+        and eval()'d, should call the function with the appropriate arguments.
+        """
+
+        if type(args) is dict:
+            args = ["{}={}".format(k, v) for (k, v) in args.items()]
+
+        return ', '.join(args)
+
+
+    def run_test(self, actual_target, context):
+        """Given an actual target (the Python function or module object
+        created by an import of the student's code) and a module context
+        (the module object created by an import of the student's code),
+        attempt to run this test on the target. Return True if the student
+        submission contains code that passes this test, or False if it
+        fails the test. The context may not actually be used, if the test
+        can be performed without using eval().
+        """
+
+        if type(actual_target) is Module:
+            # TODO implement testing for modules
+            return True
+
+        mod_name = self.target.parent_module.name
+        name = self.target.name
+        formatted_args = Test.__format_args(self.arguments)
+        call = "{}.{}({})".format(mod_name, name, formatted_args)
+
+        if self.action == 'eval':
+            result = eval(call, globals(), {mod_name:context})
+            return result == self.expected
+
+        elif self.action == 'output':
+            old_stdout = sys.stdout
+            output = StringIO()
+            sys.stdout = output
+
+            eval(call, globals(), {mod_name:context})
+
+            sys.stdout = old_stdout
+
+            return output.getvalue() == self.expected

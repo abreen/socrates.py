@@ -1,7 +1,5 @@
 """Utility classes to represent criteria for an assignment."""
 
-from test import *
-
 
 class Criteria:
     """Represents requirements for student submissions. Contains one or more

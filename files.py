@@ -6,6 +6,7 @@ import sys
 
 from util import *
 from criteria import *
+from test import *
 
 
 def generate(path):

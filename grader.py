@@ -1,10 +1,7 @@
 import sys
 import os
-import inspect
-from io import StringIO         # for capturing standard out
 
 from util import *
-from criteria import *
 from evaluation import *
 import files
 
@@ -58,7 +55,13 @@ def grade(criteria, submissions):
             sprint("skipping {}; target missing".format(test.target))
             continue
 
-        passed = _run_test(test, ev.submission[test.target])
+        # run the test, passing in the actual target (function or module
+        # object resulting from import) and module context (object returned
+        # by __import__())
+        actual_target = ev.submission[test.target]
+        module_context = ev.tests[test]
+
+        passed = test.run_test(actual_target, module_context)
 
         if not passed:
             sprint("failed: {}".format(test), color=COLOR_YELLOW)
@@ -73,58 +76,6 @@ def grade(criteria, submissions):
     ev.to_file(filename=grade_filename)
 
     sprint("finished grading session")
-    return
-
-
-# TODO this should really be a Test object method, but when I had it
-# in the criteria.py file, it was like the __import__()'d modules here
-# were out of scope there; we might be able to pass the module object in
-# as well as the test target if this function were a Test method
-def _run_test(test, actual_target):
-    if type(actual_target) is Module:
-        # TODO implement testing for modules
-        return True
-
-    mod_name = test.target.parent_module.name
-    name = actual_target.__name__
-    formatted_args = _format_args(test)
-    call = "{}.{}({})".format(mod_name, name, formatted_args)
-
-    if test.action == 'eval':
-        try:
-            result = eval(call)
-        except TypeError:
-            sprint("failure: incorrect argument type or name")
-            return False
-        except:
-            sprint("spectacular failure: {}".format(test), error=True)
-            return False
-
-        return result == test.expected
-
-    elif test.action == 'output':
-        old_stdout = sys.stdout
-        output = StringIO()
-        sys.stdout = output
-
-        eval(call)
-
-        sys.stdout = old_stdout
-
-        return output.getvalue() == test.expected
-
-
-def _format_args(test):
-    """Return a string that, when placed inside of calling parentheses
-    and eval()'d, should call the function with the appropriate arguments.
-    """
-
-    args = test.arguments
-
-    if type(args) is dict:
-        args = ["{}={}".format(k, v) for (k, v) in args.items()]
-
-    return ', '.join(args)
 
 
 if __name__ == '__main__':
