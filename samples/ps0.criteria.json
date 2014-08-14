@@ -41,7 +41,14 @@
                     "point_value": 10
                 },
                 {
-                    "tests": [],
+                    "tests": [
+                        { "action": "output",
+                          "arguments": { },
+                          "expected": "Hello, world!\n",
+                          "deduction": 10,
+                          "description": "should print \"Hello, world!\""
+                        }
+                    ],
                     "parameters": [],
                     "function_name": "hello",
                     "point_value": 10
@@ -64,7 +71,15 @@
                     "point_value": 10
                 },
                 {
-                    "tests": [],
+                    "tests": [
+                        { "action": "eval",
+                          "arguments": { "a": 1,
+                                         "b": 1 },
+                          "expected": 1,
+                          "deduction": 2,
+                          "description": "simple case of 1 * 1"
+                        }
+                    ],
                     "parameters": [
                         "a",
                         "b"
@@ -73,7 +88,20 @@
                     "point_value": 10
                 },
                 {
-                    "tests": [],
+                    "tests": [
+                        { "action": "eval",
+                          "arguments": { "x": 0 },
+                          "expected": 0,
+                          "deduction": 2,
+                          "description": "series_sum(0) should return 0"
+                        },
+                        { "action": "eval",
+                          "arguments": { "x": 1 },
+                          "expected": 1,
+                          "deduction": 2,
+                          "description": "series_sum(1) should return 1"
+                        }
+                    ],
                     "parameters": [
                         "x"
                     ],
