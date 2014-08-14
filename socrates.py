@@ -77,7 +77,11 @@ if __name__ == '__main__':
         import grader
 
         # decode JSON criteria file into Criteria object
-        criteria = files.from_json(args.criteria_file)
+        try:
+            criteria = files.from_json(args.criteria_file)
+        except ValueError as err:
+            sprint("error parsing JSON: {}".format(err), error=True)
+            sys.exit(1)
 
         # interactively grade submissions using criteria and write grade file
         grader.grade(criteria, args.submission_file)
