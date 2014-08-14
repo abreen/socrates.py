@@ -52,7 +52,8 @@ def grade(criteria, submissions):
 
     for test in ev.tests:
         if ev.submission[test.target] == None:
-            sprint("skipping {}; target missing".format(test.target))
+            sprint("skipping {}; target missing".format(test.target),
+                   color=COLOR_CYAN)
             continue
 
         # run the test, passing in the actual target (function or module
