@@ -105,13 +105,13 @@ class Evaluation:
             points_lost = 0
 
             for t in self.failed_tests[target]:
-                points_lost += t.deduction
-
                 ded = t.deduction
                 desc = t.description
 
                 if ded + points_lost > total_value:
                     ded = 0
+                else:
+                    points_lost += t.deduction
 
                 f.write("-{}\tfailed test: {}\n".format(ded, desc))
 
