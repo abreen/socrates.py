@@ -60,15 +60,15 @@ if __name__ == '__main__':
         # (we do this because files.generate() will try to import the module)
         sys.path.append(os.path.split(args.solution_file)[0])
 
-        crit = files.generate(args.solution_file)
         # generate Criteria object from Python solution
-        #try:
-        #except ImportError as err:
-        #    sprint("error importing module: {}".format(err), error=True)
-        #    sys.exit(1)
-        #except Exception as exc:
-        #    sprint("bug in solution: {}".format(exc), error=True)
-        #    sys.exit(1)
+        try:
+            crit = files.generate(args.solution_file)
+        except ImportError as err:
+            sprint("error importing module: {}".format(err), error=True)
+            sys.exit(1)
+        except Exception as exc:
+            sprint("bug in solution: {}".format(exc), error=True)
+            sys.exit(1)
 
         # convert Criteria object to JSON format and write to file
         out_filename = files.to_json(crit)
