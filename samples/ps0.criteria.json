@@ -9,10 +9,21 @@
             "module_name": "ps0",
             "functions": [
                 {
+                    "function_name": "meet",
+                    "parameters": null,
+                    "point_value": 5,
+                    "tests": [
+                        { "action": "eval",
+                          "description": "giving \"Alex\" as input should produce \"Nice to meet you, Alex!\"",
+                          "deduction": 2,
+                          "input": "Alex\n",
+                          "output": "What's your name? Nice to meet you, Alex!\n"
+                        }
+                    ]
+                },
+                {
                     "function_name": "double",
-                    "parameters": [
-                        "x"
-                    ],
+                    "parameters": [ "x" ],
                     "point_value": 10,
                     "tests": [
                         { "action": "eval",
@@ -35,9 +46,7 @@
                 },
                 {
                     "function_name": "greetings",
-                    "parameters": [
-                        "name"
-                    ],
+                    "parameters": [ "name" ],
                     "point_value": 10,
                     "tests": [
                         { "action": "eval",
@@ -50,7 +59,7 @@
                 },
                 {
                     "function_name": "hello",
-                    "parameters": [],
+                    "parameters": null,
                     "point_value": 10,
                     "tests": [
                         { "action": "eval",
@@ -63,10 +72,7 @@
                 },
                 {
                     "function_name": "my_add",
-                    "parameters": [
-                        "a",
-                        "b"
-                    ],
+                    "parameters": [ "a", "b" ],
                     "point_value": 10,
                     "tests": [
                         { "action": "eval",

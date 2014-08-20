@@ -5,6 +5,11 @@ def hello():
     print("Hello, world! ")
 
 
+def meet():
+    name = input("What's your name? ")
+    print("Nice to meet you, " + name + "!")
+
+
 def greetings(name):
     print("Greetings, " + name + "!")
 

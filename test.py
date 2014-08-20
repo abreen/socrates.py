@@ -1,6 +1,6 @@
 import sys
 import inspect
-from io import StringIO         # for capturing standard out
+import io
 
 from criteria import *
 
@@ -39,7 +39,8 @@ class Test:
 
     def __str__(self):
         return "test of {}: {} ({} points)".format(self.target,
-               self.description, self.deduction)
+                                                   self.description,
+                                                   self.deduction)
 
 
     def to_dict(self):
@@ -134,24 +135,23 @@ class Test:
         fn_call = "{}.{}({})".format(mod_name, name, formatted_args)
 
         if self.input:
-            # TODO buffer specified input to standard in before function call
-            pass
+            in_buf = io.StringIO(self.input)
+            sys.stdin = in_buf
 
-        old_stdout = sys.stdout
-        output = StringIO()
-        sys.stdout = output
+        if self.output:
+            out_buf = io.StringIO()
+            sys.stdout = out_buf
 
         return_value = eval(fn_call, globals(), {mod_name:context})
 
-        sys.stdout = old_stdout
+        # restore default standard in/out
+        sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
         passed = True
-
         if self.value:
             passed = passed and self.value == return_value
-
         if self.output:
-            passed = passed and self.output == output.getvalue()
+            passed = passed and self.output == out_buf.getvalue()
 
         return passed
 
