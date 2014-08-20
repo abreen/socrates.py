@@ -120,7 +120,7 @@ brackets should be replaced with literals of your choosing):
         "action": ("eval" | "review"),
         "description": <string>,
         "deduction": <integer>,
-        ["arguments": { <arg-name> : <arg-value>, ... },]
+        ["arguments": { <arg-name>: <arg-value>, ... },]
         ["input": <string>,]
         ["value": <string>,]
         ["output": <string>,]
