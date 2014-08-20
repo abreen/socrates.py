@@ -129,6 +129,7 @@ class Evaluation:
             filename = self.criteria.short_name + "-grade.txt"
 
         point_total = self.criteria.get_total_points()
+        total_value = point_total
 
         with open(filename, 'x') as f:
             f.write("Grade Report: {}\n".format(self.criteria.assignment_name))
@@ -170,4 +171,7 @@ class Evaluation:
                     f.write("\n\n")
 
 
-            f.write("Total: {}\n".format(point_total))
+            f.write("\n")
+            f.write("Point total: {}/{}\n".format(point_total, total_value))
+            percent = point_total / total_value
+            f.write("Percentage: {:.2%}\n".format(percent))
