@@ -109,7 +109,11 @@ class Function:
 
 
     def __str__(self):
-        params = ', '.join(self.parameters)
+        if self.parameters:
+            params = ', '.join(self.parameters)
+        else:
+            params = ""
+
         name = "{}({})".format(self.name, params)
         return "function {}".format(name)
 
