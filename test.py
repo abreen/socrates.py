@@ -5,8 +5,6 @@ from io import StringIO         # for capturing standard out
 from criteria import *
 
 VALID_TEST_ACTIONS = ['eval',         # evaluate an expression
-                      'recursive',    # check for a recursive function or method
-                      'output',       # match output of an expression
                       'review']       # pause for human input
 
 class Test:
@@ -16,22 +14,27 @@ class Test:
     possible test types.
     """
 
-    def __init__(self, action, target, deduction, description,
-                 arguments, expected):
+    def __init__(self, action, target, description, deduction,
+                 arguments=None, input=None, value=None, output=None):
         if action not in VALID_TEST_ACTIONS:
             raise ValueError("test action '" + action + "' invalid; choose "
                              "from " + str(VALID_TEST_ACTIONS))
 
+        if arguments and type(arguments) is not dict:
+            raise ValueError("arguments must be a dictionary containing "
+                             "<arg-name>: <arg-value> pairs")
+
+        # required components
         self.action = action            # e.g., 'eval'
         self.target = target            # Module or Function object to test
-
-        self.deduction = deduction      # num. of points to deduct if test fails
         self.description = description  # deduction reasoning for grade file
+        self.deduction = deduction      # num. of points to deduct if test fails
 
-        # the 'review' action will not use these, since the deduction will
-        # depend on the human grader
-        self.arguments = arguments      # for function, what arguments to pass
-        self.expected = expected        # expected return value or output
+        # optional components
+        self.arguments = arguments      # what arguments to pass (dict)
+        self.input = input              # what input to send
+        self.value = value              # expected return value
+        self.output = output            # expected output
 
 
     def __str__(self):
@@ -41,13 +44,12 @@ class Test:
 
     def to_dict(self):
         test_dict = {'action': self.action,
-                     'target': str(self.target),
+                     'description': self.description,
                      'deduction': self.deduction,
-                     'description': self.description}
-
-        if self.action != 'review':
-            test_dict['arguments'] = self.arguments
-            test_dict['expected'] = self.expected
+                     'arguments': self.arguments,
+                     'input': self.input,
+                     'value': self.value,
+                     'output': self.output}
 
         return test_dict
 
@@ -67,18 +69,13 @@ class Test:
 
         args = {'action': dict_obj['action'],
                 'target': test_target,
-                'deduction': dict_obj['deduction'],
-                'description': dict_obj['description']}
+                'description': dict_obj['description'],
+                'deduction': dict_obj['deduction']}
 
-        if 'arguments' in dict_obj:
-            args['arguments'] = dict_obj['arguments']
-        else:
-            args['arguments'] = None
-
-        if 'expected' in dict_obj:
-            args['expected'] = dict_obj['expected']
-        else:
-            args['expected'] = None
+        # add optional components, if present
+        for a in ['arguments', 'input', 'value', 'output']:
+            if a in dict_obj:
+                args[a] = dict_obj[a]
 
         return Test(**args)
 
@@ -105,45 +102,58 @@ class Test:
         can be performed without using eval().
         """
 
+        # TODO run tests in separate thread
+
         if type(actual_target) is Module:
             # TODO implement testing for modules
             return True
 
-        if self.action in ['eval', 'output']:
-            return self.__run_eval_output(actual_target, context)
+        if self.action == 'eval':
+            return self.__run_eval(actual_target, context)
         elif self.action == 'review':
             return self.__run_review(actual_target)
-        elif self.action == 'recursive':
-            return True
         else:
             raise ValueError("test has invalid action")
 
 
-    def __run_eval_output(self, actual_target, context):
-        """Perform an 'eval' or 'output' test by creating a function call
-        string and passing it to eval() with the local module context.
-        Return True iff the expected value or output is produced.
+    def __run_eval(self, actual_target, context):
+        """Perform an 'eval' test by creating a function call string and
+        passing it to eval() with the local module context.
+        Return True iff the expected value or output is produced given
+        the input and/or arguments specified by the test.
         """
 
         mod_name = self.target.parent_module.name
         name = self.target.name
-        formatted_args = Test.__format_args(self.arguments)
-        call = "{}.{}({})".format(mod_name, name, formatted_args)
 
-        if self.action == 'eval':
-            result = eval(call, globals(), {mod_name:context})
-            return result == self.expected
+        if self.arguments:
+            formatted_args = Test.__format_args(self.arguments)
+        else:
+            formatted_args = ""
 
-        elif self.action == 'output':
-            old_stdout = sys.stdout
-            output = StringIO()
-            sys.stdout = output
+        fn_call = "{}.{}({})".format(mod_name, name, formatted_args)
 
-            eval(call, globals(), {mod_name:context})
+        if self.input:
+            # TODO buffer specified input to standard in before function call
+            pass
 
-            sys.stdout = old_stdout
+        old_stdout = sys.stdout
+        output = StringIO()
+        sys.stdout = output
 
-            return output.getvalue() == self.expected
+        return_value = eval(fn_call, globals(), {mod_name:context})
+
+        sys.stdout = old_stdout
+
+        passed = True
+
+        if self.value:
+            passed = passed and self.value == return_value
+
+        if self.output:
+            passed = passed and self.output == output.getvalue()
+
+        return passed
 
 
     def __run_review(self, actual_target):
@@ -156,12 +166,15 @@ class Test:
         print("Deduction value: {}".format(self.deduction))
 
         while True:
-            ans = input("Should this deduction be taken (yes/no)? ")
+            ans = input("Should this deduction be taken (y/n)? ")
 
-            if ans in ['yes', 'no']:
+            if ans in ['y', 'n', 'yes', 'no']:
                 break
 
-        if ans == 'yes':
+        if ans == 'y' or ans == 'yes':
+            # the deduction *should* be taken, therefore this test fails
             return False
         else:
+            # the deduction *should not* be taken, therefore this test passes
             return True
+

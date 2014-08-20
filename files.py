@@ -83,6 +83,7 @@ def _from_dict(d):
                     short_name=d['short_name'],
                     course_name=d['course_name'])
 
+    # TODO for all tests, detect test sets if present
     for m in d['modules']:
         m_obj = Module(module_name=m['module_name'])
 

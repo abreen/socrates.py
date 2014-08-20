@@ -1,121 +1,115 @@
 {
+    "assignment_name": "Problem Set 0",
+    "short_name": "ps0",
+    "course_name": "CS 111 at Boston University",
+
     "modules": [
         {
             "tests": [],
             "module_name": "ps0",
             "functions": [
                 {
-                    "tests": [
-                        { "action": "eval",
-                          "arguments": { "x": 1 },
-                          "expected": 2,
-                          "deduction": 2,
-                          "description": "double(1) should equal 2"
-                        },
-                        { "action": "eval",
-                          "arguments": { "x": 0 },
-                          "expected": 0,
-                          "deduction": 2,
-                          "description": "double(0) should equal 0"
-                        },
-                        { "action": "review",
-                          "deduction": 2,
-                          "description": "should not use any variables"
-                        }
-                    ],
+                    "function_name": "double",
                     "parameters": [
                         "x"
                     ],
-                    "function_name": "double",
-                    "point_value": 10
+                    "point_value": 10,
+                    "tests": [
+                        { "action": "eval",
+                          "description": "double(1) should equal 2",
+                          "deduction": 2,
+                          "arguments": { "x": 1 },
+                          "value": 2
+                        },
+                        { "action": "eval",
+                          "description": "double(0) should equal 0",
+                          "deduction": 2,
+                          "arguments": { "x": 0 },
+                          "value": 0
+                        },
+                        { "action": "review",
+                          "description": "should not use any variables",
+                          "deduction": 2
+                        }
+                    ]
                 },
                 {
-                    "tests": [
-                        { "action": "output",
-                          "arguments": { "name": "'Dave'" },
-                          "expected": "Greetings, Dave!\n",
-                          "deduction": 10,
-                          "description": "greetings(\"Dave\") should print \"Greetings, Dave!\""
-                        }
-                    ],
+                    "function_name": "greetings",
                     "parameters": [
                         "name"
                     ],
-                    "function_name": "greetings",
-                    "point_value": 10
-                },
-                {
+                    "point_value": 10,
                     "tests": [
-                        { "action": "output",
-                          "arguments": { },
-                          "expected": "Hello, world!\n",
+                        { "action": "eval",
+                          "description": "greetings(\"Dave\") should print \"Greetings, Dave!\"",
                           "deduction": 10,
-                          "description": "should print \"Hello, world!\""
+                          "arguments": { "name": "'Dave'" },
+                          "output": "Greetings, Dave!\n"
                         }
-                    ],
-                    "parameters": [],
+                    ]
+                },
+                {
                     "function_name": "hello",
-                    "point_value": 10
-                },
-                {
+                    "parameters": [],
+                    "point_value": 10,
                     "tests": [
                         { "action": "eval",
-                          "arguments": { "a": 1,
-                                         "b": 1 },
-                          "expected": 2,
-                          "deduction": 2,
-                          "description": "simple case of 1 + 1"
+                          "description": "should print \"Hello, world!\"",
+                          "deduction": 10,
+                          "arguments": null,
+                          "output": "Hello, world!\n"
                         }
-                    ],
-                    "parameters": [
-                        "a",
-                        "b"
-                    ],
+                    ]
+                },
+                {
                     "function_name": "my_add",
-                    "point_value": 10
-                },
-                {
-                    "tests": [
-                        { "action": "eval",
-                          "arguments": { "a": 1,
-                                         "b": 1 },
-                          "expected": 1,
-                          "deduction": 2,
-                          "description": "simple case of 1 * 1"
-                        }
-                    ],
                     "parameters": [
                         "a",
                         "b"
                     ],
-                    "function_name": "my_mult",
-                    "point_value": 10
-                },
-                {
+                    "point_value": 10,
                     "tests": [
                         { "action": "eval",
-                          "arguments": { "x": 0 },
-                          "expected": 0,
+                          "description": "simple case of 1 + 1",
                           "deduction": 2,
-                          "description": "series_sum(0) should return 0"
+                          "arguments": { "a": 1, "b": 1 },
+                          "value": 2
+                        }
+                    ]
+                },
+                {
+                    "function_name": "my_mult",
+                    "parameters": [ "a", "b" ],
+                    "point_value": 10,
+                    "tests": [
+                        { "action": "eval",
+                          "description": "simple case of 1 * 1",
+                          "deduction": 2,
+                          "arguments": { "a": 1, "b": 1 },
+                          "value": 1
+                        }
+                    ]
+                },
+                {
+                    "function_name": "series_sum",
+                    "parameters": [ "x" ],
+                    "point_value": 20,
+                    "tests": [
+                        { "action": "eval",
+                          "description": "series_sum(0) should return 0",
+                          "deduction": 2,
+                          "arguments": { "x": 0 },
+                          "value": 0
                         },
                         { "action": "eval",
-                          "arguments": { "x": 1 },
-                          "expected": 1,
+                          "description": "series_sum(1) should return 1",
                           "deduction": 2,
-                          "description": "series_sum(1) should return 1"
+                          "arguments": { "x": 1 },
+                          "value": 1
                         }
-                    ],
-                    "parameters": [
-                        "x"
-                    ],
-                    "function_name": "series_sum",
-                    "point_value": 20
+                    ]
                 }
             ]
         }
-    ],
-    "short_name": "ps0",
-    "assignment_name": "Problem Set 0",
-    "course_name": "CS 111 at Boston University"
+    ]
 }
