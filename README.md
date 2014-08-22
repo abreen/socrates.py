@@ -31,6 +31,29 @@ will deduct the value of the module or function and skip any tests written
 for the module or function.
 
 
+Exit status
+-----------
+
+In the case of an error, `socrates` will stop and print an error message to
+the standard error, returning one of the following values to the shell:
+
+    2       when a problem with program arguments was encountered
+            (handled by the 'argparse' module)
+    3       in generate mode, when there was an error importing a solution
+            module (e.g., the module file does not exist)
+    4       in generate mode, when the solution module could not be imported
+            (e.g., as a result of a syntax error)
+    5       in grade mode, when an error occurred parsing the JSON criteria
+            file
+    6       in grade mode, when the human grader specified a submission file
+            that does not exist or is not a file
+    7       in grade mode, when a grade file for the specified assignment
+            already exists in the currrent directory
+    8       in grade mode, when the human grader specified a criteria file
+            that does not exist
+
+
+
 Criteria files
 --------------
 
@@ -67,13 +90,13 @@ function object:
         "parameters": [ "n" ],
         "point_value": 5,
         "tests": [
-            { "action": "eval",
+            { "type": "eval",
               "arguments": { "n": 0 },
               "value": 0,
               "deduction": 2,
               "description": "Fibonacci base case of F_0"
             },
-            { "action": "eval",
+            { "type": "eval",
               "arguments": { "n": 1 },
               "value": 1,
               "deduction": 2,
@@ -98,7 +121,7 @@ will be deducted from the student's score.
 
 ### Tests
 
-Each test has an associated *action*. The two tests above were `eval`
+Each test has an associated *type*. The two tests above were `eval`
 tests, which will cause `socrates` to call `eval()` on the function, with
 the given arguments and/or simulated human input on the keyboard. Either
 the return value of the function or the output of the function (or both)
@@ -117,7 +140,7 @@ optional attributes, parentheses indicate a choice, items inside angle
 brackets should be replaced with literals of your choosing):
 
     {
-        "action": ("eval" | "review"),
+        "type": ("eval" | "review"),
         "description": <string>,
         "deduction": <integer>,
         ["arguments": { <arg-name>: <arg-value>, ... },]
@@ -145,7 +168,7 @@ will fail the test.
 
 ### Test sets
 
-In place of a test object, a *test set* object can be specified that contains
+A *test set* object is a special test type that contains
 one or more member test objects. A test set allows `socrates` to deduct
 specific point values based on how many tests in the set fail. For example,
 it may be desired to perform five tests and deduct 2 points if one
@@ -154,7 +177,9 @@ tests fail. The exact deductions can be specified by way of a *deduction map*,
 shown below:
 
     {
-        "deduction_map": { "1": 2, "2": 3, "5": 4 },
+        "type": "set",
+        "description": "a sample test set",
+        "deductions": { "1": 2, "2": 3, "5": 4 },
         "members": [
             ...
         ]

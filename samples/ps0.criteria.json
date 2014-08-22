@@ -13,7 +13,7 @@
                     "parameters": null,
                     "point_value": 5,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "giving \"Alex\" as input should produce \"Nice to meet you, Alex!\"",
                           "deduction": 2,
                           "input": "Alex\n",
@@ -26,19 +26,19 @@
                     "parameters": [ "x" ],
                     "point_value": 10,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "double(1) should equal 2",
                           "deduction": 2,
                           "arguments": { "x": 1 },
                           "value": 2
                         },
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "double(0) should equal 0",
                           "deduction": 2,
                           "arguments": { "x": 0 },
                           "value": 0
                         },
-                        { "action": "review",
+                        { "type": "review",
                           "description": "should not use any variables",
                           "deduction": 2
                         }
@@ -49,7 +49,7 @@
                     "parameters": [ "name" ],
                     "point_value": 10,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "greetings(\"Dave\") should print \"Greetings, Dave!\"",
                           "deduction": 10,
                           "arguments": { "name": "'Dave'" },
@@ -62,7 +62,7 @@
                     "parameters": null,
                     "point_value": 10,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "should print \"Hello, world!\"",
                           "deduction": 10,
                           "arguments": null,
@@ -75,7 +75,7 @@
                     "parameters": [ "a", "b" ],
                     "point_value": 10,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "simple case of 1 + 1",
                           "deduction": 2,
                           "arguments": { "a": 1, "b": 1 },
@@ -88,7 +88,7 @@
                     "parameters": [ "a", "b" ],
                     "point_value": 10,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "simple case of 1 * 1",
                           "deduction": 2,
                           "arguments": { "a": 1, "b": 1 },
@@ -101,13 +101,13 @@
                     "parameters": [ "x" ],
                     "point_value": 20,
                     "tests": [
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "series_sum(0) should return 0",
                           "deduction": 2,
                           "arguments": { "x": 0 },
                           "value": 0
                         },
-                        { "action": "eval",
+                        { "type": "eval",
                           "description": "series_sum(1) should return 1",
                           "deduction": 2,
                           "arguments": { "x": 1 },

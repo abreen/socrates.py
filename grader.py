@@ -15,13 +15,13 @@ def grade(criteria, submissions):
     for s in submissions:
         if not os.path.isfile(s):
             sprint("'{}' is not a file".format(s), error=True)
-            sys.exit(1)
+            sys.exit(6)
 
     grade_filename = criteria.short_name + '-grade.txt'
 
     if os.path.isfile(grade_filename):
         sprint("refusing to overwrite existing grade file", error=True)
-        sys.exit(1)
+        sys.exit(7)
 
     ev = Evaluation(criteria)
 

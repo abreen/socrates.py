@@ -1,5 +1,4 @@
 * Test API changes
-    - change test 'actions' to test 'types'
     - create package 'tests' in this directory
     - split each type of test into specific classes with their own
       'run_test' methods

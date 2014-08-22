@@ -2,14 +2,13 @@
 
 import os
 import sys
+import argparse
 
 from util import *
 import files
 
 
 def _handle_args():
-    import argparse
-
     top_opts = { 'description': "Grade student work from the command line",
                  'epilog': "(try socrates.py generate -h or "
                            "socrates.py grade -h)" }
@@ -65,10 +64,10 @@ if __name__ == '__main__':
             crit = files.generate(args.solution_file)
         except ImportError as err:
             sprint("error importing module: {}".format(err), error=True)
-            sys.exit(1)
+            sys.exit(3)
         except Exception as exc:
             sprint("bug in solution: {}".format(exc), error=True)
-            sys.exit(1)
+            sys.exit(4)
 
         # convert Criteria object to JSON format and write to file
         out_filename = files.to_json(crit)
@@ -79,9 +78,12 @@ if __name__ == '__main__':
         # decode JSON criteria file into Criteria object
         try:
             criteria = files.from_json(args.criteria_file)
+        except FileNotFoundError:
+            sprint("criteria file does not exist", error=True)
+            sys.exit(8)
         except ValueError as err:
             sprint("error parsing JSON: {}".format(err), error=True)
-            sys.exit(1)
+            sys.exit(5)
 
         # interactively grade submissions using criteria and write grade file
         grader.grade(criteria, args.submission_file)

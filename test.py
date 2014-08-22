@@ -4,28 +4,28 @@ import io
 
 from criteria import *
 
-VALID_TEST_ACTIONS = ['eval',         # evaluate an expression
-                      'review']       # pause for human input
+VALID_TEST_TYPES = ['eval',         # evaluate an expression
+                    'review']       # pause for human input
 
 class Test:
     """Represents a test that socrates will run to determine if the student
     should get credit for some part of a submission. A test's "target" is the
-    function or module on which it should run. See VALID_TEST_ACTIONS for
+    function or module on which it should run. See VALID_TEST_TYPES for
     possible test types.
     """
 
-    def __init__(self, action, target, description, deduction,
+    def __init__(self, test_type, target, description, deduction,
                  arguments=None, input=None, value=None, output=None):
-        if action not in VALID_TEST_ACTIONS:
-            raise ValueError("test action '" + action + "' invalid; choose "
-                             "from " + str(VALID_TEST_ACTIONS))
+        if test_type not in VALID_TEST_TYPES:
+            raise ValueError("test type '" + test_type + "' invalid; choose "
+                             "from " + str(VALID_TEST_TYPES))
 
         if arguments and type(arguments) is not dict:
             raise ValueError("arguments must be a dictionary containing "
                              "<arg-name>: <arg-value> pairs")
 
         # required components
-        self.action = action            # e.g., 'eval'
+        self.type = test_type           # e.g., 'eval'
         self.target = target            # Module or Function object to test
         self.description = description  # deduction reasoning for grade file
         self.deduction = deduction      # num. of points to deduct if test fails
@@ -44,7 +44,7 @@ class Test:
 
 
     def to_dict(self):
-        test_dict = {'action': self.action,
+        test_dict = {'type': self.type,
                      'description': self.description,
                      'deduction': self.deduction,
                      'arguments': self.arguments,
@@ -68,7 +68,7 @@ class Test:
         if not test_target:
             raise ValueError("the target of this test must be specified")
 
-        args = {'action': dict_obj['action'],
+        args = {'test_type': dict_obj['type'],
                 'target': test_target,
                 'description': dict_obj['description'],
                 'deduction': dict_obj['deduction']}
@@ -109,12 +109,12 @@ class Test:
             # TODO implement testing for modules
             return True
 
-        if self.action == 'eval':
+        if self.type == 'eval':
             return self.__run_eval(actual_target, context)
-        elif self.action == 'review':
+        elif self.type == 'review':
             return self.__run_review(actual_target)
         else:
-            raise ValueError("test has invalid action")
+            raise ValueError("test has invalid type")
 
 
     def __run_eval(self, actual_target, context):
