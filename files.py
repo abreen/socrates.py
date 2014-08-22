@@ -7,9 +7,6 @@ import sys
 from util import *
 from criteria import *
 
-from tests import basetest
-from tests import *
-
 
 def generate(path):
     """Given a path to a Python file, create a new Criteria object based on
@@ -81,11 +78,15 @@ def _from_dict(d):
     Criteria object with the contents of the dict.
     """
 
+    # note that importing the 'tests' package will trigger imports of all
+    # known subclasses of BaseTest after which it will be possible to
+    # determine which test types are actually supported
+    import tests
+
     crit = Criteria(assignment_name=d['assignment_name'],
                     short_name=d['short_name'],
                     course_name=d['course_name'])
 
-    # TODO for all tests, detect test sets if present
     for m in d['modules']:
         m_obj = Module(module_name=m['module_name'])
 
@@ -100,7 +101,7 @@ def _from_dict(d):
             if 'tests' in f:
                 for func_test in f['tests']:
                     test_type = func_test['type']
-                    test_cls = _find_test_class(test_type)
+                    test_cls = tests.get_test_class(test_type)
 
                     f_obj.add_test(test_cls.from_dict(func_test, f_obj))
 
@@ -110,27 +111,13 @@ def _from_dict(d):
         if 'tests' in m:
             for mod_test in m['tests']:
                 test_type = mod_test['type']
-                test_cls = _find_test_class(test_type)
+                test_cls = tests.get_test_class(test_type)
 
                 m_obj.add_test(test_cls.from_dict(mod_test, m_obj))
 
         crit.add_module(m_obj)
 
     return crit
-
-
-def _find_test_class(test_type):
-    """Given a test type specified by a criteria file, search through the
-    available subclasses of BaseTest from the 'tests' package to find the class
-    that handles the given test type. The class is returned.
-    """
-
-    for cls in basetest.BaseTest.__subclasses__():
-        if cls.handles_type == test_type:
-            return cls
-    else:
-        raise ValueError("could not find code to handle '{}' "
-                         "test type".format(test_type))
 
 
 class SocratesEncoder(json.JSONEncoder):
