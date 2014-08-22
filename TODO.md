@@ -1,4 +1,14 @@
+* Test API changes
+    - change test 'actions' to test 'types'
+    - create package 'tests' in this directory
+    - split each type of test into specific classes with their own
+      'run_test' methods
+    - each test class should specify an ID, e.g. 'eval' or 'review';
+      the code in the 'files' package will check all available test class
+      to see which tests can handle the ID specified in the criteria file
 * Add test sets (use README.md for specification)
+    - change test set to have a 'type' of set
+    - add test set class
 * Add diffs to failed tests (for value and output)
   For example: -10  failed test: simple test
                     expected output: Hello, world!\n
