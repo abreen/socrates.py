@@ -1,6 +1,8 @@
 * Add test sets (use README.md for specification)
     - change test set to have a 'type' of set
     - add test set class
+* Add --quiet mode
+* Add batch grading mode
 * Add diffs to failed tests (for value and output)
   For example: -10  failed test: simple test
                     expected output: Hello, world!\n
