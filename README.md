@@ -16,7 +16,7 @@ and other features can be added. Then the `.criteria.json` file can be
 sent along to the grader.
 
 The grader uses `socrates` in grade mode, in which the criteria file is
-specified and one or more submission files are specified. `socrates` will
+specified and zero or more submission files are specified. `socrates` will
 read the criteria file to obtain a list of expected modules and functions,
 and for each module in the submission, run any tests specified in the
 criteria file. When `socrates` finds a failed test, it will deduct the
@@ -51,7 +51,6 @@ the standard error, returning one of the following values to the shell:
             already exists in the currrent directory
     8       in grade mode, when the human grader specified a criteria file
             that does not exist
-
 
 
 Criteria files
@@ -146,12 +145,12 @@ brackets should be replaced with literals of your choosing):
         ["arguments": { <arg-name>: <arg-value>, ... },]
         ["input": <string>,]
         ["value": <string>,]
-        ["output": <string>,]
+        ["output": <string>]
     }
 
 Any or all of the attributes `arguments`, `input`, `value`, and `output`
-can be specified; if present, they will cause `socrates` to behave according
-to the following specifications:
+can be specified (and in any order); if present, they will cause `socrates`
+to behave according to the following specifications:
 
 * when `arguments` is specified, `socrates` will call the specified function
   with the given arguments (here, `null` as a replacement for `<arg-value>`
@@ -162,6 +161,9 @@ to the following specifications:
   function (here, `null` is allowed and will correspond to Python's `None`);
 * when `output` is specified, `socrates` will capture any bytes sent to the
   standard out while the function is run and compare it to the specified value
+
+Note that, if the `arguments` attribute is missing or if it has a value of
+`null`, the target function will be called with no arguments.
 
 If either `value` or `output` does not match the expected value, `socrates`
 will fail the test.
