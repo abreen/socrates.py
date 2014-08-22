@@ -6,7 +6,9 @@ import sys
 
 from util import *
 from criteria import *
-from test import *
+
+from tests import basetest
+from tests import *
 
 
 def generate(path):
@@ -97,19 +99,38 @@ def _from_dict(d):
             # add function-level tests
             if 'tests' in f:
                 for func_test in f['tests']:
-                    f_obj.add_test(Test.from_dict(func_test, f_obj))
+                    test_type = func_test['type']
+                    test_cls = _find_test_class(test_type)
+
+                    f_obj.add_test(test_cls.from_dict(func_test, f_obj))
 
             m_obj.add_function(f_obj)
 
         # add module-level tests
         if 'tests' in m:
             for mod_test in m['tests']:
-                m_obj.add_test(Test.from_dict(mod_test, m_obj))
+                test_type = mod_test['type']
+                test_cls = _find_test_class(test_type)
+
+                m_obj.add_test(test_cls.from_dict(mod_test, m_obj))
 
         crit.add_module(m_obj)
 
     return crit
 
+
+def _find_test_class(test_type):
+    """Given a test type specified by a criteria file, search through the
+    available subclasses of BaseTest from the 'tests' package to find the class
+    that handles the given test type. The class is returned.
+    """
+
+    for cls in basetest.BaseTest.__subclasses__():
+        if cls.handles_type == test_type:
+            return cls
+    else:
+        raise ValueError("could not find code to handle '{}' "
+                         "test type".format(test_type))
 
 
 class SocratesEncoder(json.JSONEncoder):
