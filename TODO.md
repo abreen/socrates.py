@@ -12,6 +12,9 @@
   For example: -10  failed test: simple test
                     expected output: Hello, world!\n
                     produced output: Hello, world!
+* Add optional 'socrates_dir' to criteria file; a directory where solution keys
+  and other files can be stored so tests may refer to files outside of a
+  student's submission directory
 * Add general file capability to the criteria code, so that graders can specify
   non-Python files on the command line and the criteria can keep track of them
 * Add other test types specific to files:
