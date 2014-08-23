@@ -180,7 +180,6 @@ shown below:
 
     {
         "type": "set",
-        "description": "a sample test set",
         "deductions": { "1": 2, "2": 3, "5": 4 },
         "members": [
             ...

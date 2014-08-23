@@ -27,7 +27,6 @@
                     "point_value": 10,
                     "tests": [
                         { "type": "set",
-                          "description": "double() tests",
                           "deductions": { "1": 8, "2": 10 },
                           "members": [
                               { "type": "eval",
