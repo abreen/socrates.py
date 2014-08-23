@@ -144,7 +144,7 @@ class Evaluation:
                 module_heading = "{}.py ({} points)".format(m.name, points)
                 f.write(heading(module_heading, level=1))
 
-                if self.submission[m] == None:
+                if self.submission[m] is None:
                     value = m.get_total_points()
                     point_total -= value
                     f.write("-{}\tnot submitted\n".format(value))
@@ -160,7 +160,7 @@ class Evaluation:
                                                                     f_points)
                     f.write(heading(func_heading, level=2))
 
-                    if self.submission[func] == None:
+                    if self.submission[func] is None:
                         value = func.point_value
                         point_total -= value
                         f.write("-{}\tnot submitted\n\n\n".format(value))
