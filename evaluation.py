@@ -113,7 +113,9 @@ class Evaluation:
                 else:
                     points_lost += t.deduction
 
-                f.write("-{}\tfailed test: {}\n".format(ded, desc))
+                f.write("-{}\treasoning:\n".format(ded))
+                lines = '\n'.join(map(lambda s: '\t\t' + s, desc.split('\n')))
+                f.write(lines)
 
             return points_lost
         else:

@@ -13,7 +13,7 @@ class EvalTest(basetest.BaseTest):
             raise ValueError("arguments must be a dictionary containing "
                              "<arg-name>: <arg-value> pairs")
 
-        super().__init__(target, description, deduction)
+        super().__init__(target, "failed eval: " + description, deduction)
 
         # optional components
         self.arguments = arguments      # what arguments to pass (dict)
@@ -23,9 +23,8 @@ class EvalTest(basetest.BaseTest):
 
 
     def __str__(self):
-        return "evaluation test of {}: {} ({} points)".format(self.target,
-                                                              self.description,
-                                                              self.deduction)
+        return "eval of {} ({} pts.)".format(self.target,
+                                             self.deduction)
 
 
     def to_dict(self):

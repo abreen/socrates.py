@@ -7,13 +7,12 @@ class ReviewTest(basetest.BaseTest):
     handles_type = 'review'
 
     def __init__(self, target, description, deduction):
-        super().__init__(target, description, deduction)
+        super().__init__(target, "failed review: " + description, deduction)
 
 
     def __str__(self):
-        return "review of {}: {} ({} points)".format(self.target,
-                                                     self.description,
-                                                     self.deduction)
+        return "review of {} ({} pts.)".format(self.target,
+                                               self.deduction)
 
 
     def to_dict(self):
