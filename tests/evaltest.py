@@ -95,9 +95,9 @@ class EvalTest(basetest.BaseTest):
         sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
         passed = True
-        if self.value:
+        if self.value is not None:
             passed = passed and self.value == return_value
-        if self.output:
+        if self.output is not None:
             passed = passed and self.output == out_buf.getvalue()
 
         return passed
