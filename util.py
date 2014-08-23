@@ -2,6 +2,7 @@
 
 import sys
 
+
 COLOR_RED='\033[91m'
 COLOR_GREEN='\033[92m'
 COLOR_YELLOW='\033[93m'
@@ -9,9 +10,14 @@ COLOR_BLUE='\033[94m'
 COLOR_CYAN='\033[96m'
 COLOR_RESET='\033[0m'
 
+quiet_mode = False
+sprint_prefix = ""
+
 
 def sprint(string, error=False, color=COLOR_BLUE):
-    first = "socrates: "
+    if quiet_mode: return
+
+    first = sprint_prefix
 
     if error:
         color=COLOR_RED

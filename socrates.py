@@ -4,7 +4,7 @@ import os
 import sys
 import argparse
 
-from util import *
+import util
 import files
 
 
@@ -14,6 +14,8 @@ def _handle_args():
                            "socrates.py grade -h)" }
 
     top_parser = argparse.ArgumentParser(**top_opts)
+    top_parser.add_argument('-q', '--quiet', action='store_true')
+
     subparsers = top_parser.add_subparsers(dest='mode')
 
     # parser for generate mode
@@ -50,6 +52,9 @@ def _handle_args():
 if __name__ == '__main__':
     args = _handle_args()
 
+    if args.quiet:
+        util.quiet_mode = True
+
     # add the current directory to Python's path; this will allow us to
     # do imports of modules from where socrates is invoked
     sys.path.append(os.getcwd())
@@ -63,10 +68,10 @@ if __name__ == '__main__':
         try:
             crit = files.generate(args.solution_file)
         except ImportError as err:
-            sprint("error importing module: {}".format(err), error=True)
+            util.sprint("error importing module: {}".format(err), error=True)
             sys.exit(3)
         except Exception as exc:
-            sprint("bug in solution: {}".format(exc), error=True)
+            util.sprint("bug in solution: {}".format(exc), error=True)
             sys.exit(4)
 
         # convert Criteria object to JSON format and write to file
@@ -79,10 +84,10 @@ if __name__ == '__main__':
         try:
             criteria = files.from_json(args.criteria_file)
         except FileNotFoundError:
-            sprint("criteria file does not exist", error=True)
+            util.sprint("criteria file does not exist", error=True)
             sys.exit(8)
         except ValueError as err:
-            sprint("error parsing JSON: {}".format(err), error=True)
+            util.sprint("error parsing JSON: {}".format(err), error=True)
             sys.exit(5)
 
         # interactively grade submissions using criteria and write grade file
