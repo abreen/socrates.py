@@ -72,7 +72,7 @@ class TestSet(BaseTest):
 
             return  {'deduction': deduction,
                      'description': desc,
-                     'subresults': subresults}
+                     'subresults': failed_tests}
 
 
 
