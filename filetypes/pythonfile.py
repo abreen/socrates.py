@@ -167,7 +167,8 @@ class ReviewTest(BaseTest):
 
             for m in inspect.getmembers(context, inspect.isfunction):
                 if m[0] == self.target.name:
-                    func_obj = m
+                    func_obj = m[1]
+                    break
             else:
                 return {'deduction': self.deduction,
                         'description': self.description,
