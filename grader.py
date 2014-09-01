@@ -56,8 +56,9 @@ def _write_results(f, results, indent='\t'):
 
     total = 0
     for r in results:
-        ded, desc = r['deduction'], r['description']
-        if ded:
+        desc = r['description']
+        if 'deduction' in r:
+            ded = r['deduction']
             total += ded
             f.write("-{}{}{}\n".format(ded, indent, desc))
         else:
