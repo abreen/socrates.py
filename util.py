@@ -40,3 +40,10 @@ def heading(string, level=1):
     else:
         return ('#' * level) + ' ' + string + '\n'
 
+
+def escape(s):
+    return s.replace('\n', '\\n').replace('\t', '\\t')
+
+
+def prepend_lines(lines, pre):
+    return '\n'.join(map(lambda x: pre + x, lines.split('\n')))

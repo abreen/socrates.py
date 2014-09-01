@@ -1,56 +1,16 @@
-"""A grading toolkit for programming assignments in Python."""
-
 import os
 import sys
-import argparse
 
+import cmdline
 import util
-import files
+import criteria
 
-
-def _handle_args():
-    top_opts = { 'description': "Grade student work from the command line",
-                 'epilog': "(try socrates.py generate -h or "
-                           "socrates.py grade -h)" }
-
-    top_parser = argparse.ArgumentParser(**top_opts)
-    top_parser.add_argument('-q', '--quiet', action='store_true')
-
-    subparsers = top_parser.add_subparsers(dest='mode')
-
-    # parser for generate mode
-    gen_mode_opts = { 'description': "Generate a JSON criteria file from an "
-                                     "existing solution",
-                      'aliases': ['gen'] }
-    gen_mode_parser = subparsers.add_parser('generate', **gen_mode_opts)
-
-    sol_opts = { 'help': "Python file for which to generate criteria" }
-    gen_mode_parser.add_argument('solution_file', **sol_opts)
-
-    # parser for grading mode
-    norm_mode_opts = { 'description': "Start an interactive grading session" }
-    norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
-
-    criteria_opts = { 'help': "criteria file in JSON format" }
-    norm_mode_parser.add_argument('criteria_file', **criteria_opts)
-
-    input_opts = { 'help': "Python file(s) to grade",
-                   'nargs': '*' }
-    norm_mode_parser.add_argument('submission_file', **input_opts)
-
-
-    args = top_parser.parse_args()
-
-    if not args.mode:
-        top_parser.parse_args(['-h'])
-        system.exit(1)
-
-    return args
-
+# triggers discovery of file and test types (see filetypes/__init__.py)
+import filetypes
 
 
 if __name__ == '__main__':
-    args = _handle_args()
+    args = cmdline.get_args()
 
     if args.quiet:
         util.quiet_mode = True
@@ -60,36 +20,29 @@ if __name__ == '__main__':
     sys.path.append(os.getcwd())
 
     if args.mode in ['generate', 'gen']:
-        # add path to enclosing directory of solution module
-        # (we do this because files.generate() will try to import the module)
-        sys.path.append(os.path.split(args.solution_file)[0])
+        plain_files = []
+        for file_path in args.solution_file:
+            plain_file = filetypes.plainfile.PlainFile(path=file_path,
+                                                       point_value=0,
+                                                       tests=None)
+            plain_files.append(plain_file)
 
-        # generate Criteria object from Python solution
-        try:
-            crit = files.generate(args.solution_file)
-        except ImportError as err:
-            util.sprint("error importing module: {}".format(err), error=True)
-            sys.exit(3)
-        except Exception as exc:
-            util.sprint("bug in solution: {}".format(exc), error=True)
-            sys.exit(4)
-
-        # convert Criteria object to JSON format and write to file
-        out_filename = files.to_json(crit)
+        crit = criteria.Criteria(assignment_name="generated assignment",
+                                 short_name="replaceme",
+                                 course_name="CS 101 at Acme College",
+                                 files=plain_files)
+        crit.to_json()
 
     if args.mode == 'grade':
         import grader
 
-        # decode JSON criteria file into Criteria object
         try:
-            criteria = files.from_json(args.criteria_file)
+            c = criteria.Criteria.from_json(args.criteria_file)
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
             sys.exit(8)
         except ValueError as err:
-            util.sprint("error parsing JSON: {}".format(err), error=True)
+            util.sprint("error importing criteria: {}".format(err), error=True)
             sys.exit(5)
 
-        # interactively grade submissions using criteria and write grade file
-        grader.grade(criteria, args.submission_file)
-
+        grader.grade(c, args.submission_file, c.short_name + "-grade.txt")

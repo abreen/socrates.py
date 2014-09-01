@@ -3,10 +3,11 @@ socrates
 
 ![The man himself](https://raw.githubusercontent.com/abreen/socrates/master/socrates.jpg)
 
-`socrates` is a grading toolkit written in Python, for assignments in Python.
-As a standalone script, its main function is to generate grading criteria files
-from existing Python files (the *generate* mode) and provide an interactive
-grading session for graders (the *grade* mode).
+`socrates` is a grading application designed for automation of grading tasks,
+like running tests on Python modules and other plain text files.  Its primary
+functions are generating grading criteria files from an existing solution (the
+*generate* mode) and providing an interactive grading session for graders (the
+*grade* mode).
 
 Generate mode allows instructors to create a basic starting point for
 their criteria files, which are required to actually start grading student
@@ -17,40 +18,17 @@ sent along to the grader.
 
 The grader uses `socrates` in grade mode, in which the criteria file is
 specified and zero or more submission files are specified. `socrates` will
-read the criteria file to obtain a list of expected modules and functions,
-and for each module in the submission, run any tests specified in the
-criteria file. When `socrates` finds a failed test, it will deduct the
-appropriate amount from the student's score. `socrates` also has a special
-"review" test, which will cause the auto-grading to pause while a human
-reviews the submission and applies manual deductions, if necessary.
+read the criteria file to obtain a list of expected files, and, for each
+expected file, run any tests specified in the criteria. When a submission fails
+a test, `socrates` deducts the appropriate amount from the student's score.
+`socrates` also has a special "review" test, which will cause the auto-grading
+to pause while a human reviews the submission and applies manual deductions, if
+necessary.
 
 When `socrates` exits in grade mode, a final grade file is written,
 containing any failed tests and the deductions associated with the tests,
-along with the total score. If a module or function is missing, `socrates`
-will deduct the value of the module or function and skip any tests written
-for the module or function.
-
-
-Exit status
------------
-
-In the case of an error, `socrates` will stop and print an error message to
-the standard error, returning one of the following values to the shell:
-
-    2       when a problem with program arguments was encountered
-            (handled by the 'argparse' module)
-    3       in generate mode, when there was an error importing a solution
-            module (e.g., the module file does not exist)
-    4       in generate mode, when the solution module could not be imported
-            (e.g., as a result of a syntax error)
-    5       in grade mode, when an error occurred parsing the JSON criteria
-            file
-    6       in grade mode, when the human grader specified a submission file
-            that does not exist or is not a file
-    7       in grade mode, when a grade file for the specified assignment
-            already exists in the currrent directory
-    8       in grade mode, when the human grader specified a criteria file
-            that does not exist
+along with the total score. If an expected component is missing, `socrates`
+will deduct the value of the component and skip any tests written for it.
 
 
 Criteria files
@@ -58,67 +36,98 @@ Criteria files
 
 A criteria file is a plain text file containing one JSON object with four
 attributes: the name of the problem set, the file name-safe name, the
-total number of points, and an array of module objects.
+name of the course (used when writing the final grade file), and an array of
+file objects.
 
     {
       "assignment_name": <assignment_name>,
       "short_name": <short_name>,
-      "total_points": <total>,
-      "modules": [ module_0, ..., module_n ]
+      "course_name": <course_name>,
+      "files": [ file_0, ..., file_n ]
     }
 
-
-Each module object specifies the required components of the Python module,
-including any function definitions the module should make. A point value
-is associated with the existence of each.
-A module object also contains zero or more *tests* that
-`socrates` will use in grading mode.
+Zero or more file objects can be specified. All file objects must have the
+following basic structure (square brackets indicate optional attributes,
+parentheses indicate a choice, items inside angle brackets should be replaced
+with literals of your choosing):
 
     {
-      "module_name": <module_name>,
-      "functions": [ function_0, ..., function_n ],
-      "tests": [ test_0, ..., test_q ]
+        "path": <file_path>,
+        "type": ("plain" | "python"),
+        "point_value": <value>,
+        ["tests": [ test_0, ..., test_n ]]
     }
 
-In grading mode, `socrates` will use the `functions` array to check a
-student's submission. Let's look at the structure of a sample
-function object:
+Note that, in the case of a relative path, `socrates` will use its current
+working directory as the root.
+
+A file object can have zero or more tests. A file's `type` attribute
+determines which tests can be used to test that file. For example, a file of
+type `plain` can be tested using the `diff` test, which (as it sounds)
+causes `socrates` to run a diff against a solution file. Or, for a file of
+type `python`, more complex tests can be run on the file.
+
+
+Testing Python module submissions
+---------------------------------
+
+Since `socrates` was written in Python and intended to grade assignments
+written in Python, it has specific Python module-testing abilities. To use
+these features, specify `python` as the file type for a Python file you
+intend to test. When you use the `python` file type, you can list the functions
+you expect to be in the student's submission in the `functions` array, along
+with any tests designed for those functions. Here's an example file object with
+the `python` file type:
 
     {
-        "function_name": "fibonacci",
-        "parameters": [ "n" ],
-        "point_value": 5,
-        "tests": [
-            { "type": "eval",
-              "arguments": { "n": 0 },
-              "value": 0,
-              "deduction": 2,
-              "description": "Fibonacci base case of F_0"
-            },
-            { "type": "eval",
-              "arguments": { "n": 1 },
-              "value": 1,
-              "deduction": 2,
-              "description": "Fibonacci base case of F_1"
+        "path": "ps0.py",
+        "type": "python",
+        "functions": [
+            {
+                "function_name": "fibonacci",
+                "parameters": [ "n" ],
+                "point_value": 5,
+                "tests": [
+                    { "type": "eval",
+                      "arguments": { "n": 0 },
+                      "value": 0,
+                      "deduction": 2,
+                      "description": "Fibonacci base case of F_0"
+                    },
+                    { "type": "eval",
+                      "arguments": { "n": 1 },
+                      "value": 1,
+                      "deduction": 2,
+                      "description": "Fibonacci base case of F_1"
+                    }
+                ]
             }
         ]
     }
 
-`socrates` will evaluate `fibonacci(n=0)` and `fibonacci(n=1)` as part of
-each test. If the `fibonacci(n=0)` does not return the expected value of
-0, a two-point deduction is taken with the reasoning
-`"failed test: Fibonacci base case of F_0"`.
 
-If the `fibonacci` function were to be found missing by
-`socrates`, its total point value would be subtracted from the student's
-score, and the tests for it would be skipped.
+Note that this example file object does not contain a `tests` attribute, which
+means that `socrates` will not perform any module-level tests. However, the
+`fibonacci` function has two tests written for it.
 
-Any number of tests can be specified for a target function or module.
-If an item fails many tests, no more than the value of the entire item
-will be deducted from the student's score.
+As part of each test, `socrates` will evaluate `fibonacci(n=0)` and
+`fibonacci(n=1)`. If the `fibonacci(n=0)` does not return the expected value of
+0, a two-point deduction is taken.
+
+If the `fibonacci` function were missing from a student submission, its total
+point value would be subtracted from the student's score, and both of these
+tests for it would be skipped.
+
+If a function (or module) fails many tests, no more than the value of the
+entire item will be deducted from the student's score.
+
+Note also that this file object does not have a `point_value` attribute,
+although it was listed as required in the previous section! For `python` file
+types, `socrates` will use the sum of the values of all functions as the total
+value for the module.
 
 
-### Tests
+### Tests for Python functions
 
 Each test has an associated *type*. The two tests above were `eval`
 tests, which will cause `socrates` to call `eval()` on the function, with
@@ -168,7 +177,9 @@ Note that, if the `arguments` attribute is missing or if it has a value of
 If either `value` or `output` does not match the expected value, `socrates`
 will fail the test.
 
-### Test sets
+
+Test sets
+---------
 
 A *test set* object is a special test type that contains
 one or more member test objects. A test set allows `socrates` to deduct
@@ -188,6 +199,7 @@ shown below:
 
 `socrates` uses the lowest attribute in the deduction map as the lower bound
 for deductions and the highest attribute in the map as the maximum deduction.
+Member tests do not need to specify individual deductions.
 For example, for the deduction map
 
     { "2": 4, "4": 6, "5": 10 }

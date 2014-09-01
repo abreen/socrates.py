@@ -1,81 +1,77 @@
 import sys
 import os
+import datetime
 
 from util import *
-from evaluation import *
-import files
 
 
-def grade(criteria, submissions):
-    """Given a Criteria object and a list of paths to student submissions,
-    evaluate the submission files against the criteria, prompting a human
-    grader when necessary. Then write the final grade to a file.
-    """
-
-    for s in submissions:
-        if not os.path.isfile(s):
-            sprint("'{}' is not a file".format(s), error=True)
-            sys.exit(6)
-
-    grade_filename = criteria.short_name + '-grade.txt'
-
-    if os.path.isfile(grade_filename):
-        sprint("refusing to overwrite existing grade file", error=True)
-        sys.exit(7)
-
-    ev = Evaluation(criteria)
+def grade(criteria, submissions, filename):
+    found = []
+    total = criteria.total_points
 
     for s in submissions:
         directory, name = os.path.split(s)
-        module_name = name[:name.index('.py')] if '.py' in name else name
 
-        if module_name not in criteria.modules:
-            sprint("skipping non-required module '{}'".format(module_name))
-            continue
-        else:
-            sprint("adding required module '{}'".format(module_name))
+        for f in criteria.files:
+            d, n = os.path.split(f.path)
 
-            if directory not in sys.path:
-                sys.path.append(directory)
+            if n == name:
+                found.append(f)
 
-            try:
-                module = __import__(module_name)
-            except:
-                sprint("importing '{}' failed".format(module_name),
-                       color=COLOR_YELLOW)
+    with open(filename, 'w') as out:
+        sprint("writing to '{}'".format(filename))
+        _write_header(out, criteria)
+
+        for f in criteria.files:
+            out.write(heading("{} [{} points]".format(f, f.point_value),
+                              level=2))
+
+            if f not in found:
+                total -= f.point_value
+                out.write("-{}\tnot submitted\n".format(f.point_value))
             else:
-                ev.add_module(module)
+                total -= _write_results(out, f.run_tests())
 
-    # all modules in submission have been imported
-    sprint("running tests")
+            out.write("\n")
 
-    for test in ev.tests:
-        if ev.submission[test.target] is None:
-            sprint("skipping {}; target missing".format(test.target),
-                   color=COLOR_CYAN)
-            continue
+        out.write("\ntotal: {}\n".format(total))
 
-        # run the test, passing in the actual target (function or module
-        # object resulting from import) and module context (object returned
-        # by __import__())
-        actual_target = ev.submission[test.target]
-        module_context = ev.tests[test]
+    sprint("grading completed")
 
-        passed = test.run_test(actual_target, module_context)
 
-        if not passed:
-            sprint("failed: {}".format(test), color=COLOR_YELLOW)
-            if test.target not in ev.failed_tests:
-                ev.failed_tests[test.target] = [test]
-            else:
-                ev.failed_tests[test.target].append(test)
+def _write_header(f, crit):
+    f.write("Grade Report: {}\n".format(crit.assignment_name))
+    f.write("{}\n".format(crit.course_name))
+
+    today = datetime.date.today()
+    day = today.strftime("%d")
+    if day[0] == "0":
+        day = day[1]
+    f.write(today.strftime("%B {}, %Y".format(day)) + "\n\n")
+
+
+def _write_results(f, results, indent='\t'):
+    if len(results) == 0:
+        return 0
+
+    total = 0
+    for r in results:
+        ded, desc = r['deduction'], r['description']
+        if ded:
+            total += ded
+            f.write("-{}{}{}\n".format(ded, indent, desc))
         else:
-            sprint("passed: {}".format(test), color=COLOR_GREEN)
+            f.write("{}{}\n".format(indent, desc))
 
+        if 'notes' in r and r['notes']:
+            for n in r['notes']:
+                f.write(indent + '\t' + n + '\n')
 
-    ev.to_file(filename=grade_filename)
+        if 'subresults' in r and r['subresults']:
+            for subr in r['subresults']:
+                total += _write_results(f, [subr], '\t' + indent)
 
-    sprint("finished grading session")
+    return total
 
 
 if __name__ == '__main__':
