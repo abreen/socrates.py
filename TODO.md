@@ -1,7 +1,4 @@
 * Refactor test set code
-* Add pre- and post-test batch hooks
-* Could PythonFile pre-test batch hook be importing module?
-* PythonFile needs to not take more deductions than the value of the function
 * Add batch grading mode
 * Add optional 'socrates_dir' to criteria file; a directory where solution keys
   and other files can be stored so tests may refer to files outside of a

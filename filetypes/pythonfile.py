@@ -260,12 +260,17 @@ class PythonFile(PlainFile):
             return [{'deduction': self.point_value,
                      'description': "importing '{}'".format(self.path)}]
 
+        # TODO check existence of all functions and skip tests for
+        # nonexistent functions
+
         for test in self.tests:
             result = test.run(module_context)
             if result is not None:
                 results.append(result)
 
         for func in self.functions:
+            # TODO do not take more than the value of a function
+
             for test in func.tests:
 
                 # TODO fix this hacky thing
