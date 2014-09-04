@@ -11,6 +11,20 @@
         {
             "path": "submission/ps0.py",
             "type": "python",
+            "variables": [
+                {
+                    "variable_name": "PI",
+                    "point_value": 10,
+                    "tests": [
+                        {
+                            "type": "eval",
+                            "description": "PI should be equal to 3.14",
+                            "deduction": 8,
+                            "value": 3.14
+                        }
+                    ]
+                }
+            ],
             "functions": [
                 {
                     "function_name": "meet",

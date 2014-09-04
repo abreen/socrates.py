@@ -1,6 +1,8 @@
 # ps0-solution.py
 # A simple solution to a problem set from an introductory CS course.
 
+PI = 3.14
+
 def hello():
     print("Hello, world!")
 
