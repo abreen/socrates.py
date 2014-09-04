@@ -55,7 +55,16 @@ class EvalTest(BaseTest):
         return EvalTest(**args)
 
 
-    def run(self, context):
+    def run(self, cxt):
+        if type(self.target) is PythonFunction:
+            return self.__run_function(cxt)
+        elif type(self.target) is PythonVariable:
+            return self.__run_variable(cxt)
+        else:
+            raise ValueError("invalid target type")
+
+
+    def __run_function(self, context):
         import sys
         import io
 
@@ -120,6 +129,35 @@ class EvalTest(BaseTest):
                 result['notes'].append("produced output: " + po)
 
             return result
+
+
+    def __run_variable(self, context):
+        import sys
+        import io
+
+        mod_name = context.__name__
+        var_name = self.target.name
+        exp = mod_name + "." + var_name
+
+        try:
+            value = eval(exp, globals(), {mod_name:context})
+        except AttributeError as err:
+            return {'deduction': self.deduction,
+                    'description': self.description,
+                    'notes': [str(err)]}
+
+        if value == self.value:
+            return None
+        else:
+            result = {'deduction': self.deduction,
+                      'description': self.description,
+                      'notes': []}
+
+            result['notes'].append("expected value: " + str(self.value))
+            result['notes'].append("produced value: " + str(value))
+
+            return result
+
 
 
 class ReviewTest(BaseTest):
@@ -205,10 +243,11 @@ class PythonFile(PlainFile):
     supported_tests.append(EvalTest)
 
 
-    def __init__(self, path, tests=None, functions=None):
+    def __init__(self, path, tests=None, functions=None, variables=None):
         self.path = path
         self.tests = tests if tests else []
         self.functions = functions if functions else []
+        self.variables = variables if variables else []
         self.point_value = sum([f.point_value for f in self.functions])
 
 
@@ -216,7 +255,8 @@ class PythonFile(PlainFile):
     def from_dict(dict_obj):
         args = {'path': dict_obj['path'],
                 'tests': [],
-                'functions': []}
+                'functions': [],
+                'variables': []}
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
@@ -230,6 +270,9 @@ class PythonFile(PlainFile):
 
         for f in dict_obj['functions']:
             args['functions'].append(PythonFunction.from_dict(f))
+
+        for v in dict_obj['variables']:
+            args['variables'].append(PythonVariable.from_dict(v))
 
 
         # set target of tests for module to this new PythonFile object
@@ -260,6 +303,9 @@ class PythonFile(PlainFile):
             return [{'deduction': self.point_value,
                      'description': "importing '{}'".format(self.path)}]
 
+        found_functions = self.__get_members(module_context, 'functions')
+        found_variables = self.__get_members(module_context, 'variables')
+
         # TODO check existence of all functions and skip tests for
         # nonexistent functions
 
@@ -271,12 +317,36 @@ class PythonFile(PlainFile):
         for func in self.functions:
             # TODO do not take more than the value of a function
 
-            for test in func.tests:
+            if func not in found_functions:
+                results.append({'deduction': func.point_value,
+                                'description': "missing function "
+                                               "'{}'".format(func)})
+                continue
 
+            for test in func.tests:
                 # TODO fix this hacky thing
                 if type(test) is TestSet:
                     for m in test.members:
                         m.target = func
+
+                result = test.run(module_context)
+                if result is not None:
+                    results.append(result)
+
+        for var in self.variables:
+            # TODO do not take more than the value of a variable
+
+            if var not in found_variables:
+                results.append({'deduction': var.point_value,
+                                'description': "missing variable "
+                                               "'{}'".format(var)})
+                continue
+
+            for test in var.tests:
+                # TODO fix this hacky thing
+                if type(test) is TestSet:
+                    for m in test.members:
+                        m.target = var
 
                 result = test.run(module_context)
                 if result is not None:
@@ -296,6 +366,31 @@ class PythonFile(PlainFile):
             sys.path.append(directory)
 
         return __import__(mod_name)
+
+
+    def __get_members(self, cxt, kind):
+        import inspect
+        members = []
+
+        if kind == 'functions':
+            for m in inspect.getmembers(cxt, inspect.isfunction):
+                for f in self.functions:
+                    if f.name == m[0]:
+                        members.append(f)
+
+        elif kind == 'variables':
+            import types
+            bad_types = [types.FunctionType, types.LambdaType, types.MethodType,
+                         types.ModuleType]
+            for m in inspect.getmembers(cxt):
+                if type(m[1]) in bad_types:
+                    continue
+
+                for v in self.variables:
+                    if v.name == m[0]:
+                        members.append(v)
+
+        return members
 
 
     def __str__(self):
@@ -351,5 +446,49 @@ class PythonFunction:
     def to_dict(self):
         return {'function_name': self.name,
                 'parameters': self.parameters,
+                'point_value': self.point_value,
+                'tests': [t.to_dict() for t in self.tests]}
+
+
+
+class PythonVariable:
+    """Utility class representing a Python variable that the criteria specifies
+    should be in a module of a student's submission. Used only with files of
+    type 'python'.
+    """
+
+    def __init__(self, name, point_value, tests=None):
+        self.name = name
+        self.point_value = point_value
+
+        # variable-level tests
+        self.tests = [] if not tests else tests
+
+
+    def __str__(self):
+        return "variable {}".format(self.name)
+
+
+    @staticmethod
+    def from_dict(dict_obj):
+        args = {'name': dict_obj['variable_name'],
+                'point_value': dict_obj['point_value'],
+                'tests': []}
+
+        if 'tests' in dict_obj:
+            for t in dict_obj['tests']:
+                test_cls = filetypes.find_test_class(t['type'])
+                args['tests'].append(test_cls.from_dict(t))
+
+        # set target of tests for module to this new PythonVariable object
+        new = PythonVariable(**args)
+        for test in new.tests:
+            test.target = new
+
+        return new
+
+
+    def to_dict(self):
+        return {'variable_name': self.name,
                 'point_value': self.point_value,
                 'tests': [t.to_dict() for t in self.tests]}
