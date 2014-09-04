@@ -178,6 +178,36 @@ If either `value` or `output` does not match the expected value, `socrates`
 will fail the test.
 
 
+### Testing variables in a Python module
+
+A file object of type `python` can also specify required variables in the
+module. Similarly to functions, specifying variables is done by creating
+an array of JSON objects in an attribute `variables` in a Python file
+object. For example:
+
+    {
+        "type": "python",
+        "path": "demo/mymodule.py",
+        "variables": [
+            {
+                "variable_name": "var1",
+                "point_value": 10,
+                "tests": [
+                    {
+                        "type": "eval",
+                        "description": "var1 should be zero",
+                        "deduction": 8,
+                        "value": 0
+                    }
+                ]
+            }
+        ]
+
+Python variables can include `eval` and `review` tests. For `eval` tests,
+only the `value` attribute can be specified. `socrates` will simply evaluate
+the variable and take the deduction if it does not evaluate to `value`.
+
+
 Test sets
 ---------
 
