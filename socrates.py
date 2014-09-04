@@ -33,7 +33,7 @@ if __name__ == '__main__':
                                  files=plain_files)
         crit.to_json()
 
-    if args.mode == 'grade':
+    if args.mode in ['grade', 'batch']:
         import grader
 
         try:
@@ -45,4 +45,25 @@ if __name__ == '__main__':
             util.sprint("error importing criteria: {}".format(err), error=True)
             sys.exit(5)
 
-        grader.grade(c, args.submission_file, c.short_name + "-grade.txt")
+        grade_filename = c.short_name + "-grade.txt"
+        if args.mode == 'grade':
+            grader.grade(c, args.submission_files, grade_filename)
+
+        elif args.mode == 'batch':
+            for subdir in args.submission_dirs:
+                if not os.path.isdir(subdir):
+                    util.sprint("invalid submission directory "
+                                "'{}'".format(subdir), error=True)
+
+                util.sprint("changing into '{}'".format(subdir))
+                os.chdir(subdir)
+
+                files_here = os.listdir(os.curdir)
+
+                if grade_filename in files_here:
+                    util.sprint("skipping '{}'; a grade file for this "
+                                "assignment already exists".format(subdir))
+                else:
+                    grader.grade(c, files_here, grade_filename)
+
+                os.chdir(os.pardir)

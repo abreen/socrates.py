@@ -24,6 +24,7 @@ def get_args():
                 'nargs': '*'}
     gen_mode_parser.add_argument('solution_file', **sol_opts)
 
+
     # parser for grading mode
     norm_mode_opts = {'description': "Start an interactive grading session"}
     norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
@@ -33,7 +34,19 @@ def get_args():
 
     input_opts = {'help': "submission file(s) to grade",
                   'nargs': '*'}
-    norm_mode_parser.add_argument('submission_file', **input_opts)
+    norm_mode_parser.add_argument('submission_files', **input_opts)
+
+
+    # parser for batch mode
+    batch_mode_opts = {'description': "Start grading in batch mode"}
+    batch_mode_parser = subparsers.add_parser('batch', **batch_mode_opts)
+
+    criteria_opts = {'help': "criteria file in JSON format"}
+    batch_mode_parser.add_argument('criteria_file', **criteria_opts)
+
+    input_opts = {'help': "submission directories, one per student",
+                  'nargs': '*'}
+    batch_mode_parser.add_argument('submission_dirs', **input_opts)
 
 
     args = top_parser.parse_args()
