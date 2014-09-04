@@ -295,7 +295,8 @@ class PythonFile(PlainFile):
     # categories of tests: module-level tests (which are in self.tests) and
     # function-level tests (which are in f.tests for each f in self.functions)
     def run_tests(self):
-        results = []
+        results = dict()
+        results[self] = []
 
         try:
             module_context = self.__import_module()
@@ -306,21 +307,17 @@ class PythonFile(PlainFile):
         found_functions = self.__get_members(module_context, 'functions')
         found_variables = self.__get_members(module_context, 'variables')
 
-        # TODO check existence of all functions and skip tests for
-        # nonexistent functions
-
         for test in self.tests:
             result = test.run(module_context)
             if result is not None:
-                results.append(result)
+                results[self].append(result)
 
         for func in self.functions:
-            # TODO do not take more than the value of a function
-
+            results[func] = []
             if func not in found_functions:
-                results.append({'deduction': func.point_value,
-                                'description': "missing function "
-                                               "'{}'".format(func)})
+                results[func].append({'deduction': func.point_value,
+                                      'description': "missing function "
+                                                     "'{}'".format(func)})
                 continue
 
             for test in func.tests:
@@ -331,15 +328,14 @@ class PythonFile(PlainFile):
 
                 result = test.run(module_context)
                 if result is not None:
-                    results.append(result)
+                    results[func].append(result)
 
         for var in self.variables:
-            # TODO do not take more than the value of a variable
-
+            results[var] = []
             if var not in found_variables:
-                results.append({'deduction': var.point_value,
-                                'description': "missing variable "
-                                               "'{}'".format(var)})
+                results[var].append({'deduction': var.point_value,
+                                     'description': "missing variable "
+                                                    "'{}'".format(var)})
                 continue
 
             for test in var.tests:
@@ -350,9 +346,17 @@ class PythonFile(PlainFile):
 
                 result = test.run(module_context)
                 if result is not None:
-                    results.append(result)
+                    results[var].append(result)
 
-        return results
+        for target, failures in results.items():
+            sum = 0
+            for f in failures:
+                sum += f['deduction']
+
+                if sum > target.point_value:
+                    f['deduction'] = 0
+
+        return [item for subl in results.values() for item in subl]
 
 
     def __import_module(self):
