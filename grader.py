@@ -34,7 +34,7 @@ def grade(criteria, submissions, filename):
 
             out.write("\n")
 
-        out.write("\ntotal: {}\n".format(total))
+        out.write("\nTotal: {}\n".format(total))
 
     sprint("grading completed")
 
