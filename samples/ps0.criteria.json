@@ -4,12 +4,12 @@
     "course_name": "CS 111 at Boston University",
     "files": [
         {
-            "path": "test.txt",
+            "path": "ps0-partI.txt",
             "type": "plain",
             "point_value": 10
         },
         {
-            "path": "submission/ps0.py",
+            "path": "ps0.py",
             "type": "python",
             "variables": [
                 {

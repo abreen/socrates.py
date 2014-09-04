@@ -1,10 +1,11 @@
 # ps0.py
-# A flawed solution to a problem set from an introductory CS course.
+# by Alexander Breen
+# A perfect solution to a problem set from an introductory CS course.
 
-PI = 3.149999
+PI = 3.14
 
 def hello():
-    print("Hello, world! ")
+    print("Hello, world!")
 
 
 def meet():
@@ -16,8 +17,8 @@ def greetings(name):
     print("Greetings, " + name + "!")
 
 
-#def my_add(a, b):
-#    return a + b
+def my_add(a, b):
+    return a + b
 
 
 def my_mult(a, b):
@@ -25,14 +26,11 @@ def my_mult(a, b):
 
 
 def double(x):
-    if x == 0:
-        return 1
-
     return x * 2
 
 
 def series_sum(x):
-    if x <= 1:
+    if x <= 0:
         return 0
 
     return x + series_sum(x - 1)
