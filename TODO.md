@@ -1,5 +1,4 @@
 * Refactor test set code
-* Add batch grading mode
 * Add optional 'socrates_dir' to criteria file; a directory where solution keys
   and other files can be stored so tests may refer to files outside of a
   student submission directory
