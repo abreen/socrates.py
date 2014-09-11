@@ -58,6 +58,8 @@ if __name__ == '__main__':
         import inspect
         import subprocess
 
+        util.log_file = open("log.txt", 'w')
+
         proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
         crit_path = os.path.abspath(args.criteria_file)
 
@@ -65,13 +67,17 @@ if __name__ == '__main__':
             if not os.path.isdir(subdir):
                 util.sprint("invalid submission directory "
                             "'{}'".format(subdir), error=True)
+                continue
 
             util.sprint("changing into '{}'".format(subdir))
             os.chdir(subdir)
 
             files_here = os.listdir(os.curdir)
+
+            util.sprint("running socrates")
             subprocess.call([proc, "grade", crit_path] + files_here)
 
+            util.sprint("completed subdirectory '{}'".format(subdir))
             os.chdir(os.pardir)
 
         sys.exit(0)

@@ -11,21 +11,27 @@ COLOR_CYAN='\033[96m'
 COLOR_RESET='\033[0m'
 
 quiet_mode = False
+log_file = None
 sprint_prefix = ""
 
 
 def sprint(string, error=False, color=COLOR_BLUE):
-    if quiet_mode: return
+    if quiet_mode:
+        return
 
-    first = sprint_prefix
+    pre = COLOR_RED if error else color
+    post = COLOR_RESET
 
-    if error:
-        color=COLOR_RED
-        first += "{}error:{} ".format(COLOR_RED, COLOR_RESET)
+    err = "error: " if error else ""
 
-    msg = color + string + COLOR_RESET
+    if log_file:
+        pre = ""
+        post = ""
+        out = log_file
+    else:
+        out = sys.stderr if error else sys.stdout
 
-    print(first + msg, file=sys.stderr if error else sys.stdout)
+    print(pre + sprint_prefix + err + string + post, file=out)
 
 
 def heading(string, level=1):
