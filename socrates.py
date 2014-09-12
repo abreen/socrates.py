@@ -50,6 +50,9 @@ if __name__ == '__main__':
             util.sprint("refusing to overwrite existing grade file")
             sys.exit(6)
 
+        if not args.submission_files:
+            util.sprint("warning: no submission files specified")
+
         grader.grade(c, args.submission_files, grade_filename)
         sys.exit(0)
 
