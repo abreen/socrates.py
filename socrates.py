@@ -10,6 +10,9 @@ import criteria
 # triggers discovery of file and test types (see filetypes/__init__.py)
 import filetypes
 
+# loads configuration file
+import config
+
 
 if __name__ == '__main__':
     args = cmdline.get_args()

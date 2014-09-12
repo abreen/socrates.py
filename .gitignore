@@ -1,3 +1,8 @@
+# installation-dependent socrates stuff
+socrates.ini
+static
+dropbox
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
