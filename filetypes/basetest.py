@@ -19,11 +19,6 @@ class BaseTest:
 
 
     @abstractmethod
-    def to_dict(self):
-        raise NotImplementedError()
-
-
-    @abstractmethod
     def run(self):
         return (self.deduction, '(generic reason)')
         # or, if the test did not fail, return None

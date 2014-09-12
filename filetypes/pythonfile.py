@@ -26,18 +26,6 @@ class EvalTest(BaseTest):
                                              self.deduction)
 
 
-    def to_dict(self):
-        test_dict = {'type': self.json_type,
-                     'description': self.description,
-                     'deduction': self.deduction,
-                     'arguments': self.arguments,
-                     'input': self.input,
-                     'value': self.value,
-                     'output': self.output}
-
-        return test_dict
-
-
     @staticmethod
     def from_dict(dict_obj):
         args = {'target': None,
@@ -175,14 +163,6 @@ class ReviewTest(BaseTest):
                                                self.deduction)
 
 
-    def to_dict(self):
-        test_dict = {'type': self.json_type,
-                     'description': self.description,
-                     'deduction': self.deduction}
-
-        return test_dict
-
-
     @staticmethod
     def from_dict(dict_obj):
         args = {'target': None,
@@ -295,11 +275,19 @@ class PythonFile(PlainFile):
     # categories of tests: module-level tests (which are in self.tests) and
     # function-level tests (which are in f.tests for each f in self.functions)
     def run_tests(self):
+        import sys
+        import os
+
         results = dict()
         results[self] = []
 
         try:
-            module_context = self.__import_module()
+            directory, name = os.path.split(self.path)
+            mod_name = name[:name.index('.py')] if '.py' in name else name
+
+            sys.path.append(directory)
+
+            module_context = __import__(mod_name)
         except ImportError as err:
             return [{'deduction': self.point_value,
                      'description': "importing '{}'".format(self.path)}]
@@ -358,18 +346,6 @@ class PythonFile(PlainFile):
 
         return [item for subl in results.values() for item in subl]
 
-
-    def __import_module(self):
-        import os
-        import sys
-
-        directory, name = os.path.split(self.path)
-        mod_name = name[:name.index('.py')] if '.py' in name else name
-
-        if directory not in sys.path:
-            sys.path.append(directory)
-
-        return __import__(mod_name)
 
 
     def __get_members(self, cxt, kind):

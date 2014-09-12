@@ -18,14 +18,6 @@ class TestSet(BaseTest):
         return "test set"
 
 
-    def to_dict(self):
-        test_dict = {'description': self.description,
-                     'deductions': str(self.deductions),
-                     'members': [m.to_dict() for m in self.members]}
-
-        return test_dict
-
-
     @staticmethod
     def from_dict(dict_obj):
         args = {'deductions': dict_obj['deductions']}

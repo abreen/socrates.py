@@ -23,11 +23,6 @@ class DiffTest(BaseTest):
                         against=dict_obj['against'])
 
 
-    def to_dict(self):
-        return {'description': dict_obj['description'],
-                'deduction': dict_obj['deduction']}
-
-
     def run(self, submission):
         import filecmp
 
