@@ -1,0 +1,13 @@
+# socrates configuration file
+# copy this file to socrates.ini and edit that file
+
+# this file is read using Python's configparser library
+# the [socrates] section is required
+
+[socrates]
+# if tests need any additional data to run their tests, they
+# can read from this directory (e.g., solution files to diff against)
+static_dir: .
+
+# the destination to which the final grading files are sent
+dropbox_dir: .
