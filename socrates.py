@@ -71,6 +71,7 @@ if __name__ == '__main__':
     elif args.mode == 'submit':
         import tarfile
 
+        num_submitted = 0
         for subdir in args.submission_dirs:
             if not os.path.isdir(subdir):
                 util.sprint("'{}' is not a directory".format(subdir),
@@ -93,8 +94,11 @@ if __name__ == '__main__':
                             "assignment is not present", error=True)
                 sys.exit(7)
 
+            num_submitted += 1
+
             util.sprint("wrote '{}' to dropbox".format(tf_name))
 
+        util.sprint("submitted {} graded directories".format(num_submitted))
         sys.exit(0)
 
     elif args.mode == 'batch':
