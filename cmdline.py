@@ -49,6 +49,18 @@ def get_args():
     batch_mode_parser.add_argument('submission_dirs', **input_opts)
 
 
+    # parser for submit mode
+    submit_mode_opts = {'description': "Submit graded files"}
+    submit_mode_parser = subparsers.add_parser('submit', **submit_mode_opts)
+
+    criteria_opts = {'help': "criteria file in JSON format"}
+    submit_mode_parser.add_argument('criteria_file', **criteria_opts)
+
+    input_opts = {'help': "submission directories, one per student",
+                  'nargs': '*'}
+    submit_mode_parser.add_argument('submission_dirs', **input_opts)
+
+
     args = top_parser.parse_args()
 
     if not args.mode:

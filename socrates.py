@@ -35,7 +35,7 @@ if __name__ == '__main__':
         crit.to_json()
         sys.exit(0)
 
-    if args.mode == 'grade':
+    if args.mode in ['grade', 'submit']:
         import grader
         try:
             c = criteria.Criteria.from_json(args.criteria_file)
@@ -49,6 +49,7 @@ if __name__ == '__main__':
 
         grade_filename = c.short_name + "-grade.txt"
 
+    if args.mode == 'grade':
         if os.path.isfile(grade_filename):
             util.sprint("refusing to overwrite existing grade file")
             sys.exit(6)
@@ -59,8 +60,28 @@ if __name__ == '__main__':
         grader.grade(c, args.submission_files, grade_filename)
         sys.exit(0)
 
+    elif args.mode == 'submit':
+        import tarfile
+
+        for subdir in args.submission_dirs:
+            if not os.path.isdir(subdir):
+                util.sprint("'{}' is not a directory".format(subdir),
+                            error=True)
+                continue
+            elif not os.path.isfile(subdir + os.sep + grade_filename):
+                util.sprint("not submitting '{}': directory has no "
+                            "grade file".format(subdir))
+                continue
+
+            tf_name = config.dropbox_dir + os.sep + subdir + '.tgz'
+            with tarfile.open(tf_name, 'w:gz') as tar:
+                tar.add(subdir)
+
+            util.sprint("wrote '{}' to dropbox".format(tf_name))
+
+        sys.exit(0)
+
     elif args.mode == 'batch':
-        import os
         import inspect
         import subprocess
 
@@ -87,3 +108,4 @@ if __name__ == '__main__':
             os.chdir(os.pardir)
 
         sys.exit(0)
+

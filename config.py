@@ -5,8 +5,6 @@ import inspect
 import util
 
 
-SOCRATES_CONFIG = 'socrates.ini'
-
 # the current working directory at the time socrates started
 _cwd = os.getcwd()
 
@@ -15,24 +13,19 @@ _conf = os.path.abspath(inspect.getfile(inspect.currentframe()))
 
 # SOCRATES_DIR should contain the running socrates.py file
 SOCRATES_DIR, _ = os.path.split(_conf)
+SOCRATES_CONFIG = SOCRATES_DIR + os.sep + 'socrates.ini'
 
-
-# set default values
-static_dir = SOCRATES_DIR + os.sep + 'static'
-dropbox_dir = SOCRATES_DIR + os.sep + 'dropbox'
+_parser = configparser.ConfigParser()
 
 if os.path.isfile(SOCRATES_CONFIG):
-    _parser = configparser.ConfigParser()
     _parser.read(SOCRATES_CONFIG)
+    if len(_parser) < 2:
+        util.sprint("warning: found config file, but it looks empty")
 
-    if 'socrates' not in _parser:
-        util.sprint("warning: found config file, but it seems empty")
-    else:
-        _opts = _parser['socrates']
-
-        if 'static_dir' in _opts:
-            static_dir = _opts['static_dir']
-            dropbox_dir = _opts['dropbox_dir']
+static_dir = _parser.get('socrates', 'static_dir',
+                         fallback=SOCRATES_DIR + os.sep + 'static')
+dropbox_dir = _parser.get('socrates', 'dropbox_dir',
+                          fallback=SOCRATES_DIR + os.sep + 'dropbox')
 
 
 if not os.path.isdir(static_dir):
