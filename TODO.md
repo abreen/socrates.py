@@ -1,7 +1,4 @@
 * Refactor test set code
-* Add optional 'socrates_dir' to criteria file; a directory where solution keys
-  and other files can be stored so tests may refer to files outside of a
-  student submission directory
 * Add other test types specific to files:
     - "picobot" with the usual default attributes as well as an attribute
       "maps", a list of file paths to map files that will be used to test the
