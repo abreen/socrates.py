@@ -73,9 +73,17 @@ if __name__ == '__main__':
                             "grade file".format(subdir))
                 continue
 
-            tf_name = config.dropbox_dir + os.sep + subdir + '.tgz'
-            with tarfile.open(tf_name, 'w:gz') as tar:
-                tar.add(subdir)
+            tf_name = config.dropbox_dir + os.sep + \
+                      c.short_name + os.sep + \
+                      subdir + '.tgz'
+
+            try:
+                with tarfile.open(tf_name, 'w:gz') as tar:
+                    tar.add(subdir)
+            except FileNotFoundError:
+                util.sprint("cannot submit; dropbox directory for this "
+                            "assignment is not present", error=True)
+                sys.exit(7)
 
             util.sprint("wrote '{}' to dropbox".format(tf_name))
 
