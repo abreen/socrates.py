@@ -20,6 +20,14 @@ if __name__ == '__main__':
     if args.quiet:
         util.quiet_mode = True
 
+    if args.mode == 'config':
+        import inspect
+        for m in inspect.getmembers(config):
+            if m[0][0] != '_' and not inspect.ismodule(m[1]):
+                print("{}: {}".format(m[0], m[1]))
+
+        sys.exit(0)
+
     if args.mode in ['generate', 'gen']:
         plain_files = []
         for file_path in args.solution_file:

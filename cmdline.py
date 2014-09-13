@@ -6,8 +6,9 @@ import argparse
 
 def get_args():
     top_opts = {'description': "Grade student work from the command line",
-                'epilog': "(try socrates.py generate -h or "
-                          "socrates.py grade -h)"}
+                'epilog': "(try socrates generate -h, "
+                          "socrates grade -h, or "
+                          "socrates submit -h)"}
 
     top_parser = argparse.ArgumentParser(**top_opts)
     top_parser.add_argument('-q', '--quiet', action='store_true')
@@ -59,6 +60,11 @@ def get_args():
     input_opts = {'help': "submission directories, one per student",
                   'nargs': '*'}
     submit_mode_parser.add_argument('submission_dirs', **input_opts)
+
+
+    # parser for config mode
+    config_mode_opts = {'description': "Print current configuration"}
+    config_mode_parser = subparsers.add_parser('config', **config_mode_opts)
 
 
     args = top_parser.parse_args()
