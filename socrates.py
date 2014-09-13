@@ -126,7 +126,7 @@ if __name__ == '__main__':
             files_here = os.listdir(os.curdir)
 
             util.sprint("running socrates")
-            subprocess.call([proc, "grade", crit_path] + files_here)
+            subprocess.call([proc, "--log", "grade", crit_path] + files_here)
 
             util.sprint("completed subdirectory '{}'".format(subdir))
             os.chdir(os.pardir)
