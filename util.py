@@ -16,22 +16,18 @@ sprint_prefix = ""
 
 
 def sprint(string, error=False, color=COLOR_BLUE):
-    if quiet_mode:
-        return
-
     pre = COLOR_RED if error else color
     post = COLOR_RESET
 
     err = "error: " if error else ""
 
-    if log_file:
-        pre = ""
-        post = ""
-        out = log_file
-    else:
-        out = sys.stderr if error else sys.stdout
+    stream = sys.stderr if error else sys.stdout
 
-    print(pre + sprint_prefix + err + string + post, file=out)
+    if log_file:
+        print(err + string, file=log_file)
+
+    if not quiet_mode:
+        print(pre + sprint_prefix + err + string + post, file=stream)
 
 
 def heading(string, level=1):

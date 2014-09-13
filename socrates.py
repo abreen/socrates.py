@@ -2,6 +2,7 @@
 
 import os
 import sys
+import datetime
 
 import cmdline
 import util
@@ -19,6 +20,11 @@ if __name__ == '__main__':
 
     if args.quiet:
         util.quiet_mode = True
+
+    if args.log:
+        util.log_file = open("socrates-log.txt", 'a')
+        now = datetime.datetime.today()
+        util.log_file.write(str(now) + '\n')
 
     if args.mode == 'config':
         import inspect
@@ -104,11 +110,6 @@ if __name__ == '__main__':
     elif args.mode == 'batch':
         import inspect
         import subprocess
-        import datetime
-
-        util.log_file = open("log.txt", 'a')
-        now = datetime.datetime.today()
-        util.log_file.write(str(now) + '\n')
 
         proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
         crit_path = os.path.abspath(args.criteria_file)
