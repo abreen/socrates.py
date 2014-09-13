@@ -104,8 +104,11 @@ if __name__ == '__main__':
     elif args.mode == 'batch':
         import inspect
         import subprocess
+        import datetime
 
-        util.log_file = open("log.txt", 'w')
+        util.log_file = open("log.txt", 'a')
+        now = datetime.datetime.today()
+        util.log_file.write(str(now) + '\n')
 
         proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
         crit_path = os.path.abspath(args.criteria_file)
