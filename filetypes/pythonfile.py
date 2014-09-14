@@ -223,12 +223,16 @@ class PythonFile(PlainFile):
     supported_tests.append(EvalTest)
 
 
-    def __init__(self, path, tests=None, functions=None, variables=None):
+    def __init__(self, path, point_value=0, tests=None, functions=None, variables=None):
         self.path = path
         self.tests = tests if tests else []
         self.functions = functions if functions else []
         self.variables = variables if variables else []
-        self.point_value = sum([f.point_value for f in self.functions])
+
+        if point_value:
+            self.point_value = point_value
+        else:
+            self.point_value = sum([f.point_value for f in self.functions])
 
 
     @staticmethod
@@ -237,6 +241,9 @@ class PythonFile(PlainFile):
                 'tests': [],
                 'functions': [],
                 'variables': []}
+
+        if 'point_value' in dict_obj:
+            args['point_value'] = dict_obj['point_value']
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
