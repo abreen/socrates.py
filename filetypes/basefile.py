@@ -19,13 +19,13 @@ class TestSet(BaseTest):
 
 
     @staticmethod
-    def from_dict(dict_obj):
+    def from_dict(dict_obj, file_type):
         args = {'deductions': dict_obj['deductions']}
 
         members = []
         for m in dict_obj['members']:
-            cls = filetypes.find_test_class(m['type'])
-            members.append(cls.from_dict(m))
+            cls = filetypes.find_test_class(file_type, m['type'])
+            members.append(cls.from_dict(m, file_type))
 
         args['members'] = members
 
@@ -95,13 +95,8 @@ class BaseFile:
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(t['type'])
-                if test_cls not in cls.supported_tests:
-                    raise ValueError("file type '{}' does not support"
-                                     "test type '{}'".format(cls.json_type,
-                                     t['type']))
-
-                args['tests'].append(test_cls.from_dict(t))
+                test_cls = filetypes.find_test_class(cls.json_type, t['type'])
+                args['tests'].append(test_cls.from_dict(t, cls.json_type))
 
         return cls(**args)
 

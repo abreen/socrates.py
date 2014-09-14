@@ -14,7 +14,7 @@ class BaseTest:
 
     @staticmethod
     @abstractmethod
-    def from_dict(dict_obj):
+    def from_dict(dict_obj, file_type):
         raise NotImplementedError()
 
 

@@ -27,7 +27,7 @@ class EvalTest(BaseTest):
 
 
     @staticmethod
-    def from_dict(dict_obj):
+    def from_dict(dict_obj, file_type):
         args = {'target': None,
                 'description': dict_obj['description']}
 
@@ -164,7 +164,7 @@ class ReviewTest(BaseTest):
 
 
     @staticmethod
-    def from_dict(dict_obj):
+    def from_dict(dict_obj, file_type):
         args = {'target': None,
                 'description': dict_obj['description'],
                 'deduction': dict_obj['deduction']}
@@ -240,19 +240,16 @@ class PythonFile(PlainFile):
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(t['type'])
-                if test_cls not in cls.supported_tests:
-                    raise ValueError("file type '{}' does not support"
-                                     "test type '{}'".format(cls.json_type,
-                                     t['type']))
+                test_cls = filetypes.find_test_class(PythonFile.json_type, t['type'])
+                args['tests'].append(test_cls.from_dict(t, PythonFile.json_type))
 
-                args['tests'].append(test_cls.from_dict(t))
+        if 'functions' in dict_obj:
+            for f in dict_obj['functions']:
+                args['functions'].append(PythonFunction.from_dict(f))
 
-        for f in dict_obj['functions']:
-            args['functions'].append(PythonFunction.from_dict(f))
-
-        for v in dict_obj['variables']:
-            args['variables'].append(PythonVariable.from_dict(v))
+        if 'variables' in dict_obj:
+            for v in dict_obj['variables']:
+                args['variables'].append(PythonVariable.from_dict(v))
 
 
         # set target of tests for module to this new PythonFile object
@@ -412,8 +409,8 @@ class PythonFunction:
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(t['type'])
-                args['tests'].append(test_cls.from_dict(t))
+                test_cls = filetypes.find_test_class(PythonFile.json_type, t['type'])
+                args['tests'].append(test_cls.from_dict(t, PythonFile.json_type))
 
         # set target of tests for module to this new PythonFunction object
         new = PythonFunction(**args)
@@ -457,8 +454,8 @@ class PythonVariable:
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(t['type'])
-                args['tests'].append(test_cls.from_dict(t))
+                test_cls = filetypes.find_test_class(PythonFile.json_type, t['type'])
+                args['tests'].append(test_cls.from_dict(t, PythonFile.json_type))
 
         # set target of tests for module to this new PythonVariable object
         new = PythonVariable(**args)

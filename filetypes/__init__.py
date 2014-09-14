@@ -1,33 +1,29 @@
-__all__ = ['basefile', 'plainfile', 'pythonfile']
+__all__ = ['basefile', 'plainfile', 'pythonfile', 'picobotfile']
 
 from filetypes import basefile
 from filetypes import basetest
 from filetypes import *
 
 
-def _traverse_subclasses(cls, classes):
-    """Given a root class object (any subclass of BaseFile or BaseTest) and a
-    dictionary, add this class and all its subclasses to the dictionary, using
-    the json_type attribute as a key. Raise ImportError if two classes try to
-    handle the same json_type.
+def _traverse(cls):
+    """Given a root class object (any subclass of BaseFile), add this class to
+    the _file_handlers dictionary and its subclasses, recursively. For each
+    test type that the file type supports, add it to the _test_handlers
+    dictionary, keyed by a (file type JSON keyword, test type JSON keyword) pair.
     """
-    if cls.json_type in classes:
-        raise ImportError("two or more classes handling the same "
-                          "type (type '{}')".format(cls.json_type))
+    _file_handlers[cls.json_type] = cls
 
-    classes[cls.json_type] = cls
+    for t in cls.supported_tests:
+        _test_handlers[(cls.json_type, t.json_type)] = t
 
     for subcls in cls.__subclasses__():
-        _traverse_subclasses(subcls, classes)
+        _traverse(subcls)
 
 
 _file_handlers = dict()
-for subcls in basefile.BaseFile.__subclasses__():
-    _traverse_subclasses(subcls, _file_handlers)
-
 _test_handlers = dict()
-for subcls in basetest.BaseTest.__subclasses__():
-    _traverse_subclasses(subcls, _test_handlers)
+for subcls in basefile.BaseFile.__subclasses__():
+    _traverse(subcls)
 
 
 def find_file_class(file_type):
@@ -36,19 +32,20 @@ def find_file_class(file_type):
     ValueError is raised if the file type is not supported.
     """
 
-    if file_type in _file_handlers:
+    try:
         return _file_handlers[file_type]
-    else:
+    except KeyError:
         raise ValueError("unsupported file type '{}'".format(file_type))
 
 
-def find_test_class(test_type):
+def find_test_class(file_type, test_type):
     """Given a test type specified by a criteria file, find the appropriate
     subclass of BaseTest that implements the test. The class is returned, or
     ValueError is raised if the test type is not supported.
     """
+    print(file_type, test_type)
 
-    if test_type in _test_handlers:
-        return _test_handlers[test_type]
-    else:
+    try:
+        return _test_handlers[(file_type, test_type)]
+    except KeyError:
         raise ValueError("unsupported test type '{}'".format(test_type))
