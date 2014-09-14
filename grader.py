@@ -52,7 +52,7 @@ def _write_header(f, crit):
 
 
 def _write_results(f, results, indent='\t'):
-    if len(results) == 0:
+    if not results:
         return 0
 
     total = 0
