@@ -20,7 +20,9 @@ class BaseTest:
 
     @abstractmethod
     def run(self):
-        return (self.deduction, '(generic reason)')
+        return {'deduction': self.deduction,
+                'description': 'not yet implemented',
+                'notes': []}
         # or, if the test did not fail, return None
 
 
