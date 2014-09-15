@@ -23,9 +23,24 @@ class ReviewTest(BaseTest):
 
 
     def run(self, path):
-        f = open(path, 'r')
+        f = open(path, 'rb')
 
-        print(f.read())
+        while True:
+            c = f.read(1)
+            if not c:
+                break
+            if c == '\r':
+                continue
+            if c == '\n':
+                print()
+                continue
+
+            try:
+                print(c.decode('utf-8'), end='')
+            except UnicodeDecodeError:
+                import util
+                print(util.COLOR_INVERTED + '?' + util.COLOR_RESET, end='')
+
         print("deduction description: {}".format(self.description))
         print("deduction value: {}".format(self.deduction))
 
