@@ -57,7 +57,7 @@ def _parse_rules(path):
 
         match = re.match(rule_pattern, line)
         if not match:
-            raise ValueError("syntax error on line {}".format(i))
+            raise PicobotSyntaxError("syntax error on line {}".format(i))
 
         prestate = int(match.group(1))
         surr_n, surr_e = match.group(2), match.group(3)
@@ -142,7 +142,7 @@ def _parse_rules(path):
         # movement post-state pair
         for s in surrs:
             if rules[prestate][s]:
-                raise ValueError("repeat rule")
+                raise RepeatRuleError("repeat rule")
 
             rules[prestate][s] = (postdir, poststate)
 
@@ -211,12 +211,13 @@ def _print_map(map, r=-1, c=-1):
 class MapTest(BaseTest):
     json_type = 'map'
 
-    def __init__(self, description, deductions, map, start):
+    def __init__(self, description, deductions, error_deduction, map, start):
         import os
         import config
 
         self.description = description
         self.deductions = deductions
+        self.error_deduction = error_deduction
         self.start = start
 
         map_path = config.static_dir + os.sep + map
@@ -233,6 +234,7 @@ class MapTest(BaseTest):
         import re
 
         args = {'description': dict_obj['description'],
+                'error_deduction': dict_obj['error_deduction'],
                 'map': dict_obj['map']}
 
         # parse starting location
@@ -255,9 +257,28 @@ class MapTest(BaseTest):
         Picobot rules, simulate the action of Picobot on a map and return
         a deduction as necessary, dependent on Picobot's map coverage.
         """
-        import fractions
 
-        coverage = self.__simulate(path)
+        try:
+            coverage = self.__simulate(path)
+
+        except PicobotSyntaxError as err:
+            return {'description': self.description,
+                    'deduction': self.error_deduction,
+                    'notes': [str(err)]}
+        except RepeatRuleError as err:
+            return {'description': self.description,
+                    'deduction': self.error_deduction,
+                    'notes': [str(err)]}
+        except WallError as err:
+            return {'description': self.description,
+                    'deduction': self.error_deduction,
+                    'notes': [str(err)]}
+        except NoRuleError as err:
+            return {'description': self.description,
+                    'deduction': self.error_deduction,
+                    'notes': [str(err)]}
+
+        import fractions
         ratios = sorted(self.deductions.keys())
 
         if coverage > ratios[-1]:
@@ -319,7 +340,7 @@ class MapTest(BaseTest):
             if dir in ['s', 'S']: r += 1
 
             if self.map[r][c] == WALL:
-                raise ValueError("cannot move into wall")
+                raise WallError("cannot move into wall")
 
             return r, c
 
@@ -333,7 +354,7 @@ class MapTest(BaseTest):
 
             new = rules[state][surroundings(r, c)]
             if not new:
-                raise ValueError("no rule mapping for current conditions")
+                raise NoRuleError("no rule mapping for current conditions")
 
             r, c = move(r, c, new[0])
 
@@ -398,3 +419,16 @@ class PicobotFile(PlainFile):
 
         return results
 
+
+
+class PicobotSyntaxError(Exception):
+    pass
+
+class RepeatRuleError(Exception):
+    pass
+
+class WallError(Exception):
+    pass
+
+class NoRuleError(Exception):
+    pass
