@@ -48,6 +48,8 @@ class EvalTest(BaseTest):
             return self.__run_function(cxt)
         elif type(self.target) is PythonVariable:
             return self.__run_variable(cxt)
+        elif type(self.target) is PythonFile:
+            return self.__run_module(cxt)
         else:
             raise ValueError("invalid target type")
 
@@ -143,6 +145,48 @@ class EvalTest(BaseTest):
 
             result['notes'].append("expected value: " + str(self.value))
             result['notes'].append("produced value: " + str(value))
+
+            return result
+
+
+    def __run_module(self, context):
+        import sys
+        import io
+        import imp
+
+        if self.input:
+            in_buf = io.StringIO(self.input)
+            sys.stdin = in_buf
+
+        if self.output:
+            out_buf = io.StringIO()
+            sys.stdout = out_buf
+
+        imp.reload(context)
+
+        # restore default standard in/out
+        sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+
+        if self.output is not None:
+            output = out_buf.getvalue()
+
+        passed = True
+        if self.output is not None:
+            passed = passed and self.output == output
+
+        if passed:
+            return None
+        else:
+            result =  {'deduction': self.deduction,
+                       'description': self.description,
+                       'notes': []}
+
+            if self.output is not None:
+                import util
+                eo, po = util.escape(self.output), util.escape(output)
+
+                result['notes'].append("expected output: " + eo)
+                result['notes'].append("produced output: " + po)
 
             return result
 
@@ -275,11 +319,9 @@ class PythonFile(PlainFile):
                 'functions': [f.to_dict() for f in self.functions]}
 
 
-    # note: this function replaces the function from PlainFile and runs two
-    # categories of tests: module-level tests (which are in self.tests) and
-    # function-level tests (which are in f.tests for each f in self.functions)
     def run_tests(self):
         import sys
+        import io
         import os
 
         results = dict()
@@ -291,7 +333,11 @@ class PythonFile(PlainFile):
 
             sys.path.append(directory)
 
+            # redirect standard out to empty buffer to "mute" the program
+            sys.stdout = io.StringIO()
             module_context = __import__(mod_name)
+            sys.stdout = sys.__stdout__
+
         except ImportError as err:
             return [{'deduction': self.point_value,
                      'description': "importing '{}'".format(self.path)}]
