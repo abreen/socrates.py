@@ -120,13 +120,24 @@ if __name__ == '__main__':
                             "'{}'".format(subdir), error=True)
                 continue
 
-            util.sprint("changing into '{}'".format(subdir))
             os.chdir(subdir)
-
             files_here = os.listdir(os.curdir)
+            util.sprint("running socrates in '{}'".format(subdir))
 
-            util.sprint("running socrates")
-            subprocess.call([proc, "--log", "grade", crit_path] + files_here)
+            try:
+                rv = subprocess.call([proc, "--log", "grade", crit_path]
+                                     + files_here)
+            except KeyboardInterrupt:
+                util.sprint("\nparent stopping (received interrupt)")
+                util.sprint("stopped while grading '{}'".format(subdir))
+                os.chdir(os.pardir)
+                sys.exit(util.ERR_INTERRUPTED)
+
+            if rv != 0 and rv != util.ERR_GRADE_FILE_EXISTS:
+                util.sprint("child process encountered an error",
+                            error=True)
+                os.chdir(os.pardir)
+                sys.exit(rv)
 
             util.sprint("completed subdirectory '{}'".format(subdir))
             os.chdir(os.pardir)

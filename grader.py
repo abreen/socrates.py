@@ -1,5 +1,6 @@
 import sys
 import os
+import io
 import datetime
 
 from util import *
@@ -18,7 +19,7 @@ def grade(criteria, submissions, filename):
             if n == name:
                 found.append(f)
 
-    out = open(filename, 'w')
+    out = io.StringIO()
 
     try:
         sprint("writing to '{}'".format(filename))
@@ -43,7 +44,6 @@ def grade(criteria, submissions, filename):
         sprint("\nstopping (received interrupt)")
 
         out.close()
-        os.remove(filename)
         sys.exit(ERR_INTERRUPTED)
 
     except:
@@ -54,9 +54,12 @@ def grade(criteria, submissions, filename):
                "way (sorry)")
 
         out.close()
-        os.remove(filename)
         sys.exit(ERR_GRADING_MISC)
 
+
+    with open(filename, 'w') as f:
+        out.seek(0)
+        f.write(out.read())
 
     sprint("grading completed")
 
