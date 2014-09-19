@@ -21,7 +21,6 @@ class EvalTest(BaseTest):
 
         # get expected output; this may be an exact string or a regex
         if type(output) is dict and 'match' in output:
-            print(output['match'])
             import re
             pattern = re.compile(output['match'])
             self.output = pattern
