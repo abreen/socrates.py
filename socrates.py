@@ -32,7 +32,7 @@ if __name__ == '__main__':
             if m[0][0] != '_' and not inspect.ismodule(m[1]):
                 print("{}: {}".format(m[0], m[1]))
 
-        sys.exit(0)
+        sys.exit()
 
     if args.mode in ['generate', 'gen']:
         plain_files = []
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                                  course_name="CS 101 at Acme College",
                                  files=plain_files)
         crit.to_json()
-        sys.exit(0)
+        sys.exit()
 
     if args.mode in ['grade', 'submit']:
         import grader
@@ -55,24 +55,24 @@ if __name__ == '__main__':
             c = criteria.Criteria.from_json(args.criteria_file)
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
-            sys.exit(8)
+            sys.exit(util.ERR_CRITERIA_MISSING)
         except ValueError as err:
             util.sprint("error importing criteria: {}".format(err),
                         error=True)
-            sys.exit(5)
+            sys.exit(util.ERR_CRITERIA_IMPORT)
 
         grade_filename = c.short_name + "-grade.txt"
 
     if args.mode == 'grade':
         if os.path.isfile(grade_filename):
             util.sprint("refusing to overwrite existing grade file")
-            sys.exit(6)
+            sys.exit(util.ERR_GRADE_FILE_EXISTS)
 
         if not args.submission_files:
             util.sprint("warning: no submission files specified")
 
         grader.grade(c, args.submission_files, grade_filename)
-        sys.exit(0)
+        sys.exit()
 
     elif args.mode == 'submit':
         import tarfile
@@ -98,14 +98,14 @@ if __name__ == '__main__':
             except FileNotFoundError:
                 util.sprint("cannot submit; dropbox directory for this "
                             "assignment is not present", error=True)
-                sys.exit(7)
+                sys.exit(util.ERR_NO_DROPBOX)
 
             num_submitted += 1
 
             util.sprint("wrote '{}' to dropbox".format(tf_name))
 
         util.sprint("submitted {} graded directories".format(num_submitted))
-        sys.exit(0)
+        sys.exit()
 
     elif args.mode == 'batch':
         import inspect
@@ -131,5 +131,5 @@ if __name__ == '__main__':
             util.sprint("completed subdirectory '{}'".format(subdir))
             os.chdir(os.pardir)
 
-        sys.exit(0)
+        sys.exit()
 

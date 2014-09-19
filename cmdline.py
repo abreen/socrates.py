@@ -3,6 +3,8 @@
 import sys
 import argparse
 
+import util
+
 
 def get_args():
     top_opts = {'description': "Grade student work from the command line",
@@ -72,7 +74,7 @@ def get_args():
 
     if not args.mode:
         top_parser.parse_args(['-h'])
-        sys.exit(1)
+        sys.exit(util.ERR_ARGS)
 
     return args
 

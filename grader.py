@@ -18,7 +18,9 @@ def grade(criteria, submissions, filename):
             if n == name:
                 found.append(f)
 
-    with open(filename, 'w') as out:
+    out = open(filename, 'w')
+
+    try:
         sprint("writing to '{}'".format(filename))
         _write_header(out, criteria)
 
@@ -36,6 +38,25 @@ def grade(criteria, submissions, filename):
             out.write("\n")
 
         out.write("\nTotal: {}\n".format(total))
+
+    except KeyboardInterrupt:
+        sprint("\nstopping (received interrupt)")
+
+        out.close()
+        os.remove(filename)
+        sys.exit(ERR_INTERRUPTED)
+
+    except:
+        e = sys.exc_info()[0]
+        sprint("encountered an error while "
+               "grading: {}".format(e), error=True)
+        sprint("you might have to grade the old-fashioned "
+               "way (sorry)")
+
+        out.close()
+        os.remove(filename)
+        sys.exit(ERR_GRADING_MISC)
+
 
     sprint("grading completed")
 
