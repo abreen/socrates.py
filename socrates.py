@@ -75,7 +75,28 @@ if __name__ == '__main__':
         sys.exit()
 
     elif args.mode == 'submit':
+        from functools import reduce
         import tarfile
+        import random
+
+        chars = [str(i) for i in range(10)] + \
+                [chr(ord('a') + i) for i in range(26)]
+
+        # create a pseudorandomly named subdirectory in the dropbox
+        # for this submission (security through obscurity)
+        gen_rand = lambda: reduce(str.__add__,
+                                  [random.choice(chars) for c in range(8)])
+
+        gen_dir = lambda x: config.dropbox_dir + os.sep + c.short_name + \
+                            os.sep + x
+
+        rand = gen_rand()
+        submit_dir = gen_dir(rand)
+
+        while os.path.isdir(submit_dir):
+            submit_dir = gen_dir(gen_rand())
+
+        os.makedirs(submit_dir, exist_ok=True)
 
         num_submitted = 0
         for subdir in args.submission_dirs:
@@ -88,12 +109,10 @@ if __name__ == '__main__':
                             "grade file".format(subdir))
                 continue
 
-            tf_name = config.dropbox_dir + os.sep + \
-                      c.short_name + os.sep + \
-                      subdir + '.tgz'
 
             try:
-                with tarfile.open(tf_name, 'w:gz') as tar:
+                tar_path = submit_dir + os.sep + subdir + '.tgz'
+                with tarfile.open(tar_path, 'w:gz') as tar:
                     tar.add(subdir)
             except FileNotFoundError:
                 util.sprint("cannot submit; dropbox directory for this "
@@ -102,7 +121,7 @@ if __name__ == '__main__':
 
             num_submitted += 1
 
-            util.sprint("wrote '{}' to dropbox".format(tf_name))
+            util.sprint("wrote '{}' to dropbox".format(tar_path))
 
         util.sprint("submitted {} graded directories".format(num_submitted))
         sys.exit()
@@ -125,8 +144,8 @@ if __name__ == '__main__':
             util.sprint("running socrates in '{}'".format(subdir))
 
             try:
-                rv = subprocess.call([proc, "--log", "grade", crit_path]
-                                     + files_here)
+                rv = subprocess.call([proc, "--log", "grade", crit_path] +
+                                     files_here)
             except KeyboardInterrupt:
                 util.sprint("\nparent stopping (received interrupt)")
                 util.sprint("stopped while grading '{}'".format(subdir))
