@@ -18,7 +18,15 @@ class EvalTest(BaseTest):
         self.arguments = arguments      # what arguments to pass (dict)
         self.input = input              # what input to send
         self.value = value              # expected return value
-        self.output = output            # expected output
+
+        # get expected output; this may be an exact string or a regex
+        if type(output) is dict and 'match' in output:
+            print(output['match'])
+            import re
+            pattern = re.compile(output['match'])
+            self.output = pattern
+        else:
+            self.output = output
 
 
     def __str__(self):
@@ -98,7 +106,7 @@ class EvalTest(BaseTest):
         if self.value is not None:
             passed = passed and self.value == return_value
         if self.output is not None:
-            passed = passed and self.output == output
+            passed = passed and self.__output_matches(output)
 
         if passed:
             return None
@@ -111,7 +119,7 @@ class EvalTest(BaseTest):
                 result['notes'].append("expected value: " + str(self.value))
                 result['notes'].append("produced value: " + str(return_value))
 
-            if self.output is not None:
+            if self.output is not None and type(self.output) is str:
                 import util
                 eo, po = util.escape(self.output), util.escape(output)
 
@@ -172,7 +180,7 @@ class EvalTest(BaseTest):
 
         passed = True
         if self.output is not None:
-            passed = passed and self.output == output
+            passed = passed and self.__output_matches(output)
 
         if passed:
             return None
@@ -181,7 +189,7 @@ class EvalTest(BaseTest):
                        'description': self.description,
                        'notes': []}
 
-            if self.output is not None:
+            if self.output is not None and type(self.output) is str:
                 import util
                 eo, po = util.escape(self.output), util.escape(output)
 
@@ -189,6 +197,21 @@ class EvalTest(BaseTest):
                 result['notes'].append("produced output: " + po)
 
             return result
+
+
+    def __output_matches(self, out_string):
+        """Given a string obtained from the running of a function or
+        module, determine whether the output matches the expected output.
+        This method handles the case where the criteria file specified
+        exact output or a regular expression.
+        """
+
+        if type(self.output) is str:
+            return self.output == out_string
+
+        # self.output should be a pattern object
+        import re
+        return self.output.match(out_string)
 
 
 
