@@ -1,5 +1,5 @@
 import filetypes
-from filetypes.plainfile import PlainFile
+from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet
 from filetypes.basetest import BaseTest
 
@@ -214,41 +214,40 @@ class EvalTest(BaseTest):
 
 
 
-class ReviewTest(BaseTest):
-    json_type = 'review'
-
+class PythonReviewTest(ReviewTest):
     def __init__(self, target, description, deduction):
         super().__init__(description, deduction)
 
         # target can be a PythonFile or PythonFunction
+        # TODO this is None initially (confusing)
         self.target = target
-
-
-    def __str__(self):
-        return "review of {} ({} pts.)".format(self.target,
-                                               self.deduction)
 
 
     @staticmethod
     def from_dict(dict_obj, file_type):
-        args = {'target': None,
-                'description': dict_obj['description'],
-                'deduction': dict_obj['deduction']}
+        args = {'description': dict_obj['description'],
+                'deduction': dict_obj['deduction'],
+                'target': None}
 
-        return ReviewTest(**args)
+        return PythonReviewTest(**args)
 
 
     def run(self, context):
         """Perform a 'review' test by acquring the source code of the function
         or module and printing it. The context is not used. A human is asked
-        to confirm the deduction.
+        to confirm the deduction(s).
         """
+        from tempfile import NamedTemporaryFile
+        temp = NamedTemporaryFile()
+
         if type(self.target) is PythonFile:
-            src = open(self.target.path).read()
+            temp.write(open(self.target.path, 'rb').read())
+            temp.flush()
 
         elif type(self.target) is PythonFunction:
             import inspect
 
+            # TODO why is this done here?
             for m in inspect.getmembers(context, inspect.isfunction):
                 if m[0] == self.target.name:
                     func_obj = m[1]
@@ -258,26 +257,11 @@ class ReviewTest(BaseTest):
                         'description': self.description,
                         'notes': ["could not find {}".format(self.target)]}
 
-            src = inspect.getsource(func_obj)
+            temp.write(inspect.getsource(func_obj).encode('utf-8'))
+            temp.flush()
 
-        print(src)
-        print("deduction description: {}".format(self.description))
-        print("deduction value: {}".format(self.deduction))
 
-        while True:
-            ans = input("Should this deduction be taken (y/n)? ")
-
-            if ans in ['y', 'n', 'yes', 'no']:
-                break
-
-        if ans == 'y' or ans == 'yes':
-            # the deduction *should* be taken, therefore this test fails
-            return {'deduction': self.deduction,
-                    'description': self.description,
-                    'notes': ["failed human review"]}
-        else:
-            # the deduction *should not* be taken, therefore this test passes
-            return None
+        return super().run(temp.name)
 
 
 
@@ -285,7 +269,7 @@ class PythonFile(PlainFile):
     json_type = 'python'
     extensions = ['py']
     supported_tests = PlainFile.supported_tests.copy()
-    supported_tests.append(ReviewTest)
+    supported_tests.append(PythonReviewTest)
     supported_tests.append(EvalTest)
 
 
