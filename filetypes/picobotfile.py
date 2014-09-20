@@ -53,7 +53,7 @@ def _parse_rules(path):
     for line in f:
         i += 1
         line = line.strip()
-        if not line or line[0] == '#':
+        if not line or line[0] == '#' or line[0] not in map(str, range(10)):
             continue
 
         match = re.match(rule_pattern, line)
