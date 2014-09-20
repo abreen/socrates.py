@@ -1,12 +1,55 @@
 from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
 
+from util import sprint, COLOR_BLUE, COLOR_CYAN, COLOR_INVERTED, COLOR_RESET
+
+
+def _print_file(path):
+    f = open(path, 'rb')
+
+    while True:
+        c = f.read(1)
+        if not c:
+            break
+        if c == '\r':
+            continue
+        if c == '\n':
+            print()
+            continue
+
+        try:
+            print(c.decode('utf-8'), end='')
+        except UnicodeDecodeError:
+            print(COLOR_INVERTED + '?' + COLOR_RESET, end='')
+
+
+
+def _prompt_for(msg, choices):
+    from functools import reduce
+
+    while True:
+        ans = input("{}{} ({}): {}".format(COLOR_BLUE, msg,
+                    reduce(lambda x, y: x + '/' + y,
+                           [str(c) for c in choices]),
+                    COLOR_RESET))
+
+        for c in choices:
+            if ans == str(c):
+                return c
+
+
 
 class ReviewTest(BaseTest):
     json_type = 'review'
 
     def __init__(self, description, deduction):
-        super().__init__(description, deduction)
+        super().__init__(description, None)
+
+        if type(deduction) is dict:
+            if 'choice' not in deduction:
+                raise ValueError("missing choice in JSON object")
+
+        self.deduction = {int(k):v for k, v in deduction['choice'].items()}
 
 
     def __str__(self):
@@ -23,41 +66,43 @@ class ReviewTest(BaseTest):
 
 
     def run(self, path):
-        f = open(path, 'rb')
+        _print_file(path)
 
-        while True:
-            c = f.read(1)
-            if not c:
-                break
-            if c == '\r':
-                continue
-            if c == '\n':
-                print()
-                continue
+        print(COLOR_CYAN + ('-' * 30) + COLOR_RESET)
 
-            try:
-                print(c.decode('utf-8'), end='')
-            except UnicodeDecodeError:
-                import util
-                print(util.COLOR_INVERTED + '?' + util.COLOR_RESET, end='')
+        if type(self.deduction) is int:
+            sprint("deduction description: {}".format(self.description))
+            sprint("deduction value: {}".format(self.deduction))
 
-        print("deduction description: {}".format(self.description))
-        print("deduction value: {}".format(self.deduction))
+            choice = _prompt_for("should this deduction be taken?",
+                                 ['y', 'yes', 'n', 'no'])
 
-        while True:
-            ans = input("Should this deduction be taken (y/n)? ")
+            if choice in ['y', 'yes']:
+                return {'deduction': self.deduction,
+                        'description': self.description,
+                        'notes': ["failed human review"]}
+            else:
+                sprint("taking no deduction")
 
-            if ans in ['y', 'n', 'yes', 'no']:
-                break
 
-        if ans == 'y' or ans == 'yes':
-            # the deduction *should* be taken, therefore this test fails
-            return {'deduction': self.deduction,
-                    'description': self.description,
-                    'notes': ["failed human review"]}
-        else:
-            # the deduction *should not* be taken, therefore this test passes
-            return None
+        if type(self.deduction) is dict:
+            sprint("deduction description: {}".format(self.description))
+            sprint("deduction options:")
+
+            choices = sorted(self.deduction)
+            for k in choices:
+                sprint("    -{}: {}".format(k, self.deduction[k]))
+
+            choice = _prompt_for("which deduction should be taken?", choices)
+
+            if choice > 0:
+                return {'deduction': choice,
+                        'description': self.deduction[choice]}
+            else:
+                sprint("taking no deduction")
+
+
+        return None
 
 
 
