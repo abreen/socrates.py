@@ -1,5 +1,6 @@
 import configparser
 import os
+import sys
 import inspect
 
 import util
@@ -28,12 +29,15 @@ dropbox_dir = _parser.get('socrates', 'dropbox_dir',
                           fallback=SOCRATES_DIR + os.sep + 'dropbox')
 
 
+_f = False
 if not os.path.isdir(static_dir):
-    util.sprint("creating empty static files directory "
-                "at '{}'".format(static_dir))
-    os.mkdir(static_dir)
+    _f = True
+    util.sprint("config file specifies nonexistent static directory",
+                error=True)
 
 if not os.path.isdir(dropbox_dir):
-    util.sprint("creating empty dropbox directory "
-                "at '{}'".format(dropbox_dir))
-    os.mkdir(dropbox_dir)
+    _f = True
+    util.sprint("config file specifies nonexistent dropbox directory",
+                error=True)
+
+if _f: sys.exit(util.ERR_BAD_CONFIG)
