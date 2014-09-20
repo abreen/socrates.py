@@ -286,6 +286,10 @@ class MapTest(BaseTest):
             return {'description': self.description,
                     'deduction': self.error_deduction,
                     'notes': [str(err)]}
+        except EmptyRulesError as err:
+            return {'description': self.description,
+                    'deduction': self.error_deduction,
+                    'notes': [str(err)]}
 
         import fractions
         ratios = sorted(self.deductions.keys())
@@ -320,11 +324,12 @@ class MapTest(BaseTest):
 
 
     def __simulate(self, path):
+        rules = _parse_rules(path)
+        if len(rules) == 0:
+            raise EmptyRulesError()
+
         from fractions import Fraction
         from functools import reduce
-
-        rules = _parse_rules(path)
-        state = 0
 
         # note: (row, column) notation is used here for uniformity:
         # row 0 is the *top* row and column 0 is the *left* edge
@@ -358,9 +363,9 @@ class MapTest(BaseTest):
             if dir in ['s', 'S']: r += 1
             return r, c
 
-        # color and count initial location
         self.map[r][c] = VISITED
-        num_blank -= 1
+        num_blank -= 1                  # initial location counts as visited
+        state = 0
 
         i = 0
         while num_blank > 0 and i < MAX_STEPS:
@@ -457,3 +462,7 @@ class NoRuleError(Exception):
     def __init__(self, state, surr):
         super().__init__("could not find a rule for state {} with "
                          "surroundings {}".format(state, _surr_str(surr)))
+
+class EmptyRulesError(Exception):
+    def __init__(self):
+        super().__init__("Picobot program contains no rules")
