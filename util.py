@@ -60,3 +60,22 @@ def escape(s):
 
 def prepend_lines(lines, pre):
     return '\n'.join(map(lambda x: pre + x, lines.split('\n')))
+
+
+def makedirs(dirpath):
+    """Recursively create directories up to the leaf directory, if they
+    do not already exist.
+    """
+    import os
+
+    head, tail = os.path.split(dirpath)
+    if tail == '':
+        # root directory or current relative root has been reached
+        return
+    else:
+        # make all parent directories
+        makedirs(head)
+
+        # make this directory if it does not exist
+        if not os.path.isdir(dirpath):
+            os.mkdir(dirpath)

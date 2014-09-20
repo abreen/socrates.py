@@ -82,29 +82,27 @@ if __name__ == '__main__':
         chars = [str(i) for i in range(10)] + \
                 [chr(ord('a') + i) for i in range(26)]
 
-        # create a pseudorandomly named subdirectory in the dropbox
-        # for this submission (security through obscurity)
-        gen_rand = lambda: reduce(str.__add__,
-                                  [random.choice(chars) for c in range(8)])
+        rand = reduce(str.__add__, [random.choice(chars) for c in range(32)])
+        submit_dir = config.dropbox_dir + os.sep + c.short_name + \
+                     os.sep + rand + (os.sep + c.group if c.group else '')
 
-        gen_dir = lambda x: config.dropbox_dir + os.sep + c.short_name + \
-                            os.sep + x + (os.sep + c.group if c.group else '')
-
-        rand = gen_rand()
-        submit_dir = gen_dir(rand)
-
-        while os.path.isdir(submit_dir):
-            submit_dir = gen_dir(gen_rand())
+        if not os.path.isdir(config.dropbox_dir + os.sep + c.short_name):
+            util.sprint("cannot submit: dropbox directory has not been "
+                        "set up for this assignment", error=True)
+            sys.exit(util.ERR_NO_DROPBOX)
 
         os.umask(0o022)
         try:
-            os.makedirs(submit_dir, exist_ok=True)
+            util.makedirs(submit_dir)
         except:
             util.sprint("error making directories in dropbox", error=True)
             sys.exit(util.ERR_DROPBOX_MAKEDIRS)
 
         num_submitted = 0
         for subdir in args.submission_dirs:
+            if subdir[-1] == os.sep:
+                subdir = subdir[:-1]
+
             if not os.path.isdir(subdir):
                 util.sprint("'{}' is not a directory".format(subdir),
                             error=True)
@@ -114,15 +112,9 @@ if __name__ == '__main__':
                             "grade file".format(subdir))
                 continue
 
-
-            try:
-                tar_path = submit_dir + os.sep + subdir + '.tgz'
-                with tarfile.open(tar_path, 'w:gz') as tar:
-                    tar.add(subdir)
-            except FileNotFoundError:
-                util.sprint("cannot submit; dropbox directory for this "
-                            "assignment is not present", error=True)
-                sys.exit(util.ERR_NO_DROPBOX)
+            tar_path = submit_dir + os.sep + subdir + '.tgz'
+            with tarfile.open(tar_path, 'w:gz') as tar:
+                tar.add(subdir)
 
             num_submitted += 1
 
