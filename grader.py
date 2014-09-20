@@ -33,7 +33,7 @@ def grade(criteria, submissions, filename):
                 total -= f.point_value
                 out.write("-{}\tnot submitted\n".format(f.point_value))
             else:
-                sprint("running tests")
+                sprint("running tests for " + str(f))
                 total -= _write_results(out, f.run_tests())
 
             out.write("\n")
@@ -47,9 +47,12 @@ def grade(criteria, submissions, filename):
         sys.exit(ERR_INTERRUPTED)
 
     except:
-        e = sys.exc_info()[0]
+        import traceback
+
+        err = sys.exc_info()
         sprint("encountered an error while "
-               "grading: {}".format(e), error=True)
+               "grading: {}".format(err[0].__name__), error=True)
+        traceback.print_exc()
         sprint("you might have to grade the old-fashioned "
                "way (sorry)")
 
