@@ -1,8 +1,9 @@
 import filetypes
 from filetypes.plainfile import PlainFile
 from filetypes.basetest import BaseTest
+import util
 
-MAX_STEPS = 2e20
+MAX_STEPS = 1e4
 
 NUM_ROWS = 25
 NUM_COLS = 25
@@ -57,7 +58,7 @@ def _parse_rules(path):
 
         match = re.match(rule_pattern, line)
         if not match:
-            raise PicobotSyntaxError("syntax error on line {}".format(i))
+            raise PicobotSyntaxError(i)
 
         prestate = int(match.group(1))
         surr_n, surr_e = match.group(2), match.group(3)
@@ -142,12 +143,22 @@ def _parse_rules(path):
         # movement post-state pair
         for s in surrs:
             if rules[prestate][s]:
-                raise RepeatRuleError("repeat rule")
+                raise RepeatRuleError(i)
 
             rules[prestate][s] = (postdir, poststate)
 
     f.close()
     return rules
+
+
+
+def _surr_str(surr):
+    n = 'N' if surr[0] else 'X'
+    e = 'E' if surr[1] else 'X'
+    w = 'W' if surr[2] else 'X'
+    s = 'S' if surr[3] else 'X'
+
+    return n + e + w + s
 
 
 
@@ -160,12 +171,7 @@ def _print_rules(rules):
         print("while in state {}:".format(prestate))
 
         for surr in rules[prestate]:
-            n = 'N' if surr[0] else 'X'
-            e = 'E' if surr[1] else 'X'
-            w = 'W' if surr[2] else 'X'
-            s = 'S' if surr[3] else 'X'
-
-            print("{}{}{}{}".format(n, e, w, s), end='')
+            print(_surr_str(surr), end='')
 
             if rules[prestate][surr]:
                 newdir = rules[prestate][surr][0]
@@ -259,7 +265,10 @@ class MapTest(BaseTest):
         """
 
         try:
-            coverage = self.__simulate(path)
+            coverage, num_steps = self.__simulate(path)
+
+            util.sprint("finished Picobot simulation "
+                        "in {:,} steps".format(num_steps))
 
         except PicobotSyntaxError as err:
             return {'description': self.description,
@@ -296,9 +305,18 @@ class MapTest(BaseTest):
                 else:
                     deduction = self.deductions[ratio]
 
-            return {'deduction': deduction,
-                    'description': self.description,
-                    'notes': ["Picobot coverage: {}".format(coverage)]}
+            result = {'deduction': deduction,
+                      'description': self.description,
+                      'notes': ["Picobot coverage: {} "
+                                "({:.2%})".format(coverage,
+                                coverage.numerator / coverage.denominator)]}
+
+            result['notes'].append("finished in {:,} steps".format(num_steps))
+            if num_steps >= MAX_STEPS:
+                result['notes'].append("reached maximum steps during "
+                                       "simulation")
+
+            return result
 
 
     def __simulate(self, path):
@@ -310,7 +328,7 @@ class MapTest(BaseTest):
 
         # note: (row, column) notation is used here for uniformity:
         # row 0 is the *top* row and column 0 is the *left* edge
-        # this matches exactly how the map is stored in map.left
+        # this matches exactly how the map is stored in self.map
         r, c = self.start
 
         def blanks(row):
@@ -338,10 +356,6 @@ class MapTest(BaseTest):
             if dir in ['e', 'E']: c += 1
             if dir in ['w', 'W']: c -= 1
             if dir in ['s', 'S']: r += 1
-
-            if self.map[r][c] == WALL:
-                raise WallError("cannot move into wall")
-
             return r, c
 
         # color and count initial location
@@ -354,17 +368,21 @@ class MapTest(BaseTest):
 
             new = rules[state][surroundings(r, c)]
             if not new:
-                raise NoRuleError("no rule mapping for current conditions")
+                raise NoRuleError(state, surroundings(r, c))
 
-            r, c = move(r, c, new[0])
+            new_r, new_c = move(r, c, new[0])
 
-            if self.map[r][c] == BLANK:
-                self.map[r][c] = VISITED
+            if self.map[new_r][new_c] == WALL:
+                raise WallError(state, surroundings(r, c), new[0])
+
+            if self.map[new_r][new_c] == BLANK:
+                self.map[new_r][new_c] = VISITED
                 num_blank -= 1
 
+            r, c = new_r, new_c
             state = new[1]
 
-        return 1 - Fraction(num_blank, total_blank)
+        return (1 - Fraction(num_blank, total_blank), i)
 
 
     def __str__(self):
@@ -422,13 +440,20 @@ class PicobotFile(PlainFile):
 
 
 class PicobotSyntaxError(Exception):
-    pass
+    def __init__(self, line):
+        super().__init__("syntax error on line {}".format(line))
 
 class RepeatRuleError(Exception):
-    pass
+    def __init__(self, line):
+        super().__init__("repeat rule on line {}".format(line))
 
 class WallError(Exception):
-    pass
+    def __init__(self, state, surr, dir):
+        super().__init__("while in state {} with surroundings {}, Picobot "
+                         "tried to move {} into a wall".format(state,
+                         _surr_str(surr), dir))
 
 class NoRuleError(Exception):
-    pass
+    def __init__(self, state, surr):
+        super().__init__("could not find a rule for state {} with "
+                         "surroundings {}".format(state, _surr_str(surr)))
