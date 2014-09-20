@@ -88,7 +88,7 @@ if __name__ == '__main__':
                                   [random.choice(chars) for c in range(8)])
 
         gen_dir = lambda x: config.dropbox_dir + os.sep + c.short_name + \
-                            os.sep + x
+                            os.sep + (c.group + os.sep if c.group else '') + x
 
         rand = gen_rand()
         submit_dir = gen_dir(rand)
@@ -96,7 +96,11 @@ if __name__ == '__main__':
         while os.path.isdir(submit_dir):
             submit_dir = gen_dir(gen_rand())
 
-        os.makedirs(submit_dir, exist_ok=True)
+        try:
+            os.makedirs(submit_dir, exist_ok=True)
+        except:
+            util.sprint("error making directories in dropbox", error=True)
+            sys.exit(util.ERR_DROPBOX_MAKEDIRS)
 
         num_submitted = 0
         for subdir in args.submission_dirs:
