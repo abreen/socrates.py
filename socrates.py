@@ -88,7 +88,7 @@ if __name__ == '__main__':
                                   [random.choice(chars) for c in range(8)])
 
         gen_dir = lambda x: config.dropbox_dir + os.sep + c.short_name + \
-                            os.sep + (c.group + os.sep if c.group else '') + x
+                            os.sep + x + (os.sep + c.group if c.group else '')
 
         rand = gen_rand()
         submit_dir = gen_dir(rand)
