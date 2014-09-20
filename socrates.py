@@ -96,6 +96,7 @@ if __name__ == '__main__':
         while os.path.isdir(submit_dir):
             submit_dir = gen_dir(gen_rand())
 
+        os.umask(0o022)
         try:
             os.makedirs(submit_dir, exist_ok=True)
         except:
