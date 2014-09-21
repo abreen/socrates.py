@@ -211,7 +211,7 @@ class EvalTest(BaseTest):
 
         if 'match' in self.output:
             import re
-            return self.output.match(out_string)
+            return self.output['match'].match(out_string)
 
         # TODO this might be a bad idea
         if 'prompt' in self.output:
