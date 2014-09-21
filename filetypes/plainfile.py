@@ -4,6 +4,8 @@ from filetypes.basetest import BaseTest
 from util import sprint, COLOR_BLUE, COLOR_CYAN, COLOR_INVERTED, COLOR_RESET
 
 
+DEDUCTION_MODE_TYPES = ['1', '*', '+']
+
 def _print_file(path):
     f = open(path, 'rb')
 
@@ -24,21 +26,6 @@ def _print_file(path):
 
 
 
-def _prompt_for(msg, choices):
-    from functools import reduce
-
-    while True:
-        ans = input("{}{} ({}): {}".format(COLOR_BLUE, msg,
-                    reduce(lambda x, y: x + '/' + y,
-                           [str(c) for c in choices]),
-                    COLOR_RESET))
-
-        for c in choices:
-            if ans == str(c):
-                return c
-
-
-
 class ReviewTest(BaseTest):
     json_type = 'review'
 
@@ -46,10 +33,23 @@ class ReviewTest(BaseTest):
         super().__init__(description, None)
 
         if type(deduction) is dict:
-            if 'choice' not in deduction:
-                raise ValueError("missing choice in JSON object")
+            mode, deductions = deduction.popitem()
+            if mode not in DEDUCTION_MODE_TYPES:
+                raise ValueError("invalid deduction mode '{}' in JSON object; "
+                                 "should be one of {}".format(mode,
+                                 DEDUCTION_MODE_TYPES))
 
-        self.deduction = {int(k):v for k, v in deduction['choice'].items()}
+            self.deduction = []
+            for d in deductions:
+                value, reason = d.popitem()
+                value = int(value)
+
+                self.deduction.append((value, reason))
+
+            self.deduction_mode = mode
+
+        else:
+            self.deduction = deduction
 
 
     def __str__(self):
@@ -66,43 +66,88 @@ class ReviewTest(BaseTest):
 
 
     def run(self, path):
+        from functools import reduce
         _print_file(path)
 
-        print(COLOR_CYAN + ('-' * 30) + COLOR_RESET)
+        sprint("deduction description: {}".format(self.description))
 
         if type(self.deduction) is int:
-            sprint("deduction description: {}".format(self.description))
             sprint("deduction value: {}".format(self.deduction))
 
-            choice = _prompt_for("should this deduction be taken?",
-                                 ['y', 'yes', 'n', 'no'])
+            while True:
+                ans = input(COLOR_CYAN + "should this deduction be "
+                            "taken (y/yes/n/no)? " + COLOR_RESET)
 
-            if choice in ['y', 'yes']:
+                if ans in ['y', 'yes', 'n', 'no']:
+                    break
+
+            if ans in ['y', 'yes']:
                 return {'deduction': self.deduction,
                         'description': self.description,
                         'notes': ["failed human review"]}
             else:
                 sprint("taking no deduction")
+                return None
 
-
-        if type(self.deduction) is dict:
-            sprint("deduction description: {}".format(self.description))
+        if type(self.deduction) is list:
             sprint("deduction options:")
 
             choices = sorted(self.deduction)
-            for k in choices:
-                sprint("    -{}: {}".format(k, self.deduction[k]))
+            letters = list(map(lambda x: chr(ord('a') + x), range(len(choices))))
 
-            choice = _prompt_for("which deduction should be taken?", choices)
+            for i in range(len(choices)):
+                sprint("{}. (-{} point{}): {}".format(letters[i],
+                       choices[i][0], 's' if choices[i][0] != 1 else '',
+                       choices[i][1]))
 
-            if choice > 0:
-                return {'deduction': choice,
-                        'description': self.deduction[choice]}
+            if self.deduction_mode == '*':
+                sprint("(select zero or more deductions)")
+                max, min = float('inf'), 0
+            elif self.deduction_mode == '+':
+                sprint("(select one or more deductions)")
+                max, min = float('inf'), 1
+            elif self.deduction_mode == '1':
+                sprint("(select one deduction)")
+                max, min = 1, 1
+
+            num_selections = 0
+            selections = []     # unique indices into choices list
+            while num_selections < min or num_selections < max:
+                sel = input(COLOR_CYAN + "your selection (enter ! "
+                            "to stop): " + COLOR_RESET)
+
+                if sel == '!':
+                    if num_selections < min:
+                        sprint("cannot stop now; you must "
+                               "make {} selection{}".format(min,
+                               's' if min != 1 else ''), error=True)
+                        continue
+                    else:
+                        break
+
+                try:
+                    if letters.index(sel) in selections:
+                        sprint("already selected {}".format(sel), error=True)
+                        continue
+
+                    selections.append(letters.index(sel))
+                    num_selections += 1
+                except ValueError:
+                    sprint("invalid selection: not in list", error=True)
+                    continue
+
+            if sum(map(lambda x: choices[x][0], selections)) > 0:
+                deductions = []
+                for s in selections:
+                    if choices[s][0] > 0:
+                        d = {'deduction': choices[s][0],
+                             'description': choices[s][1]}
+                        deductions.append(d)
+
+                return deductions
             else:
-                sprint("taking no deduction")
-
-
-        return None
+                sprint("taking no deduction(s)")
+                return None
 
 
 
@@ -153,8 +198,13 @@ class PlainFile(BaseFile):
         results = []
         for t in self.tests:
             result = t.run(self.path)
-            if result is not None:
-                results.append(result)
+
+            if result:
+                if type(result) is list:
+                    for r in result:
+                        results.append(r)
+                else:
+                    results.append(result)
 
         return results
 

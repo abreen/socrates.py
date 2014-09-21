@@ -79,3 +79,16 @@ def makedirs(dirpath):
         # make this directory if it does not exist
         if not os.path.isdir(dirpath):
             os.mkdir(dirpath)
+
+
+def add_to(a, b):
+    """Add the first argument (a) to the second argument (b), where the
+    b is a list. If a is not a list, it is appended to b. If a is a
+    list, the items of a are appended to b, in order.
+    """
+    if type(a) is list:
+        for i in a:
+            b.append(i)
+    else:
+        b.append(a)
+

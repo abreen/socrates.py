@@ -1,4 +1,6 @@
 * Refactor test set code
+* Having from_json() in addition to constructors is confusing
+* Add mode where all possible deductions are listed
 * Add other test types specific to files:
     - "picobot" with the usual default attributes as well as an attribute
       "maps", a list of file paths to map files that will be used to test the

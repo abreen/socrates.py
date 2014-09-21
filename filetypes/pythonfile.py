@@ -3,6 +3,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet
 from filetypes.basetest import BaseTest
 
+from util import sprint, add_to
 
 class EvalTest(BaseTest):
     json_type = 'eval'
@@ -23,7 +24,7 @@ class EvalTest(BaseTest):
         if type(output) is dict and 'match' in output:
             import re
             pattern = re.compile(output['match'])
-            self.output = pattern
+            self.output = {'match': pattern}
         else:
             self.output = output
 
@@ -208,19 +209,36 @@ class EvalTest(BaseTest):
         if type(self.output) is str:
             return self.output == out_string
 
-        # self.output should be a pattern object
-        import re
-        return self.output.match(out_string)
+        if 'match' in self.output:
+            import re
+            return self.output.match(out_string)
+
+        # TODO this might be a bad idea
+        if 'prompt' in self.output:
+            sprint("deduction description: {}".format(self.description))
+            sprint("deduction value: {}".format(self.deduction))
+
+            ans = input("should this deduction be taken? (y/yes/n/no) ")
+
+            if ans in ['y', 'yes']:
+                return {'deduction': self.deduction,
+                        'description': self.description,
+                        'notes': ["failed human review"]}
+            else:
+                sprint("taking no deduction")
+
 
 
 
 class PythonReviewTest(ReviewTest):
-    def __init__(self, target, description, deduction):
+    def __init__(self, target, description, deduction, print_target=True):
         super().__init__(description, deduction)
 
         # target can be a PythonFile or PythonFunction
         # TODO this is None initially (confusing)
         self.target = target
+
+        self.print_target = print_target
 
 
     @staticmethod
@@ -228,6 +246,9 @@ class PythonReviewTest(ReviewTest):
         args = {'description': dict_obj['description'],
                 'deduction': dict_obj['deduction'],
                 'target': None}
+
+        if 'print_target' in dict_obj:
+            args['print_target'] = dict_obj['print_target']
 
         return PythonReviewTest(**args)
 
@@ -241,8 +262,9 @@ class PythonReviewTest(ReviewTest):
         temp = NamedTemporaryFile()
 
         if type(self.target) is PythonFile:
-            temp.write(open(self.target.path, 'rb').read())
-            temp.flush()
+            if self.print_target:
+                temp.write(open(self.target.path, 'rb').read())
+                temp.flush()
 
         elif type(self.target) is PythonFunction:
             import inspect
@@ -257,8 +279,9 @@ class PythonReviewTest(ReviewTest):
                         'description': self.description,
                         'notes': ["could not find {}".format(self.target)]}
 
-            temp.write(inspect.getsource(func_obj).encode('utf-8'))
-            temp.flush()
+            if self.print_target:
+                temp.write(inspect.getsource(func_obj).encode('utf-8'))
+                temp.flush()
 
 
         return super().run(temp.name)
@@ -340,14 +363,29 @@ class PythonFile(PlainFile):
 
             sys.path.append(directory)
 
-            # redirect standard out to empty buffer to "mute" the program
-            sys.stdout = io.StringIO()
-            module_context = __import__(mod_name)
-            sys.stdout = sys.__stdout__
+            sprint("importing module '{}'".format(mod_name))
 
-        except ImportError as err:
+            # redirect standard out to empty buffer to "mute" the program
+            #sys.stdout = io.StringIO()
+            module_context = __import__(mod_name)
+            #sys.stdout = sys.__stdout__
+
+        except:
+            # "un-mute" the program and give socrates access to stdout
+            #sys.stdout = sys.__stdout__
+
+            import traceback
+
+            err = sys.exc_info()
+
+            sprint("encountered an error importing "
+                   "'{}' module ({})".format(mod_name, err[0].__name__))
+
+            traceback.print_exc()
+
             return [{'deduction': self.point_value,
-                     'description': "importing '{}'".format(self.path)}]
+                     'description': "error importing '{}'".format(self.path),
+                     'notes': ["encountered error {}".format(err[0].__name__)]}]
 
         found_functions = self.__get_members(module_context, 'functions')
         found_variables = self.__get_members(module_context, 'variables')
@@ -355,7 +393,7 @@ class PythonFile(PlainFile):
         for test in self.tests:
             result = test.run(module_context)
             if result is not None:
-                results[self].append(result)
+                add_to(result, results[self])
 
         for func in self.functions:
             results[func] = []
@@ -373,7 +411,7 @@ class PythonFile(PlainFile):
 
                 result = test.run(module_context)
                 if result is not None:
-                    results[func].append(result)
+                    add_to(result, results[func])
 
         for var in self.variables:
             results[var] = []
@@ -391,7 +429,7 @@ class PythonFile(PlainFile):
 
                 result = test.run(module_context)
                 if result is not None:
-                    results[var].append(result)
+                    add_to(result, results[var])
 
         for target, failures in results.items():
             sum = 0
