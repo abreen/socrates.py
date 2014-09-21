@@ -1,6 +1,9 @@
 * Refactor test set code
 * Having from_json() in addition to constructors is confusing
 * Add mode where all possible deductions are listed
+* Submitting a directory with no grade file should be an error, but it should
+  not stop the submission process
+* Handle late submission times
 * Add other test types specific to files:
     - "picobot" with the usual default attributes as well as an attribute
       "maps", a list of file paths to map files that will be used to test the
