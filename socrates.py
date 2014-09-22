@@ -75,8 +75,11 @@ if __name__ == '__main__':
         if not args.submission_files:
             util.sprint("warning: no submission files specified")
 
-        grader.grade(c, args.submission_files, grade_filename)
-        sys.exit()
+        any_missing = grader.grade(c, args.submission_files, grade_filename)
+        if any_missing:
+            sys.exit(util.EXIT_WITH_MISSING)
+        else:
+            sys.exit()
 
     elif args.mode == 'submit':
         from functools import reduce

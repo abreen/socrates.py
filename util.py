@@ -21,6 +21,8 @@ ERR_NO_DROPBOX = 7
 ERR_DROPBOX_MAKEDIRS = 8
 ERR_BAD_CONFIG = 9
 
+EXIT_WITH_MISSING = 100
+
 quiet_mode = False
 log_file = None
 sprint_prefix = ""
