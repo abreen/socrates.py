@@ -58,8 +58,8 @@ if __name__ == '__main__':
             sys.exit(util.ERR_CRITERIA_MISSING)
         except:
             err = sys.exc_info()
-            sprint("error importing criteria: "
-                   "{}".format(err[0].__name__), error=True)
+            util.sprint("error importing criteria: "
+                        "{}".format(err[0].__name__), error=True)
             sys.exit(util.ERR_CRITERIA_IMPORT)
 
         grade_filename = c.short_name + "-grade.txt"
