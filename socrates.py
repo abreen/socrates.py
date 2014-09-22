@@ -56,6 +56,9 @@ if __name__ == '__main__':
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
             sys.exit(util.ERR_CRITERIA_MISSING)
+        except IsADirectoryError:
+            util.sprint("specified criteria is a directory", error=True)
+            sys.exit(util.ERR_CRITERIA_IMPORT)
         except:
             err = sys.exc_info()
             util.sprint("error importing criteria: "
