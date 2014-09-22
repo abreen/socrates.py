@@ -1,7 +1,8 @@
 from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
 
-from util import sprint, COLOR_BLUE, COLOR_CYAN, COLOR_INVERTED, COLOR_RESET
+from util import sprint, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
+                 COLOR_INVERTED, COLOR_RESET
 
 
 DEDUCTION_MODE_TYPES = ['1', '*', '+']
@@ -90,7 +91,15 @@ class ReviewTest(BaseTest):
                 return None
 
         if type(self.deduction) is list:
-            sprint("deduction options:")
+            if self.deduction_mode == '*':
+                sprint(COLOR_GREEN + "select zero or more:" + COLOR_RESET)
+                max, min = float('inf'), 0
+            elif self.deduction_mode == '+':
+                sprint(COLOR_GREEN + "select one or more:" + COLOR_RESET)
+                max, min = float('inf'), 1
+            elif self.deduction_mode == '1':
+                sprint(COLOR_GREEN + "select one:" + COLOR_RESET)
+                max, min = 1, 1
 
             choices = sorted(self.deduction)
             letters = list(map(lambda x: chr(ord('a') + x), range(len(choices))))
@@ -99,16 +108,6 @@ class ReviewTest(BaseTest):
                 sprint("{}. (-{} point{}): {}".format(letters[i],
                        choices[i][0], 's' if choices[i][0] != 1 else '',
                        choices[i][1]))
-
-            if self.deduction_mode == '*':
-                sprint("(select zero or more deductions)")
-                max, min = float('inf'), 0
-            elif self.deduction_mode == '+':
-                sprint("(select one or more deductions)")
-                max, min = float('inf'), 1
-            elif self.deduction_mode == '1':
-                sprint("(select one deduction)")
-                max, min = 1, 1
 
             num_selections = 0
             selections = []     # unique indices into choices list
