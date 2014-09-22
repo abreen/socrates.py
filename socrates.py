@@ -56,9 +56,10 @@ if __name__ == '__main__':
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
             sys.exit(util.ERR_CRITERIA_MISSING)
-        except ValueError as err:
-            util.sprint("error importing criteria: {}".format(err),
-                        error=True)
+        except:
+            err = sys.exc_info()
+            sprint("error importing criteria: "
+                   "{}".format(err[0].__name__), error=True)
             sys.exit(util.ERR_CRITERIA_IMPORT)
 
         grade_filename = c.short_name + "-grade.txt"
