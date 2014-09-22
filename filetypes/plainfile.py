@@ -132,7 +132,11 @@ class ReviewTest(BaseTest):
                     selections.append(letters.index(sel))
                     num_selections += 1
                 except ValueError:
-                    sprint("invalid selection: not in list", error=True)
+                    if sel == '':
+                        sprint("make a selection, or enter ! to stop",
+                               error=True)
+                    else:
+                        sprint("invalid selection: not in list", error=True)
                     continue
 
             if sum(map(lambda x: choices[x][0], selections)) > 0:
