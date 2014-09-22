@@ -8,21 +8,26 @@ from util import *
 
 def grade(criteria, submissions, filename):
     found = []
+    num_missing = 0
     total = criteria.total_points
 
-    for s in submissions:
-        directory, name = os.path.split(s)
+    for f in criteria.files:
+        crit_dir, crit_name = os.path.split(f.path)
 
-        for f in criteria.files:
-            d, n = os.path.split(f.path)
+        for s in submissions:
+            sub_dir, sub_name = os.path.split(s)
 
-            if n == name:
+            if crit_name == sub_name:
                 found.append(f)
+                break
+        else:
+            sprint(COLOR_YELLOW + "could not find "
+                   "file '{}'".format(f.path) + COLOR_RESET)
+            num_missing += 1
 
     out = io.StringIO()
 
     try:
-        sprint("writing to '{}'".format(filename))
         _write_header(out, criteria)
 
         for f in criteria.files:
@@ -65,6 +70,7 @@ def grade(criteria, submissions, filename):
         f.write(out.read())
 
     sprint("grading completed")
+    return num_missing
 
 
 def _write_header(f, crit):
