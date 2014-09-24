@@ -306,7 +306,7 @@ class PythonFile(PlainFile):
             self.point_value = point_value
         else:
             self.point_value = sum([f.point_value for f in self.functions]) + \
-                               sum([f.point_value for v in self.variables])
+                               sum([v.point_value for v in self.variables])
 
 
     @staticmethod
