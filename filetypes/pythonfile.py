@@ -71,7 +71,8 @@ class EvalTest(BaseTest):
 
         if self.arguments:
             if type(self.arguments) is dict:
-                args = ["{}={}".format(k, v) for (k, v) in self.arguments.items()]
+                args = ["{}={}".format(k, repr(v)) for (k, v)
+                                                   in self.arguments.items()]
             else:
                 args = self.arguments
 
