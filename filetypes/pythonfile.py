@@ -91,10 +91,15 @@ class EvalTest(BaseTest):
 
         try:
             return_value = eval(fn_call, globals(), {mod_name:context})
-        except AttributeError as err:
+        except:
+            import sys
+
+            err = sys.exc_info()
+            sprint(COLOR_YELLOW + "failing a test due to an "
+                   "error ({})".format(err[1]) + COLOR_RESET)
             return {'deduction': self.deduction,
                     'description': self.description,
-                    'notes': [str(err)]}
+                    'notes': [str(err[1]) + " (" + str(err[0].__name__) + ")"]}
 
         # restore default standard in/out
         sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
