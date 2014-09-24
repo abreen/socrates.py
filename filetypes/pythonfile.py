@@ -17,13 +17,14 @@ class EvalTest(BaseTest):
         self.deduction = deduction
 
         self.arguments = []
-        if type(arguments) is list:
-            self.arguments = arguments
-        elif type(arguments) is dict:
-            for param_name, param_val in arguments.items():
-                self.arguments.append((param_name, param_val))
-        else:
-            raise ValueError("arguments must be in a list or dictionary")
+        if arguments:
+            if type(arguments) is list:
+                self.arguments = arguments
+            elif type(arguments) is dict:
+                for param_name, param_val in arguments.items():
+                    self.arguments.append((param_name, param_val))
+            else:
+                raise ValueError("arguments must be in a list or dictionary")
 
         self.input = input              # what input to send
         self.value = value              # expected return value
