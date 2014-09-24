@@ -3,7 +3,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet
 from filetypes.basetest import BaseTest
 
-from util import sprint, add_to, COLOR_GREEN, COLOR_RESET
+from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, COLOR_RESET
 
 
 class EvalTest(BaseTest):
@@ -348,11 +348,13 @@ class PythonFile(PlainFile):
     supported_tests.append(EvalTest)
 
 
-    def __init__(self, path, point_value=0, tests=None, functions=None, variables=None):
+    def __init__(self, path, point_value=0, error_deduction=None, tests=None,
+                 functions=None, variables=None):
         self.path = path
         self.tests = tests if tests else []
         self.functions = functions if functions else []
         self.variables = variables if variables else []
+        self.error_deduction = error_deduction
 
         if point_value:
             self.point_value = point_value
@@ -370,6 +372,9 @@ class PythonFile(PlainFile):
 
         if 'point_value' in dict_obj:
             args['point_value'] = dict_obj['point_value']
+
+        if 'error_deduction' in dict_obj:
+            args['error_deduction'] = dict_obj['error_deduction']
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
@@ -439,9 +444,17 @@ class PythonFile(PlainFile):
 
             traceback.print_exc()
 
-            return [{'deduction': self.point_value,
+            if self.error_deduction:
+                deduction = self.error_deduction
+            else:
+                deduction = self.point_value
+
+            sprint(COLOR_YELLOW + "deducting {} points for error during "
+                   "import".format(deduction) + COLOR_RESET)
+
+            return [{'deduction': deduction,
                      'description': "error importing '{}'".format(self.path),
-                     'notes': ["encountered error {}".format(err[0].__name__)]}]
+                     'notes': ["encountered {}".format(err[0].__name__)]}]
 
         found_functions = self.__get_members(module_context, 'functions')
         found_variables = self.__get_members(module_context, 'variables')
