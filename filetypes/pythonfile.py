@@ -3,7 +3,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet
 from filetypes.basetest import BaseTest
 
-from util import sprint, add_to
+from util import sprint, add_to, COLOR_GREEN, COLOR_RESET
 
 class EvalTest(BaseTest):
     json_type = 'eval'
@@ -385,12 +385,16 @@ class PythonFile(PlainFile):
 
             sys.path.append(directory)
 
-            sprint("importing module '{}'".format(mod_name))
+            sprint(COLOR_GREEN + "importing module '{}'".format(mod_name) + \
+                   COLOR_RESET)
 
             # redirect standard out to empty buffer to "mute" the program
             #sys.stdout = io.StringIO()
             module_context = __import__(mod_name)
             #sys.stdout = sys.__stdout__
+
+            sprint(COLOR_GREEN + "finished importing "
+                   "module".format(mod_name) + COLOR_RESET)
 
         except:
             # "un-mute" the program and give socrates access to stdout
