@@ -283,6 +283,28 @@ class PythonReviewTest(ReviewTest):
                 temp.write(inspect.getsource(func_obj).encode('utf-8'))
                 temp.flush()
 
+        elif type(self.target) is PythonVariable:
+            import inspect
+            import re
+
+            mod_src = inspect.getsource(context)
+
+            # TODO find a better way to do this
+            pat = re.compile("\s*" + self.target.name + "\s*=")
+
+            for line in mod_src.split('\n'):
+                if re.match(pat, line):
+                    var_src = line
+                    break
+            else:
+                return {'deduction': self.deduction,
+                        'description': self.description,
+                        'notes': ["could not find {}".format(self.target)]}
+
+            if self.print_target:
+                temp.write((var_src + '\n').encode('utf-8'))
+                temp.flush()
+
 
         return super().run(temp.name)
 
