@@ -3,7 +3,8 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet
 from filetypes.basetest import BaseTest
 
-from util import sprint, add_to
+from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, COLOR_RESET
+
 
 class EvalTest(BaseTest):
     json_type = 'eval'
@@ -15,8 +16,16 @@ class EvalTest(BaseTest):
 
         self.deduction = deduction
 
-        # optional components
-        self.arguments = arguments      # what arguments to pass (dict)
+        self.arguments = []
+        if arguments:
+            if type(arguments) is list:
+                self.arguments = arguments
+            elif type(arguments) is dict:
+                for param_name, param_val in arguments.items():
+                    self.arguments.append((param_name, param_val))
+            else:
+                raise ValueError("arguments must be in a list or dictionary")
+
         self.input = input              # what input to send
         self.value = value              # expected return value
 
@@ -69,15 +78,7 @@ class EvalTest(BaseTest):
         mod_name = context.__name__
         fn_name = self.target.name
 
-        if self.arguments:
-            if type(self.arguments) is dict:
-                args = ["{}={}".format(k, v) for (k, v) in self.arguments.items()]
-            else:
-                args = self.arguments
-
-            formatted_args = ', '.join(args)
-        else:
-            formatted_args = ""
+        formatted_args = self.__format_args(context)
 
         fn_call = "{}.{}({})".format(mod_name, fn_name, formatted_args)
 
@@ -91,10 +92,15 @@ class EvalTest(BaseTest):
 
         try:
             return_value = eval(fn_call, globals(), {mod_name:context})
-        except AttributeError as err:
+        except:
+            import sys
+
+            err = sys.exc_info()
+            sprint(COLOR_YELLOW + "failing a test due to an "
+                   "error ({})".format(err[1]) + COLOR_RESET)
             return {'deduction': self.deduction,
                     'description': self.description,
-                    'notes': [str(err)]}
+                    'notes': [str(err[1]) + " (" + str(err[0].__name__) + ")"]}
 
         # restore default standard in/out
         sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
@@ -127,6 +133,41 @@ class EvalTest(BaseTest):
                 result['notes'].append("produced output: " + po)
 
             return result
+
+
+    def __format_args(self, cxt):
+        if self.arguments:
+            # the student may have chosen different names for their function's
+            # parameters; we must create a mapping from the names in the
+            # criteria to the names in the submission
+            if type(self.arguments[0]) is tuple:
+                from inspect import signature
+
+                func_obj = _find_function_from_cxt(cxt, self.target.name)
+                student_param_names = list(signature(func_obj).parameters)
+                altered_args = []
+
+                # for each parameter in the criteria
+                for i in range(len(self.target.parameters)):
+                    # find the index of argument value from the eval test
+                    for j in range(len(self.arguments)):
+                        if self.arguments[j][0] == self.target.parameters[i]:
+                            break
+
+                    # val holds the value of this parameter from the eval test
+                    val = self.arguments[j][1]
+
+                    # add this value with the student-given name
+                    altered_args.append((student_param_names[i], val))
+
+                args = ["{}={}".format(k, repr(v)) for (k, v) in altered_args]
+                return ', '.join(args)
+            else:
+                # will not use keyword arguments, just positional
+                return ', '.join(self.arguments)
+        else:
+            # function takes no arguments
+            return ''
 
 
     def __run_variable(self, context):
@@ -267,12 +308,29 @@ class PythonReviewTest(ReviewTest):
                 temp.flush()
 
         elif type(self.target) is PythonFunction:
-            import inspect
+            func_obj = _find_function_from_cxt(context, self.target.name)
 
-            # TODO why is this done here?
-            for m in inspect.getmembers(context, inspect.isfunction):
-                if m[0] == self.target.name:
-                    func_obj = m[1]
+            if not func_obj:
+                return {'deduction': self.deduction,
+                        'description': self.description,
+                        'notes': ["could not find {}".format(self.target)]}
+
+            if self.print_target:
+                temp.write(inspect.getsource(func_obj).encode('utf-8'))
+                temp.flush()
+
+        elif type(self.target) is PythonVariable:
+            import inspect
+            import re
+
+            mod_src = inspect.getsource(context)
+
+            # TODO find a better way to do this
+            pat = re.compile("\s*" + self.target.name + "\s*=")
+
+            for line in mod_src.split('\n'):
+                if re.match(pat, line):
+                    var_src = line
                     break
             else:
                 return {'deduction': self.deduction,
@@ -280,7 +338,7 @@ class PythonReviewTest(ReviewTest):
                         'notes': ["could not find {}".format(self.target)]}
 
             if self.print_target:
-                temp.write(inspect.getsource(func_obj).encode('utf-8'))
+                temp.write((var_src + '\n').encode('utf-8'))
                 temp.flush()
 
 
@@ -296,17 +354,19 @@ class PythonFile(PlainFile):
     supported_tests.append(EvalTest)
 
 
-    def __init__(self, path, point_value=0, tests=None, functions=None, variables=None):
+    def __init__(self, path, point_value=0, error_deduction=None, tests=None,
+                 functions=None, variables=None):
         self.path = path
         self.tests = tests if tests else []
         self.functions = functions if functions else []
         self.variables = variables if variables else []
+        self.error_deduction = error_deduction
 
         if point_value:
             self.point_value = point_value
         else:
             self.point_value = sum([f.point_value for f in self.functions]) + \
-                               sum([f.point_value for v in self.variables])
+                               sum([v.point_value for v in self.variables])
 
 
     @staticmethod
@@ -318,6 +378,9 @@ class PythonFile(PlainFile):
 
         if 'point_value' in dict_obj:
             args['point_value'] = dict_obj['point_value']
+
+        if 'error_deduction' in dict_obj:
+            args['error_deduction'] = dict_obj['error_deduction']
 
         if 'tests' in dict_obj:
             for t in dict_obj['tests']:
@@ -363,12 +426,16 @@ class PythonFile(PlainFile):
 
             sys.path.append(directory)
 
-            sprint("importing module '{}'".format(mod_name))
+            sprint(COLOR_GREEN + "importing module '{}'".format(mod_name) + \
+                   COLOR_RESET)
 
             # redirect standard out to empty buffer to "mute" the program
             #sys.stdout = io.StringIO()
             module_context = __import__(mod_name)
             #sys.stdout = sys.__stdout__
+
+            sprint(COLOR_GREEN + "finished importing "
+                   "module".format(mod_name) + COLOR_RESET)
 
         except:
             # "un-mute" the program and give socrates access to stdout
@@ -383,9 +450,17 @@ class PythonFile(PlainFile):
 
             traceback.print_exc()
 
-            return [{'deduction': self.point_value,
+            if self.error_deduction:
+                deduction = self.error_deduction
+            else:
+                deduction = self.point_value
+
+            sprint(COLOR_YELLOW + "deducting {} points for error during "
+                   "import".format(deduction) + COLOR_RESET)
+
+            return [{'deduction': deduction,
                      'description': "error importing '{}'".format(self.path),
-                     'notes': ["encountered error {}".format(err[0].__name__)]}]
+                     'notes': ["encountered {}".format(err[0].__name__)]}]
 
         found_functions = self.__get_members(module_context, 'functions')
         found_variables = self.__get_members(module_context, 'variables')
@@ -567,3 +642,14 @@ class PythonVariable:
         return {'variable_name': self.name,
                 'point_value': self.point_value,
                 'tests': [t.to_dict() for t in self.tests]}
+
+
+
+def _find_function_from_cxt(context, name):
+    from inspect import getmembers, isfunction
+
+    for m in getmembers(context, isfunction):
+        if m[0] == name:
+            return m[1]
+
+    return None

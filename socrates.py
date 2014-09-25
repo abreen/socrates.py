@@ -60,9 +60,12 @@ if __name__ == '__main__':
             util.sprint("specified criteria is a directory", error=True)
             sys.exit(util.ERR_CRITERIA_IMPORT)
         except:
+            import traceback
             err = sys.exc_info()
-            util.sprint("error importing criteria: "
-                        "{}".format(err[0].__name__), error=True)
+            util.sprint("error importing criteria: {} ("
+                        "{})".format(err[0].__name__, err[1]),
+                        error=True)
+            traceback.print_exc()
             sys.exit(util.ERR_CRITERIA_IMPORT)
 
         grade_filename = c.short_name + "-grade.txt"
