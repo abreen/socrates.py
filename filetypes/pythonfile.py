@@ -122,8 +122,8 @@ class EvalTest(BaseTest):
                        'notes': []}
 
             if self.value is not None:
-                result['notes'].append("expected value: " + str(self.value))
-                result['notes'].append("produced value: " + str(return_value))
+                result['notes'].append("expected value: " + repr(self.value))
+                result['notes'].append("produced value: " + repr(return_value))
 
             if self.output is not None and type(self.output) is str:
                 import util
