@@ -34,6 +34,9 @@ will deduct the value of the component and skip any tests written for it.
 Criteria files
 --------------
 
+**Warning:** this documentation about criteria files is very outdated.
+It will be brought up to date soon.
+
 A criteria file is a plain text file containing one JSON object with four
 attributes: the name of the problem set, the file name-safe name, the
 name of the course (used when writing the final grade file), and an array of
