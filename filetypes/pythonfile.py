@@ -308,6 +308,7 @@ class PythonReviewTest(ReviewTest):
                 temp.flush()
 
         elif type(self.target) is PythonFunction:
+            import inspect
             func_obj = _find_function_from_cxt(context, self.target.name)
 
             if not func_obj:
