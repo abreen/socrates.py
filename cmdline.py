@@ -33,7 +33,7 @@ def get_args():
     norm_mode_opts = {'description': "Start an interactive grading session"}
     norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
 
-    criteria_opts = {'help': "criteria file in JSON format"}
+    criteria_opts = {'help': "criteria file in JSON or YAML format"}
     norm_mode_parser.add_argument('criteria_file', **criteria_opts)
 
     input_opts = {'help': "submission file(s) to grade",
@@ -45,7 +45,7 @@ def get_args():
     batch_mode_opts = {'description': "Start grading in batch mode"}
     batch_mode_parser = subparsers.add_parser('batch', **batch_mode_opts)
 
-    criteria_opts = {'help': "criteria file in JSON format"}
+    criteria_opts = {'help': "criteria file in JSON or YAML format"}
     batch_mode_parser.add_argument('criteria_file', **criteria_opts)
 
     input_opts = {'help': "submission directories, one per student",
@@ -57,7 +57,7 @@ def get_args():
     submit_mode_opts = {'description': "Submit graded files"}
     submit_mode_parser = subparsers.add_parser('submit', **submit_mode_opts)
 
-    criteria_opts = {'help': "criteria file in JSON format"}
+    criteria_opts = {'help': "criteria file in JSON or YAML format"}
     submit_mode_parser.add_argument('criteria_file', **criteria_opts)
 
     input_opts = {'help': "submission directories, one per student",

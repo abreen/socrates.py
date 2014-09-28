@@ -1,4 +1,5 @@
 import json
+import yaml
 
 
 class Criteria:
@@ -35,8 +36,8 @@ class Criteria:
 
     @staticmethod
     def from_json(path):
-        """Given a path to a .criteria.json file, create and return a new Criteria
-        object matching the specifications of the JSON file.
+        """Given a path to a .criteria.json file, create and return a new
+        Criteria object matching the specifications of the JSON file.
         """
         f = open(path, 'r')
         crit_dict = json.load(f)
@@ -44,9 +45,20 @@ class Criteria:
 
 
     @staticmethod
+    def from_yaml(path):
+        """Given a path to a .criteria.yml file, create and return a new
+        Criteria object matching the specifications of the YAML file.
+        """
+        f = open(path, 'r')
+        crit_dict = yaml.load(f)
+        return Criteria.from_dict(crit_dict)
+
+
+    @staticmethod
     def from_dict(d):
-        """Given a dict (the result of a JSON decode), create and return a new
-        Criteria object with the contents of the dict.
+        """Given a dict (the result of parsing a JSON or YAML file),
+        create and return a new Criteria object with the contents
+        of the dict.
         """
         import filetypes
 
