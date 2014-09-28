@@ -52,7 +52,14 @@ if __name__ == '__main__':
     if args.mode in ['grade', 'submit']:
         import grader
         try:
-            c = criteria.Criteria.from_json(args.criteria_file)
+            if '.json' in args.criteria_file:
+                c = criteria.Criteria.from_json(args.criteria_file)
+            elif '.yml' in args.criteria_file:
+                c = criteria.Criteria.from_yaml(args.criteria_file)
+            else:
+                util.sprint("file is not a JSON or YAML file", error=True)
+                sys.exit(util.ERR_CRITERIA_IMPORT)
+
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
             sys.exit(util.ERR_CRITERIA_MISSING)

@@ -10,11 +10,13 @@ class EvalTest(BaseTest):
     json_type = 'eval'
 
     def __init__(self, target, description, deduction=None,
-                 arguments=None, input=None, value=None, output=None):
+                 arguments=None, input=None, value=None,
+                 output=None, random_seed=None):
         self.target = target
         self.description = description
 
         self.deduction = deduction
+        self.random_seed = random_seed
 
         self.arguments = []
         if arguments:
@@ -53,7 +55,7 @@ class EvalTest(BaseTest):
             args['deduction'] = dict_obj['deduction']
 
         # add optional components, if present
-        for a in ['arguments', 'input', 'value', 'output']:
+        for a in ['arguments', 'input', 'value', 'output', 'random_seed']:
             if a in dict_obj:
                 args[a] = dict_obj[a]
 
@@ -89,6 +91,10 @@ class EvalTest(BaseTest):
         if self.output:
             out_buf = io.StringIO()
             sys.stdout = out_buf
+
+        if self.random_seed:
+            import random
+            random.seed(self.random_seed)
 
         try:
             return_value = eval(fn_call, globals(), {mod_name:context})
@@ -308,6 +314,7 @@ class PythonReviewTest(ReviewTest):
                 temp.flush()
 
         elif type(self.target) is PythonFunction:
+            import inspect
             func_obj = _find_function_from_cxt(context, self.target.name)
 
             if not func_obj:
