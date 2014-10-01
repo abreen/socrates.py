@@ -39,7 +39,8 @@ def grade(criteria, submissions, filename):
                 out.write("-{}\tnot submitted\n".format(f.point_value))
             else:
                 sprint("running tests for " + str(f))
-                total -= _write_results(out, f.run_tests())
+                deduction_total = _write_results(out, f.run_tests())
+                total -= min(f.point_value, deduction_total)
 
             out.write("\n")
 
