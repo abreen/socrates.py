@@ -427,6 +427,20 @@ class PythonFile(PlainFile):
         results = dict()
         results[self] = []
 
+        actual_setrecursionlimit = sys.setrecursionlimit
+
+        def intercept_stacksize_change(new_val):
+            sprint("intercepting call to sys.setrecursionlimit()")
+            old_val = sys.getrecursionlimit()
+            if new_val < old_val:
+                sprint("keeping stack size at " + str(old_val))
+                return
+            else:
+                sprint("growing stack size to " + str(new_val))
+                actual_setrecursionlimit(new_val)
+
+        sys.setrecursionlimit = intercept_stacksize_change
+
         try:
             directory, name = os.path.split(self.path)
             mod_name = name[:name.index('.py')] if '.py' in name else name
