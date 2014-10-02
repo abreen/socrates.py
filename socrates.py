@@ -15,6 +15,38 @@ import filetypes
 import config
 
 
+def _print_grader_activity(short_name, dropbox):
+    import os
+    import pwd
+    import datetime
+
+    found_grader_subs = []
+
+    for hash_dir in os.listdir(dropbox):
+        if hash_dir[0] == '.': continue
+
+        dirpath = dropbox + os.sep + hash_dir
+
+        dir_st = os.stat(dirpath)
+        dir_ctime = dir_st.st_mtime
+
+        grader_pw = pwd.getpwuid(dir_st.st_uid)
+        grader_name = grader_pw.pw_name
+        grader_fullname = grader_pw.pw_gecos
+
+        group = os.listdir(dirpath)[0]
+
+        t = (grader_name, grader_fullname, group, dir_ctime)
+        found_grader_subs.append(t)
+
+
+    util.sprint("grader submission activity:")
+    for name, fullname, group, time in found_grader_subs:
+        on = datetime.datetime.fromtimestamp(time)
+        util.sprint("{} ({}) submitted group {} on {}".format(
+                    fullname, name, group, on))
+
+
 if __name__ == '__main__':
     args = cmdline.get_args()
 
@@ -199,23 +231,20 @@ if __name__ == '__main__':
         sys.exit()
 
     elif args.mode == 'websubmit':
-        import tarfile
-        import re
-
-        ws_name = input(util.COLOR_BLUE + "enter WebSubmit's name for this "
-                        "assignment (e.g., hw00): " + util.COLOR_RESET)
-
-        ws_course = input(util.COLOR_BLUE + "enter WebSubmit's name for this "
-                          "course (e.g., cs111): " + util.COLOR_RESET)
-
         short_name = args.assignment_name[0]
-        target_dir = ws_course + '-' + ws_name
         dropbox = config.dropbox_dir + os.sep + short_name
 
         if not os.path.isdir(dropbox):
             util.sprint("no dropbox for assignment '{}'".format(short_name),
                         error=True)
             sys.exit(util.ERR_BAD_DROPBOX)
+
+        if args.activity:
+            _print_grader_activity(short_name, dropbox)
+            sys.exit()
+
+        import tarfile
+        import re
 
         found_groups = []
         found_students = dict()
@@ -225,6 +254,7 @@ if __name__ == '__main__':
 
             dirpath = dropbox + os.sep + hash_dir
             group = os.listdir(dirpath)[0]
+
             if group not in found_groups:
                 found_groups.append(group)
 
@@ -245,6 +275,14 @@ if __name__ == '__main__':
                     found_students[username] = dict()
                     found_students[username][group] = (mtime, path)
 
+
+        ws_name = input(util.COLOR_BLUE + "enter WebSubmit's name for this "
+                        "assignment (e.g., hw00): " + util.COLOR_RESET)
+
+        ws_course = input(util.COLOR_BLUE + "enter WebSubmit's name for this "
+                          "course (e.g., cs111): " + util.COLOR_RESET)
+
+        target_dir = ws_course + '-' + ws_name
         os.mkdir(target_dir)
 
         total_pat = re.compile("[tT]otal:\s*(\d+(?:\.\d+)?)")
@@ -292,3 +330,5 @@ if __name__ == '__main__':
 
         util.sprint("collected grade files into '{}'".format(target_dir))
         util.sprint("(\"zip\" this file and upload to WebSubmit!)")
+
+
