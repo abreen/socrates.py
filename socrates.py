@@ -200,15 +200,15 @@ if __name__ == '__main__':
 
     elif args.mode == 'collect':
         import tarfile
+        import re
 
-        dropbox = config.dropbox_dir + os.sep + args.assignment_name
+        short_name = args.assignment_name[0]
+        dropbox = config.dropbox_dir + os.sep + short_name
 
         if not os.path.isdir(dropbox):
-            sprint("no dropbox for assignment '{}'".format(
-                   args.assignment_name), error=True)
+            sprint("no dropbox for assignment '{}'".format(short_name),
+                   error=True)
             sys.exit(util.ERR_BAD_DROPBOX)
-
-        target_dir = os.mkdir(args.assignment_name + '-grades')
 
         found_groups = []
         found_students = dict()
@@ -238,6 +238,38 @@ if __name__ == '__main__':
                     found_students[username] = dict()
                     found_students[username][group] = (mtime, path)
 
-            print("found groups:", found_groups)
-            print("found students:", found_students)
+        target_dir = short_name + '-grades'
+        os.mkdir(target_dir)
 
+        total_pat = re.compile("[tT]otal:\s*(\d+(?:\.\d+)?)")
+
+        for username, groups in found_students.items():
+            compiled = []
+            points = 0
+
+            # we want the earlier parts to come first in the compiled
+            # grade file, so we sort the group keys
+            sgroups = sorted(groups)
+            for g in sgroups:
+                tar_path = groups[g][1]
+
+                with tarfile.open(tar_path) as tar:
+                    grd_file_path = username + os.sep + short_name + \
+                                    '-grade.txt'
+                    grade_file = tar.extractfile(grd_file_path)
+
+                    for line in grade_file:
+                        line = line.decode('utf-8')
+                        m = total_pat.match(line)
+                        if m:
+                            points += float(m.group(1))
+                        else:
+                            compiled.append(line)
+
+            os.mkdir(target_dir + os.sep + username)
+            with open(target_dir + os.sep + username + \
+                      os.sep + short_name + '-' + username +
+                      '.txt', 'w') as f:
+                f.write(''.join(compiled))
+                f.write('\n\n')
+                f.write("Total: {}\n".format(points))
