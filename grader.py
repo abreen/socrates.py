@@ -2,6 +2,7 @@ import sys
 import os
 import io
 import datetime
+import shutil
 
 from util import *
 
@@ -21,9 +22,53 @@ def grade(criteria, submissions, filename):
                 found.append(f)
                 break
         else:
+            #Informing grader, gathering input filename
             sprint(COLOR_YELLOW + "could not find "
                    "file '{}'".format(f.path) + COLOR_RESET)
-            num_missing += 1
+
+            if len(submissions) < 1:
+                continue
+
+            cur_dir = os.path.abspath(os.path.split(submissions[0])[0])            
+            sprint(COLOR_YELLOW + "listing submissions..." + COLOR_RESET)
+            sprint(COLOR_GREEN + " ".join(submissions) + COLOR_RESET)
+            sname = input(COLOR_CYAN + "Enter a file to grade, 0 to declare file missing, -1 to skip this submission: " + COLOR_RESET)
+
+            if sname == '0':
+                num_missing += 1
+                continue
+            elif sname == '-1':
+                sprint("Deferring submission.")
+                sys.exit(EXIT_WITH_DEFER)
+            else:
+                #get absolute path to the old and new files
+                opath = os.path.join(cur_dir,sname)
+                npath = os.path.join(cur_dir,crit_name)
+                
+                try:
+                    ofile = open(opath,'r')
+                    nfile = open(npath,'w')
+                except FileNotFoundError:
+                    sprint("Could not open the specified file", error=True)
+                    sys.exit(ERR_GRADING_MISC)
+
+                try:    
+                    shutil.copyfileobj(ofile,nfile)
+                except (IOerror,os.error):
+                    sprint("Could not copy the data to the new file", error=True)
+                    sys.exit(ERR_GRADING_MISC)
+                
+                ofile.close()
+                nfile.close()
+                
+                #copy file stat for use in late penalty checking
+                try:
+                    shutil.copystat(opath,npath)
+                except os.error:
+                    sprint("Could not copy the file stat to the new file", error=True)
+                    sys.exit(ERR_GRADING_MISC)
+                    
+                found.append(f)
 
     out = io.StringIO()
 
