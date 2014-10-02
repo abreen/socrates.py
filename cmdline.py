@@ -80,6 +80,10 @@ def get_args():
                        'nargs': 1}
     ws_mode_parser.add_argument('assignment_name', **assignment_opts)
 
+    activity_opts = {'help': "see log of grader submission activity",
+                     'action': 'store_true'}
+    ws_mode_parser.add_argument('--activity', **activity_opts)
+
     args = top_parser.parse_args()
 
     if not args.mode:
