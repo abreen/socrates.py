@@ -198,12 +198,18 @@ if __name__ == '__main__':
         write_missing_dirs()
         sys.exit()
 
-    elif args.mode == 'collect':
+    elif args.mode == 'websubmit':
         import tarfile
         import re
 
+        ws_name = input(util.COLOR_BLUE + "enter WebSubmit's name for this "
+                        "assignment (e.g., hw00): " + util.COLOR_RESET)
+
+        ws_course = input(util.COLOR_BLUE + "enter WebSubmit's name for this "
+                          "course (e.g., cs111): " + util.COLOR_RESET)
+
         short_name = args.assignment_name[0]
-        ws_name = args.ws_name
+        target_dir = ws_course + '-' + ws_name
         dropbox = config.dropbox_dir + os.sep + short_name
 
         if not os.path.isdir(dropbox):
@@ -239,7 +245,6 @@ if __name__ == '__main__':
                     found_students[username] = dict()
                     found_students[username][group] = (mtime, path)
 
-        target_dir = short_name + '-grades'
         os.mkdir(target_dir)
 
         total_pat = re.compile("[tT]otal:\s*(\d+(?:\.\d+)?)")
@@ -276,10 +281,7 @@ if __name__ == '__main__':
 
             os.mkdir(target_dir + os.sep + username)
             path = target_dir + os.sep + username + os.sep
-            if ws_name:
-                grade_file_path = path + ws_name + '-' + username + '.txt'
-            else:
-                grade_file_path = path + short_name + '-' + username + '.txt'
+            grade_file_path = path + ws_name + '-' + username + '.txt'
 
             with open(grade_file_path, 'w') as f:
                 f.write(''.join(compiled))
@@ -289,3 +291,4 @@ if __name__ == '__main__':
             util.sprint("wrote '{}'".format(grade_file_path))
 
         util.sprint("collected grade files into '{}'".format(target_dir))
+        util.sprint("(\"zip\" this file and upload to WebSubmit!)")

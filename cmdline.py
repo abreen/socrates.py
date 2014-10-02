@@ -70,19 +70,15 @@ def get_args():
     config_mode_parser = subparsers.add_parser('config', **config_mode_opts)
 
 
-    # parser for collect mode
-    coll_mode_opts = {'description': "Create final grade files for each "
-                                     "student, combining all the grading "
-                                     "groups for an assignment"}
-    coll_mode_parser = subparsers.add_parser('collect', **coll_mode_opts)
+    # parser for WebSubmit mode
+    ws_mode_opts = {'description': "Collect individual grades into one "
+                                   "directory for upload to WebSubmit",
+                    'aliases': ['ws']}
+    ws_mode_parser = subparsers.add_parser('websubmit', **ws_mode_opts)
 
     assignment_opts = {'help': "the short name for the assignment",
                        'nargs': 1}
-    coll_mode_parser.add_argument('assignment_name', **assignment_opts)
-
-    ws_opts = {'help': "the WebSubmit file name to use for final grade "
-                       "file (e.g., 'hw00')"}
-    coll_mode_parser.add_argument('--ws-name', **ws_opts)
+    ws_mode_parser.add_argument('assignment_name', **assignment_opts)
 
     args = top_parser.parse_args()
 
