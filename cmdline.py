@@ -70,6 +70,20 @@ def get_args():
     config_mode_parser = subparsers.add_parser('config', **config_mode_opts)
 
 
+    # parser for WebSubmit mode
+    ws_mode_opts = {'description': "Collect individual grades into one "
+                                   "directory for upload to WebSubmit",
+                    'aliases': ['ws']}
+    ws_mode_parser = subparsers.add_parser('websubmit', **ws_mode_opts)
+
+    assignment_opts = {'help': "the short name for the assignment",
+                       'nargs': 1}
+    ws_mode_parser.add_argument('assignment_name', **assignment_opts)
+
+    activity_opts = {'help': "see log of grader submission activity",
+                     'action': 'store_true'}
+    ws_mode_parser.add_argument('--activity', **activity_opts)
+
     args = top_parser.parse_args()
 
     if not args.mode:
