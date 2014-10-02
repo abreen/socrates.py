@@ -198,3 +198,46 @@ if __name__ == '__main__':
         write_missing_dirs()
         sys.exit()
 
+    elif args.mode == 'collect':
+        import tarfile
+
+        dropbox = config.dropbox_dir + os.sep + args.assignment_name
+
+        if not os.path.isdir(dropbox):
+            sprint("no dropbox for assignment '{}'".format(
+                   args.assignment_name), error=True)
+            sys.exit(util.ERR_BAD_DROPBOX)
+
+        target_dir = os.mkdir(args.assignment_name + '-grades')
+
+        found_groups = []
+        found_students = dict()
+
+        for hash_dir in os.listdir(dropbox):
+            if hash_dir[0] == '.': continue
+
+            dirpath = dropbox + os.sep + hash_dir
+            group = os.listdir(dirpath)[0]
+            if group not in found_groups:
+                found_groups.append(group)
+
+            for student_tar in os.listdir(dirpath + os.sep + group):
+                if student_tar[0] == '.': continue
+
+                path = dirpath + os.sep + group + os.sep + student_tar
+                mtime = os.stat(path).st_mtime
+
+                username = student_tar[:student_tar.index('.')]
+                if username in found_students:
+                    if group in found_students[username]:
+                        if mtime > found_students[username][group][0]:
+                            found_students[username][group] = (mtime, path)
+                    else:
+                        found_students[username][group] = (mtime, path)
+                else:
+                    found_students[username] = dict()
+                    found_students[username][group] = (mtime, path)
+
+            print("found groups:", found_groups)
+            print("found students:", found_students)
+

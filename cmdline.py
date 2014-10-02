@@ -70,6 +70,16 @@ def get_args():
     config_mode_parser = subparsers.add_parser('config', **config_mode_opts)
 
 
+    # parser for collect mode
+    coll_mode_opts = {'description': "Create final grade files for each "
+                                     "student, combining all the grading "
+                                     "groups for an assignment"}
+    coll_mode_parser = subparsers.add_parser('collect', **coll_mode_opts)
+
+    assignment_opts = {'help': "the short name for the assignment",
+                       'nargs': 1}
+    coll_mode_parser.add_argument('assignment_name', **assignment_opts)
+
     args = top_parser.parse_args()
 
     if not args.mode:
