@@ -203,11 +203,12 @@ if __name__ == '__main__':
         import re
 
         short_name = args.assignment_name[0]
+        ws_name = args.ws_name
         dropbox = config.dropbox_dir + os.sep + short_name
 
         if not os.path.isdir(dropbox):
-            sprint("no dropbox for assignment '{}'".format(short_name),
-                   error=True)
+            util.sprint("no dropbox for assignment '{}'".format(short_name),
+                        error=True)
             sys.exit(util.ERR_BAD_DROPBOX)
 
         found_groups = []
@@ -258,7 +259,14 @@ if __name__ == '__main__':
                                     '-grade.txt'
                     grade_file = tar.extractfile(grd_file_path)
 
+                    # TODO skip the first four lines of the grade file:
+                    # this probably shouldn't be here
+                    n = 4
                     for line in grade_file:
+                        if n > 0:
+                            n -= 1
+                            continue
+
                         line = line.decode('utf-8')
                         m = total_pat.match(line)
                         if m:
@@ -267,9 +275,17 @@ if __name__ == '__main__':
                             compiled.append(line)
 
             os.mkdir(target_dir + os.sep + username)
-            with open(target_dir + os.sep + username + \
-                      os.sep + short_name + '-' + username +
-                      '.txt', 'w') as f:
+            path = target_dir + os.sep + username + os.sep
+            if ws_name:
+                grade_file_path = path + ws_name + '-' + username + '.txt'
+            else:
+                grade_file_path = path + short_name + '-' + username + '.txt'
+
+            with open(grade_file_path, 'w') as f:
                 f.write(''.join(compiled))
-                f.write('\n\n')
+                f.write('\n')
                 f.write("Total: {}\n".format(points))
+
+            util.sprint("wrote '{}'".format(grade_file_path))
+
+        util.sprint("collected grade files into '{}'".format(target_dir))

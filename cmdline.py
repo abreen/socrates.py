@@ -80,6 +80,10 @@ def get_args():
                        'nargs': 1}
     coll_mode_parser.add_argument('assignment_name', **assignment_opts)
 
+    ws_opts = {'help': "the WebSubmit file name to use for final grade "
+                       "file (e.g., 'hw00')"}
+    coll_mode_parser.add_argument('--ws-name', **ws_opts)
+
     args = top_parser.parse_args()
 
     if not args.mode:
