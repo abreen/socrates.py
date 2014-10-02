@@ -45,7 +45,7 @@ def _parse_rules(path):
     import re
 
     f = open(path, 'r')
-    rule_pattern = re.compile("(\d) ([\*xXnN])([\*xXeE])([\*xXwW])([\*xXsS]) "
+    rule_pattern = re.compile("(\d+) ([\*xXnN])([\*xXeE])([\*xXwW])([\*xXsS]) "
                               "-> ([xXnNeEwWsS]) (\d)")
     rules = dict()
     i = -1
