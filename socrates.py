@@ -179,20 +179,6 @@ if __name__ == '__main__':
         proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
         crit_path = os.path.abspath(args.criteria_file)
 
-        # directory names that had missing files; removed because new feature makes this redundant
-        '''try:
-            with open('missing_files.txt', 'r') as mf:
-                missing_dirs = [dir.strip() for dir in mf]
-        except FileNotFoundError:
-            missing_dirs = []
-        '''
-        
-        def write_missing_dirs():
-            with open('missing_files.txt', 'w') as mf:
-                for m in missing_dirs:
-                    mf.write(m + '\n')
-
-
         for subdir in args.submission_dirs:
             if not os.path.isdir(subdir):
                 util.sprint("invalid submission directory "
@@ -210,29 +196,19 @@ if __name__ == '__main__':
                 util.sprint("\nparent stopping (received interrupt)")
                 util.sprint("stopped while grading '{}'".format(subdir))
                 os.chdir(os.pardir)
-                #write_missing_dirs()
                 sys.exit(util.ERR_INTERRUPTED)
 
-            if rv != 0:
-                if rv == util.EXIT_WITH_MISSING:
-                    pass
-                    #commented out because missing_files seems redundant now
-                    #if subdir not in missing_dirs:
-                    #    missing_dirs.append(subdir)
-                elif rv == util.ERR_GRADE_FILE_EXISTS:
-                    pass
-                elif rv == util.EXIT_WITH_DEFER:
-                    pass
-                else:
-                    util.sprint("child process encountered an error",
-                                error=True)
-                    os.chdir(os.pardir)
-                    sys.exit(rv)
+            okay_conditions = [util.EXIT_WITH_MISSING, util.ERR_GRADE_FILE_EXISTS,
+                               util.EXIT_WITH_DEFER]
+
+            if rv != 0 and rv not in okay_conditions:
+                util.sprint("child process encountered an error", error=True)
+                os.chdir(os.pardir)
+                sys.exit(rv)
 
             util.sprint("completed subdirectory '{}'".format(subdir))
             os.chdir(os.pardir)
 
-        #write_missing_dirs()
         sys.exit()
 
     elif args.mode in ['websubmit', 'ws']:
