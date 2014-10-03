@@ -1,5 +1,6 @@
 import json
 import yaml
+from datetime import datetime
 
 
 class Criteria:
@@ -10,11 +11,15 @@ class Criteria:
         self.assignment_name = assignment_name      # nice name ("PS 0")
         self.short_name = short_name                # safe for filename ("ps0")
         self.course_name = course_name
-        self.due = due
         self.files = files
         self.group = group                          # grading group
 
         self.total_points = sum([f.point_value for f in self.files])
+
+        if due:
+            self.due = datetime.strptime(due, '%B %d, %Y %I:%M %p')
+        else:
+            self.due = None
 
 
     def __str__(self):
