@@ -235,7 +235,7 @@ if __name__ == '__main__':
         #write_missing_dirs()
         sys.exit()
 
-    elif args.mode == 'websubmit':
+    elif args.mode in ['websubmit', 'ws']:
         short_name = args.assignment_name[0]
         dropbox = config.dropbox_dir + os.sep + short_name
 
