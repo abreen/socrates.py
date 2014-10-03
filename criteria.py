@@ -6,10 +6,11 @@ class Criteria:
     """Represents requirements for student submissions."""
 
     def __init__(self, assignment_name, short_name, course_name,
-                 files, group=None):
+                 files, due=None, group=None):
         self.assignment_name = assignment_name      # nice name ("PS 0")
         self.short_name = short_name                # safe for filename ("ps0")
         self.course_name = course_name
+        self.due = due
         self.files = files
         self.group = group                          # grading group
 
@@ -20,9 +21,11 @@ class Criteria:
         return "criteria for {}".format(self.assignment_name)
 
 
+    # TODO deprecated; generate mode will soon be removed
     def to_dict(self):
         return {'assignment_name': self.assignment_name,
                 'short_name': self.short_name,
+                'due': self.due,
                 'course_name': self.course_name,
                 'files': [f.to_dict() for f in self.files]}
 
@@ -73,6 +76,9 @@ class Criteria:
 
         if 'group' in d:
             args['group'] = d['group']
+
+        if 'due' in d:
+            args['due'] = d['due']
 
         return Criteria(**args)
 
