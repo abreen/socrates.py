@@ -360,6 +360,8 @@ class PythonFile(PlainFile):
 
         if 'error_deduction' in dict_:
             self.error_deduction = dict_['error_deduction']
+        else:
+            self.error_deduction = None
 
         if 'tests' in dict_:
             for t in dict_['tests']:
