@@ -70,12 +70,6 @@ class BaseFile:
         self.path = dict_['path']
         self.point_value = dict_['point_value']
 
-        self.tests = []
-        if 'tests' in dict_:
-            for t in dict_['tests']:
-                test_cls = filetypes.find_test_class(self.yaml_type, t['type'])
-                self.tests.append(test_cls(t, self.yaml_type))
-
 
     def __str__(self):
         return "{} ({} file)".format(self.path, self.yaml_type)
