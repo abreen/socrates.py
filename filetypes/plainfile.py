@@ -1,5 +1,6 @@
 from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
+import filetypes
 
 from util import sprint, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
                  COLOR_INVERTED, COLOR_RESET
@@ -183,6 +184,11 @@ class PlainFile(BaseFile):
     def __init__(self, dict_):
         super().__init__(dict_)
 
+        if 'tests' in dict_:
+            for t in dict_['tests']:
+                test_cls = filetypes.find_test_class(PlainFile.yaml_type,
+                                                     t['type'])
+                self.tests.append(test_cls(t, PlainFile.yaml_type))
 
     def run_tests(self):
         results = []

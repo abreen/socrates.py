@@ -354,7 +354,6 @@ class PythonFile(PlainFile):
     def __init__(self, dict_):
         super().__init__(dict_)
 
-        self.tests = []
         self.functions = []
         self.variables = []
 

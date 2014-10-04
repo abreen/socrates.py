@@ -69,6 +69,7 @@ class BaseFile:
     def __init__(self, dict_):
         self.path = dict_['path']
         self.point_value = dict_['point_value']
+        self.tests = []
 
 
     def __str__(self):
