@@ -31,7 +31,6 @@ def find_file_class(file_type):
     subclass of BaseFile that can handle that type. The class is returned, or
     ValueError is raised if the file type is not supported.
     """
-    print(_file_handlers[file_type])
     try:
         return _file_handlers[file_type]
     except KeyError:
@@ -43,7 +42,6 @@ def find_test_class(file_type, test_type):
     subclass of BaseTest that implements the test. The class is returned, or
     ValueError is raised if the test type is not supported.
     """
-    print(_test_handlers[(file_type, test_type)])
     try:
         return _test_handlers[(file_type, test_type)]
     except KeyError:
