@@ -392,7 +392,7 @@ class PicobotFile(PlainFile):
 
 
     def __init__(self, dict_):
-        super().__init__(dict_)
+        BaseFile.__init__(self, dict_)
 
         if 'tests' in dict_:
             for t in dict_['tests']:

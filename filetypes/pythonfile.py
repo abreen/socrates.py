@@ -1,6 +1,6 @@
 import filetypes
 from filetypes.plainfile import PlainFile, ReviewTest
-from filetypes.basefile import TestSet
+from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 
 from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, COLOR_RESET
@@ -352,7 +352,7 @@ class PythonFile(PlainFile):
 
 
     def __init__(self, dict_):
-        super().__init__(dict_)
+        BaseFile.__init__(self, dict_)
 
         self.functions = []
         self.variables = []
