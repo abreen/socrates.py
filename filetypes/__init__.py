@@ -11,10 +11,10 @@ def _traverse(cls):
     test type that the file type supports, add it to the _test_handlers
     dictionary, keyed by a (file type JSON keyword, test type JSON keyword) pair.
     """
-    _file_handlers[cls.json_type] = cls
+    _file_handlers[cls.yaml_type] = cls
 
     for t in cls.supported_tests:
-        _test_handlers[(cls.json_type, t.json_type)] = t
+        _test_handlers[(cls.yaml_type, t.yaml_type)] = t
 
     for subcls in cls.__subclasses__():
         _traverse(subcls)
@@ -31,6 +31,7 @@ def find_file_class(file_type):
     subclass of BaseFile that can handle that type. The class is returned, or
     ValueError is raised if the file type is not supported.
     """
+    print(_file_handlers[file_type])
     try:
         return _file_handlers[file_type]
     except KeyError:
@@ -42,6 +43,7 @@ def find_test_class(file_type, test_type):
     subclass of BaseTest that implements the test. The class is returned, or
     ValueError is raised if the test type is not supported.
     """
+    print(_test_handlers[(file_type, test_type)])
     try:
         return _test_handlers[(file_type, test_type)]
     except KeyError:

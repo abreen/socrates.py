@@ -18,18 +18,7 @@ def get_args():
 
     subparsers = top_parser.add_subparsers(dest='mode')
 
-    # parser for generate mode
-    gen_mode_opts = {'description': "Generate a JSON criteria file from an "
-                                    "existing solution",
-                     'aliases': ['gen']}
-    gen_mode_parser = subparsers.add_parser('generate', **gen_mode_opts)
-
-    sol_opts = {'help': "file(s) for which to generate criteria",
-                'nargs': '*'}
-    gen_mode_parser.add_argument('solution_file', **sol_opts)
-
-
-    # parser for grading mode
+    # parser for grade mode
     norm_mode_opts = {'description': "Start an interactive grading session"}
     norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
 

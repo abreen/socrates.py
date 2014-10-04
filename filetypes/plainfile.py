@@ -28,15 +28,15 @@ def _print_file(path):
 
 
 class ReviewTest(BaseTest):
-    json_type = 'review'
+    yaml_type = 'review'
 
-    def __init__(self, description, deduction):
-        super().__init__(description, None)
+    def __init__(self, dict_, file_type):
+        super().__init__(dict_, file_type)
 
-        if type(deduction) is dict:
-            mode, deductions = deduction.popitem()
+        if type(dict_['deduction']) is dict:
+            mode, deductions = dict_['deduction'].popitem()
             if mode not in DEDUCTION_MODE_TYPES:
-                raise ValueError("invalid deduction mode '{}' in JSON object; "
+                raise ValueError("invalid deduction mode '{}' in criteria; "
                                  "should be one of {}".format(mode,
                                  DEDUCTION_MODE_TYPES))
 
@@ -50,20 +50,12 @@ class ReviewTest(BaseTest):
             self.deduction_mode = mode
 
         else:
-            self.deduction = deduction
+            self.deduction = dict_['deduction']
 
 
     def __str__(self):
         return "review of {} ({} pts.)".format(self.target,
                                                self.deduction)
-
-
-    @staticmethod
-    def from_dict(dict_obj, file_type):
-        args = {'description': dict_obj['description'],
-                'deduction': dict_obj['deduction']}
-
-        return ReviewTest(**args)
 
 
     def run(self, path):
@@ -155,26 +147,18 @@ class ReviewTest(BaseTest):
 
 
 class DiffTest(BaseTest):
+    yaml_type = 'diff'
 
-    json_type = 'diff'
-
-    def __init__(self, description, deduction, against):
+    def __init__(self, dict_, file_type):
         import os
 
-        super().__init__(description, deduction)
+        super().__init__(dict_, file_type)
 
-        if not os.path.isfile(config.static_dir + os.sep + against):
+        if not os.path.isfile(config.static_dir + os.sep + dict_['against']):
             raise ValueError("solution file for diff ('{}') "
-                             "cannot be found".format(against))
+                             "cannot be found".format(dict_['against']))
 
-        self.against = config.static_dir + os.sep + against
-
-
-    @staticmethod
-    def from_dict(dict_obj, file_type):
-        return DiffTest(description=dict_obj['description'],
-                        deduction=dict_obj['deduction'],
-                        against=dict_obj['against'])
+        self.against = config.static_dir + os.sep + dict_['against']
 
 
     def run(self, submission):
@@ -190,11 +174,14 @@ class DiffTest(BaseTest):
 
 
 class PlainFile(BaseFile):
-    json_type = 'plain'
+    yaml_type = 'plain'
     extensions = ['txt']
     supported_tests = BaseFile.supported_tests.copy()
     supported_tests.append(DiffTest)
     supported_tests.append(ReviewTest)
+
+    def __init__(self, dict_):
+        super().__init__(dict_)
 
 
     def run_tests(self):

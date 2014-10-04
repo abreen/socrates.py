@@ -92,8 +92,6 @@ def grade(criteria, submissions, filename):
     out = io.StringIO()
 
     try:
-        _write_header(out, criteria)
-
         for f in criteria.files:
             out.write(heading("{} [{} points]".format(f, f.point_value),
                               level=2))
@@ -108,27 +106,26 @@ def grade(criteria, submissions, filename):
             points_taken = 0
             points_taken += _write_results(out, f.run_tests())
 
-            if criteria.due:
-                file_stat = os.stat(f.path)
-                mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
+            file_stat = os.stat(f.path)
+            mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
 
-                if mtime > criteria.due:
-                    if mtime > criteria.due + datetime.timedelta(hours=24):
-                        sprint(COLOR_YELLOW + "taking all points for >24-hour "
-                               "late-submitted {}".format(f) + COLOR_RESET)
+            if mtime > criteria.due:
+                if mtime > criteria.due + datetime.timedelta(hours=24):
+                    sprint(COLOR_YELLOW + "taking all points for >24-hour "
+                           "late-submitted {}".format(f) + COLOR_RESET)
 
-                        late_penalty = f.point_value
-                        out.write("-{}\tsubmitted >24 hours "
-                                  "late\n".format(late_penalty))
+                    late_penalty = f.point_value
+                    out.write("-{}\tsubmitted >24 hours "
+                              "late\n".format(late_penalty))
 
-                    else:
-                        sprint(COLOR_YELLOW + "taking 10% penalty for "
-                               "late-submitted {}".format(f) + COLOR_RESET)
+                else:
+                    sprint(COLOR_YELLOW + "taking 10% penalty for "
+                           "late-submitted {}".format(f) + COLOR_RESET)
 
-                        late_penalty = f.point_value * 0.10
-                        out.write("-{}\tsubmitted late\n".format(late_penalty))
+                    late_penalty = f.point_value * 0.10
+                    out.write("-{}\tsubmitted late\n".format(late_penalty))
 
-                    points_taken += late_penalty
+                points_taken += late_penalty
 
             total -= min(f.point_value, points_taken)
 
@@ -162,17 +159,6 @@ def grade(criteria, submissions, filename):
 
     sprint("grading completed")
     return num_missing
-
-
-def _write_header(f, crit):
-    f.write("Grade Report: {}\n".format(crit.assignment_name))
-    f.write("{}\n".format(crit.course_name))
-
-    today = datetime.date.today()
-    day = today.strftime("%d")
-    if day[0] == "0":
-        day = day[1]
-    f.write(today.strftime("%B {}, %Y".format(day)) + "\n\n")
 
 
 def _write_results(f, results, indent='\t'):
