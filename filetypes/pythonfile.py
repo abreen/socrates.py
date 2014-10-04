@@ -586,7 +586,7 @@ class PythonVariable:
             for t in dict_['tests']:
                 test_cls = filetypes.find_test_class(PythonFile.yaml_type,
                                                      t['type'])
-                args['tests'].append(test_cls(t, PythonFile.yaml_type))
+                self.tests.append(test_cls(t, PythonFile.yaml_type))
 
         # set target of tests for module to this new PythonVariable object
         for test in self.tests:
