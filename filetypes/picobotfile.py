@@ -395,8 +395,8 @@ class PicobotFile(PlainFile):
         super().__init__(dict_)
 
         self.tests = []
-        if 'tests' in dict_obj:
-            for t in dict_obj['tests']:
+        if 'tests' in dict_:
+            for t in dict_['tests']:
                 test_cls = filetypes.find_test_class(PicobotFile.yaml_type,
                                                      t['type'])
                 self.tests.append(test_cls(t, PicobotFile.yaml_type))
