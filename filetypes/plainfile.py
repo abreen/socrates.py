@@ -6,7 +6,7 @@ from util import sprint, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
                  COLOR_INVERTED, COLOR_RESET
 
 
-DEDUCTION_MODE_TYPES = ['1', '*', '+']
+DEDUCTION_MODE_TYPES = [1, '1', '*', '+']
 
 def _print_file(path):
     f = open(path, 'rb')
