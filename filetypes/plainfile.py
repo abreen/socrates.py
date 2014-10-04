@@ -90,7 +90,7 @@ class ReviewTest(BaseTest):
             elif self.deduction_mode == '+':
                 sprint(COLOR_GREEN + "select one or more:" + COLOR_RESET)
                 max, min = float('inf'), 1
-            elif self.deduction_mode == '1':
+            elif self.deduction_mode in [1, '1']:
                 sprint(COLOR_GREEN + "select one:" + COLOR_RESET)
                 max, min = 1, 1
 
