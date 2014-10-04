@@ -2,7 +2,6 @@ import sys
 import os
 import io
 import datetime
-import shutil
 
 from util import *
 
@@ -63,28 +62,12 @@ def grade(criteria, submissions, filename):
                 npath = os.path.join(submission_dir, crit_name)
 
                 try:
-                    ofile = open(opath, 'r')
-                    nfile = open(npath, 'w')
-                except FileNotFoundError:
-                    sprint("could not open the correct file", error=True)
-                    sys.exit(ERR_GRADING_MISC)
-
-                try:
-                    shutil.copyfileobj(ofile, nfile)
+                    os.rename(opath, npath)
                 except:
-                    sprint("error copying to correct file", error=True)
-                    sys.exit(ERR_GRADING_MISC)
+                    import traceback
 
-                ofile.close()
-                nfile.close()
-
-                # to preserve the modification time of the submission
-                # and not mess up late penalty checking, we'll copy
-                # the file data into the new file
-                try:
-                    shutil.copystat(opath, npath)
-                except:
-                    sprint("error copying stat to correct file", error=True)
+                    sprint("error renaming incorrectly named file", error=True)
+                    traceback.print_exc()
                     sys.exit(ERR_GRADING_MISC)
 
                 found.append(f)
