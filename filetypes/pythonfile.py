@@ -100,8 +100,10 @@ class EvalTest(BaseTest):
             return_value = eval(fn_call, globals(), {mod_name:context})
         except:
             import sys
-
             err = sys.exc_info()
+
+            sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+
             sprint(COLOR_YELLOW + "failing a test due to an "
                    "error ({})".format(err[1]) + COLOR_RESET)
             return {'deduction': self.deduction,
