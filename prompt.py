@@ -20,7 +20,7 @@ def prompt(choices, mode='*'):
         header = "select one or more:"
         max, min = float('inf'), 1
 
-    elif self.deduction_mode in [1, '1']:
+    elif mode in [1, '1']:
         header = "select one:"
         max, min = 1, 1
 
