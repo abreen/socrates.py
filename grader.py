@@ -4,6 +4,7 @@ import io
 import datetime
 
 from util import *
+from prompt import prompt
 
 
 def grade(criteria, submissions, filename):
@@ -38,26 +39,30 @@ def grade(criteria, submissions, filename):
             if not submission_dir:
                 submission_dir = os.path.abspath(os.curdir)
 
-            sprint("files in submission directory:")
-            for s in submissions:
-                print(s)
+            choices = [f for f in os.listdir(submission_dir)
+                       if os.path.isfile(os.path.join(submission_dir, f))]
+            choices.append("skip grading this submission now")
+            choices.append("mark the file as missing")
 
-            sprint(COLOR_CYAN + "did the student name the file "
-                   "incorrectly?" + COLOR_RESET)
-            sname = input(COLOR_CYAN + "enter a file name, 0 to "
-                          "declare file missing, or -1 to skip this "
-                          "submission: " + COLOR_RESET)
+            sprint("this student may have named the file incorrectly...")
 
-            if sname == '0':
+            # we prompt the grader for zero or one choice
+            got = prompt(choices, '1')
+            got = got[0]
+
+            if got == len(choices) - 1:
+                # declare the file missing
                 num_missing += 1
                 continue
 
-            elif sname == '-1':
-                sprint("deferring submission; no grade file written")
+            elif got == len(choices) - 2:
+                sprint("skipping this submission; no grade file written")
                 sys.exit(EXIT_WITH_DEFER)
 
             else:
                 # get absolute path to the old and new files
+                sname = choices[got]
+
                 opath = os.path.join(submission_dir, sname)
                 npath = os.path.join(submission_dir, crit_name)
 
