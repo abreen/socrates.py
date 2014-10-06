@@ -61,88 +61,41 @@ class ReviewTest(BaseTest):
 
     def run(self, path):
         from functools import reduce
+        import prompt
         _print_file(path)
 
-        sprint("deduction description: {}".format(self.description))
+        sprint("description: " + self.description)
 
         if type(self.deduction) is int:
-            sprint("deduction value: {}".format(self.deduction))
+            choices = ["do not take this deduction",
+                       "take this deduction (-{} points)".format(
+                           self.deduction)]
+            got = prompt.prompt(choices, '1')
 
-            while True:
-                ans = input(COLOR_CYAN + "should this deduction be "
-                            "taken (y/yes/n/no)? " + COLOR_RESET)
-
-                if ans in ['y', 'yes', 'n', 'no']:
-                    break
-
-            if ans in ['y', 'yes']:
+            if got == 0:
                 return {'deduction': self.deduction,
-                        'description': self.description,
-                        'notes': ["failed human review"]}
+                        'description': self.description}
             else:
-                sprint("taking no deduction")
+                sprint("taking no points")
                 return None
 
-        if type(self.deduction) is list:
-            if self.deduction_mode == '*':
-                sprint(COLOR_GREEN + "select zero or more:" + COLOR_RESET)
-                max, min = float('inf'), 0
-            elif self.deduction_mode == '+':
-                sprint(COLOR_GREEN + "select one or more:" + COLOR_RESET)
-                max, min = float('inf'), 1
-            elif self.deduction_mode in [1, '1']:
-                sprint(COLOR_GREEN + "select one:" + COLOR_RESET)
-                max, min = 1, 1
+        elif type(self.deduction) is list:
+            choices = ["{} (-{} points)".format(y, x) for
+                       x, y in self.deduction]
+            got = prompt.prompt(choices, self.deduction_mode)
 
-            choices = sorted(self.deduction)
-            letters = list(map(lambda x: chr(ord('a') + x), range(len(choices))))
-
-            for i in range(len(choices)):
-                sprint("{}. (-{} point{}): {}".format(letters[i],
-                       choices[i][0], 's' if choices[i][0] != 1 else '',
-                       choices[i][1]))
-
-            num_selections = 0
-            selections = []     # unique indices into choices list
-            while num_selections < min or num_selections < max:
-                sel = input(COLOR_CYAN + "your selection (enter ! "
-                            "to stop): " + COLOR_RESET)
-
-                if sel == '!':
-                    if num_selections < min:
-                        sprint("cannot stop now; you must "
-                               "make {} selection{}".format(min,
-                               's' if min != 1 else ''), error=True)
-                        continue
-                    else:
-                        break
-
-                try:
-                    if letters.index(sel) in selections:
-                        sprint("already selected {}".format(sel), error=True)
-                        continue
-
-                    selections.append(letters.index(sel))
-                    num_selections += 1
-                except ValueError:
-                    if sel == '':
-                        sprint("make a selection, or enter ! to stop",
-                               error=True)
-                    else:
-                        sprint("invalid selection: not in list", error=True)
-                    continue
-
-            if sum(map(lambda x: choices[x][0], selections)) > 0:
+            if sum(map(lambda x: self.deduction[x][0], got)) > 0:
                 deductions = []
-                for s in selections:
-                    if choices[s][0] > 0:
-                        d = {'deduction': choices[s][0],
-                             'description': choices[s][1]}
+
+                for s in got:
+                    if self.deduction[s][0] > 0:
+                        d = {'deduction': self.deduction[s][0],
+                             'description': self.deduction[s][1]}
                         deductions.append(d)
 
                 return deductions
             else:
-                sprint("taking no deduction(s)")
+                sprint("taking no points")
                 return None
 
 
