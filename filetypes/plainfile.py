@@ -2,7 +2,7 @@ from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
 
-from util import sprint, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
+from util import sprint, plural, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
                  COLOR_INVERTED, COLOR_RESET
 
 
@@ -80,7 +80,7 @@ class ReviewTest(BaseTest):
                 return None
 
         elif type(self.deduction) is list:
-            choices = ["{} (-{} points)".format(y, x) for
+            choices = ["{} (-{} {})".format(y, x, plural("point", x)) for
                        x, y in self.deduction]
             got = prompt.prompt(choices, self.deduction_mode)
 

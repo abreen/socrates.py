@@ -12,6 +12,10 @@ class EvalTest(BaseTest):
     def __init__(self, dict_, file_type):
         super().__init__(dict_, file_type)
 
+        # note: self.description might be None if no description was
+        # specified in the YAML file; this is okay, since we can construct
+        # a default one after self.target is set
+
         # target could be a PythonFunction or a PythonVariable
         # potentially confusing: this is None initially, but it should be
         # set by the PythonFunction or PythonVariable that
@@ -79,17 +83,39 @@ class EvalTest(BaseTest):
 
         fn_call = "{}.{}({})".format(mod_name, fn_name, formatted_args)
 
+        building_desc = False
+        if not self.description:
+            building_desc = True
+            self.description = fn_call + " should "
+
         if self.input:
             in_buf = io.StringIO(self.input)
             sys.stdin = in_buf
+
+            if building_desc:
+                self.description = "on input {}, ".format(repr(self.input)) + \
+                                   self.description
 
         if self.output:
             out_buf = io.StringIO()
             sys.stdout = out_buf
 
+            if building_desc:
+                self.description += "output {} ".format(repr(self.output))
+
+        if self.value and building_desc:
+            if self.output:
+                self.description += "and "
+
+            self.description += "return {}".format(repr(self.value))
+
         if self.random_seed:
             import random
             random.seed(self.random_seed)
+
+            if building_desc:
+                self.description = "with random seed {}, ".format(
+                                   self.random_seed) + self.description
 
         try:
             return_value = eval(fn_call, globals(), {mod_name:context})

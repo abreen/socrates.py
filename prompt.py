@@ -1,13 +1,10 @@
 from util import *
 
-PROMPT_MODES = ['1', '*', '+']
-
-def _plur(s, n):
-    return s + ("s" if n != 1 else "")
+PROMPT_MODES = [1, '1', '*', '+']
 
 def prompt(choices, mode='*'):
     if mode not in PROMPT_MODES:
-        raise ValueError("mode is '{}' invalid".format(mode))
+        raise ValueError("mode '{}' is invalid".format(mode))
 
     if len(choices) > 26:
         raise ValueError("too many choices")
@@ -44,7 +41,7 @@ def prompt(choices, mode='*'):
         if sel == '!':
             if num_selections < min:
                 sprint("can't stop now; you must make {} {}".format(
-                       min, _plur("selection", min)), error=True)
+                       min, plural("selection", min)), error=True)
                 continue
             else:
                 break

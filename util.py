@@ -96,3 +96,6 @@ def add_to(a, b):
     else:
         b.append(a)
 
+
+def plural(s, n):
+    return s + ("s" if n != 1 else "")
