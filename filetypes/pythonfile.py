@@ -431,6 +431,10 @@ class PythonFile(PlainFile):
             if new_val < old_val:
                 sprint("keeping stack size at " + str(old_val))
                 return
+            if new_val > 30000:
+                sprint("code wants to set stack size too large")
+                sprint("keeping stack size at " + str(old_val))
+                return
             else:
                 sprint("growing stack size to " + str(new_val))
                 actual_setrecursionlimit(new_val)
