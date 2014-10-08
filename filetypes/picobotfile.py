@@ -45,7 +45,7 @@ def _parse_rules(path):
     import re
 
     f = open(path, 'r')
-    rule_pattern = re.compile("(\d) ([\*xXnN])([\*xXeE])([\*xXwW])([\*xXsS]) "
+    rule_pattern = re.compile("(\d+) ([\*xXnN])([\*xXeE])([\*xXwW])([\*xXsS]) "
                               "-> ([xXnNeEwWsS]) (\d)")
     rules = dict()
     i = -1
@@ -215,47 +215,36 @@ def _print_map(map, r=-1, c=-1):
 
 
 class MapTest(BaseTest):
-    json_type = 'map'
+    yaml_type = 'map'
 
-    def __init__(self, description, deductions, error_deduction, map, start):
+    def __init__(self, dict_, file_type):
         import os
+        from fractions import Fraction
+        import re
         import config
 
-        self.description = description
-        self.deductions = deductions
-        self.error_deduction = error_deduction
-        self.start = start
+        super().__init__(dict_, file_type)
 
-        map_path = config.static_dir + os.sep + map
+        self.error_deduction = dict_['error_deduction']
+
+        map_path = config.static_dir + os.sep + dict_['map']
         if not os.path.isfile(map_path):
             raise ValueError("Picobot map file '{}' "
-                             "cannot be found".format(map))
+                             "cannot be found".format(map_path))
 
         self.map = _parse_map(map_path)
 
-
-    @staticmethod
-    def from_dict(dict_obj, file_type):
-        from fractions import Fraction
-        import re
-
-        args = {'description': dict_obj['description'],
-                'error_deduction': dict_obj['error_deduction'],
-                'map': dict_obj['map']}
-
         # parse starting location
         pattern = re.compile("\(?(\d+)\s*,\s*(\d+)\)?")
-        result = re.search(pattern, dict_obj['start'])
+        result = re.search(pattern, dict_['start'])
 
         x, y = int(result.group(1)), int(result.group(2))
-        args['start'] = (x, y)
+        self.start = (x, y)
 
         # parse deduction ratios
-        args['deductions'] = dict()
-        for ratio, deduction in dict_obj['deductions'].items():
-            args['deductions'][Fraction(ratio)] = deduction
-
-        return MapTest(**args)
+        self.deductions = dict()
+        for ratio, deduction in dict_['deductions'].items():
+            self.deductions[Fraction(ratio)] = deduction
 
 
     def run(self, path):
@@ -391,46 +380,29 @@ class MapTest(BaseTest):
 
 
     def __str__(self):
-        return "'{}' test of {}".format(self.json_type, self.target)
+        return "'{}' test of {}".format(self.yaml_type, self.target)
 
 
 
 class PicobotFile(PlainFile):
-    json_type = 'picobot'
+    yaml_type = 'picobot'
     extensions = ['txt', 'picobot']
     supported_tests = PlainFile.supported_tests.copy()
     supported_tests.append(MapTest)
 
 
-    def __init__(self, path, point_value, tests=None):
-        self.path = path
-        self.point_value = point_value
-        self.tests = tests if tests else []
+    def __init__(self, dict_):
+        BaseFile.__init__(self, dict_)
+
+        if 'tests' in dict_:
+            for t in dict_['tests']:
+                test_cls = filetypes.find_test_class(PicobotFile.yaml_type,
+                                                     t['type'])
+                self.tests.append(test_cls(t, PicobotFile.yaml_type))
 
 
     def __str__(self):
         return self.path + " (Picobot file)"
-
-
-    @staticmethod
-    def from_dict(dict_obj):
-        args = {'path': dict_obj['path'],
-                'point_value': dict_obj['point_value'],
-                'tests': []}
-
-        if 'tests' in dict_obj:
-            for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(PicobotFile.json_type, t['type'])
-                args['tests'].append(test_cls.from_dict(t, PicobotFile.json_type))
-
-        return PicobotFile(**args)
-
-
-    def to_dict(self):
-        return {'path': self.path,
-                'type': self.json_type,
-                'point_value': self.point_value,
-                'tests': [t.to_dict() for t in self.tests]}
 
 
     def run_tests(self):

@@ -66,32 +66,10 @@ if __name__ == '__main__':
 
         sys.exit()
 
-    if args.mode in ['generate', 'gen']:
-        plain_files = []
-        for file_path in args.solution_file:
-            plain_file = filetypes.plainfile.PlainFile(path=file_path,
-                                                       point_value=0,
-                                                       tests=None)
-            plain_files.append(plain_file)
-
-        crit = criteria.Criteria(assignment_name="generated assignment",
-                                 short_name="replaceme",
-                                 course_name="CS 101 at Acme College",
-                                 files=plain_files)
-        crit.to_json()
-        sys.exit()
-
     if args.mode in ['grade', 'submit']:
         import grader
         try:
-            if '.json' in args.criteria_file:
-                c = criteria.Criteria.from_json(args.criteria_file)
-            elif '.yml' in args.criteria_file:
-                c = criteria.Criteria.from_yaml(args.criteria_file)
-            else:
-                util.sprint("file is not a JSON or YAML file", error=True)
-                sys.exit(util.ERR_CRITERIA_IMPORT)
-
+            c = criteria.Criteria.from_yaml(args.criteria_file)
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
             sys.exit(util.ERR_CRITERIA_MISSING)
@@ -107,7 +85,7 @@ if __name__ == '__main__':
             traceback.print_exc()
             sys.exit(util.ERR_CRITERIA_IMPORT)
 
-        grade_filename = c.short_name + "-grade.txt"
+        grade_filename = c.name + (c.group if c.group else "") + "-grade.txt"
 
     if args.mode == 'grade':
         if os.path.isfile(grade_filename):
@@ -131,11 +109,11 @@ if __name__ == '__main__':
         chars = [str(i) for i in range(10)] + \
                 [chr(ord('a') + i) for i in range(26)]
 
-        rand = reduce(str.__add__, [random.choice(chars) for c in range(32)])
-        submit_dir = config.dropbox_dir + os.sep + c.short_name + \
-                     os.sep + rand + (os.sep + c.group if c.group else '')
+        rand = reduce(str.__add__, [random.choice(chars) for _ in range(32)])
+        submit_dir = config.dropbox_dir + os.sep + c.name + \
+                     os.sep + rand + (os.sep + c.group if c.group else "")
 
-        if not os.path.isdir(config.dropbox_dir + os.sep + c.short_name):
+        if not os.path.isdir(config.dropbox_dir + os.sep + c.name):
             util.sprint("cannot submit: dropbox directory has not been "
                         "set up for this assignment", error=True)
             sys.exit(util.ERR_NO_DROPBOX)
@@ -179,19 +157,6 @@ if __name__ == '__main__':
         proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
         crit_path = os.path.abspath(args.criteria_file)
 
-        # directory names that had missing files
-        try:
-            with open('missing_files.txt', 'r') as mf:
-                missing_dirs = [dir.strip() for dir in mf]
-        except FileNotFoundError:
-            missing_dirs = []
-
-        def write_missing_dirs():
-            with open('missing_files.txt', 'w') as mf:
-                for m in missing_dirs:
-                    mf.write(m + '\n')
-
-
         for subdir in args.submission_dirs:
             if not os.path.isdir(subdir):
                 util.sprint("invalid submission directory "
@@ -209,28 +174,22 @@ if __name__ == '__main__':
                 util.sprint("\nparent stopping (received interrupt)")
                 util.sprint("stopped while grading '{}'".format(subdir))
                 os.chdir(os.pardir)
-                write_missing_dirs()
                 sys.exit(util.ERR_INTERRUPTED)
 
-            if rv != 0:
-                if rv == util.EXIT_WITH_MISSING:
-                    if subdir not in missing_dirs:
-                        missing_dirs.append(subdir)
-                elif rv == util.ERR_GRADE_FILE_EXISTS:
-                    pass
-                else:
-                    util.sprint("child process encountered an error",
-                                error=True)
-                    os.chdir(os.pardir)
-                    sys.exit(rv)
+            okay_conditions = [util.EXIT_WITH_MISSING, util.ERR_GRADE_FILE_EXISTS,
+                               util.EXIT_WITH_DEFER]
+
+            if rv != 0 and rv not in okay_conditions:
+                util.sprint("child process encountered an error", error=True)
+                os.chdir(os.pardir)
+                sys.exit(rv)
 
             util.sprint("completed subdirectory '{}'".format(subdir))
             os.chdir(os.pardir)
 
-        write_missing_dirs()
         sys.exit()
 
-    elif args.mode == 'websubmit':
+    elif args.mode in ['websubmit', 'ws']:
         short_name = args.assignment_name[0]
         dropbox = config.dropbox_dir + os.sep + short_name
 
@@ -298,18 +257,11 @@ if __name__ == '__main__':
                 tar_path = groups[g][1]
 
                 with tarfile.open(tar_path) as tar:
-                    grd_file_path = username + os.sep + short_name + \
+                    grd_file_path = username + os.sep + short_name + g + \
                                     '-grade.txt'
                     grade_file = tar.extractfile(grd_file_path)
 
-                    # TODO skip the first four lines of the grade file:
-                    # this probably shouldn't be here
-                    n = 4
                     for line in grade_file:
-                        if n > 0:
-                            n -= 1
-                            continue
-
                         line = line.decode('utf-8')
                         m = total_pat.match(line)
                         if m:

@@ -4,6 +4,7 @@ import io
 import datetime
 
 from util import *
+from prompt import prompt
 
 
 def grade(criteria, submissions, filename):
@@ -21,15 +22,64 @@ def grade(criteria, submissions, filename):
                 found.append(f)
                 break
         else:
+            # in the case that the file is missing, we should prompt
+            # the grader to pick the incorrect file name or declare
+            # the file missing
+
             sprint(COLOR_YELLOW + "could not find "
                    "file '{}'".format(f.path) + COLOR_RESET)
-            num_missing += 1
+
+            if len(submissions) < 1:
+                continue
+
+            # find the submission directory (it could be the
+            # current working directory, but maybe not)
+            submission_dir, _ = os.path.split(submissions[0])
+
+            if not submission_dir:
+                submission_dir = os.path.abspath(os.curdir)
+
+            choices = [f for f in os.listdir(submission_dir)
+                       if os.path.isfile(os.path.join(submission_dir, f))]
+            choices.append("skip grading this submission now")
+            choices.append("mark the file as missing")
+
+            sprint("this student may have named the file incorrectly...")
+
+            # we prompt the grader for zero or one choice
+            got = prompt(choices, '1')
+            got = got[0]
+
+            if got == len(choices) - 1:
+                # declare the file missing
+                num_missing += 1
+                continue
+
+            elif got == len(choices) - 2:
+                sprint("skipping this submission; no grade file written")
+                sys.exit(EXIT_WITH_DEFER)
+
+            else:
+                # get absolute path to the old and new files
+                sname = choices[got]
+
+                opath = os.path.join(submission_dir, sname)
+                npath = os.path.join(submission_dir, crit_name)
+
+                try:
+                    os.rename(opath, npath)
+                except:
+                    import traceback
+
+                    sprint("error renaming incorrectly named file", error=True)
+                    traceback.print_exc()
+                    sys.exit(ERR_GRADING_MISC)
+
+                found.append(f)
 
     out = io.StringIO()
 
     try:
-        _write_header(out, criteria)
-
         for f in criteria.files:
             out.write(heading("{} [{} points]".format(f, f.point_value),
                               level=2))
@@ -37,10 +87,35 @@ def grade(criteria, submissions, filename):
             if f not in found:
                 total -= f.point_value
                 out.write("-{}\tnot submitted\n".format(f.point_value))
-            else:
-                sprint("running tests for " + str(f))
-                deduction_total = _write_results(out, f.run_tests())
-                total -= min(f.point_value, deduction_total)
+                continue
+
+            sprint("running tests for " + str(f))
+
+            points_taken = 0
+            points_taken += _write_results(out, f.run_tests())
+
+            file_stat = os.stat(f.path)
+            mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
+
+            if mtime > criteria.due:
+                if mtime > criteria.due + datetime.timedelta(hours=24):
+                    sprint(COLOR_YELLOW + "taking all points for >24-hour "
+                           "late-submitted {}".format(f) + COLOR_RESET)
+
+                    late_penalty = f.point_value
+                    out.write("-{}\tsubmitted >24 hours "
+                              "late\n".format(late_penalty))
+
+                else:
+                    sprint(COLOR_YELLOW + "taking 10% penalty for "
+                           "late-submitted {}".format(f) + COLOR_RESET)
+
+                    late_penalty = f.point_value * 0.10
+                    out.write("-{}\tsubmitted late\n".format(late_penalty))
+
+                points_taken += late_penalty
+
+            total -= min(f.point_value, points_taken)
 
             out.write("\n")
 
@@ -72,17 +147,6 @@ def grade(criteria, submissions, filename):
 
     sprint("grading completed")
     return num_missing
-
-
-def _write_header(f, crit):
-    f.write("Grade Report: {}\n".format(crit.assignment_name))
-    f.write("{}\n".format(crit.course_name))
-
-    today = datetime.date.today()
-    day = today.strftime("%d")
-    if day[0] == "0":
-        day = day[1]
-    f.write(today.strftime("%B {}, %Y".format(day)) + "\n\n")
 
 
 def _write_results(f, results, indent='\t'):

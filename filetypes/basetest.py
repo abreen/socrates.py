@@ -1,30 +1,25 @@
-from abc import ABCMeta, abstractmethod
-
-
 class BaseTest:
-    __metaclass__ = ABCMeta
+    # the test's type from the YAML file (e.g., 'review')
+    yaml_type = None
 
-    # the test's type in the JSON object (e.g., 'review')
-    json_type = None
+    def __init__(self, dict_, file_type=None):
+        if 'description' in dict_:
+            self.description = dict_['description']
+        else:
+            self.description = None
 
-    def __init__(self, description, deduction):
-        self.description = description
-        self.deduction = deduction
+        if 'deduction' in dict_:
+            self.deduction = dict_['deduction']
+        else:
+            self.deduction = None
 
 
-    @staticmethod
-    @abstractmethod
-    def from_dict(dict_obj, file_type):
+    # note: when implemented, this method should return a dict
+    # with (at least) 'deduction', 'description', and 'notes' keys,
+    # or None if the test did not fail
+    def run(self):
         raise NotImplementedError()
 
 
-    @abstractmethod
-    def run(self):
-        return {'deduction': self.deduction,
-                'description': 'not yet implemented',
-                'notes': []}
-        # or, if the test did not fail, return None
-
-
     def __str__(self):
-        return "'{}' test of {}".format(self.json_type, self.target)
+        return "'{}' test of".format(self.yaml_type)

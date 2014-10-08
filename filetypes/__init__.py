@@ -9,12 +9,12 @@ def _traverse(cls):
     """Given a root class object (any subclass of BaseFile), add this class to
     the _file_handlers dictionary and its subclasses, recursively. For each
     test type that the file type supports, add it to the _test_handlers
-    dictionary, keyed by a (file type JSON keyword, test type JSON keyword) pair.
+    dictionary, keyed by a (file type YAML keyword, test type YAML keyword) pair.
     """
-    _file_handlers[cls.json_type] = cls
+    _file_handlers[cls.yaml_type] = cls
 
     for t in cls.supported_tests:
-        _test_handlers[(cls.json_type, t.json_type)] = t
+        _test_handlers[(cls.yaml_type, t.yaml_type)] = t
 
     for subcls in cls.__subclasses__():
         _traverse(subcls)

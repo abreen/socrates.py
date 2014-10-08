@@ -1,65 +1,64 @@
 import filetypes
 from filetypes.plainfile import PlainFile, ReviewTest
-from filetypes.basefile import TestSet
+from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 
 from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, COLOR_RESET
 
 
 class EvalTest(BaseTest):
-    json_type = 'eval'
+    yaml_type = 'eval'
 
-    def __init__(self, target, description, deduction=None,
-                 arguments=None, input=None, value=None,
-                 output=None, random_seed=None):
-        self.target = target
-        self.description = description
+    def __init__(self, dict_, file_type):
+        super().__init__(dict_, file_type)
 
-        self.deduction = deduction
-        self.random_seed = random_seed
+        # note: self.description might be None if no description was
+        # specified in the YAML file; this is okay, since we can construct
+        # a default one after self.target is set
+
+        # target could be a PythonFunction or a PythonVariable
+        # potentially confusing: this is None initially, but it should be
+        # set by the PythonFunction or PythonVariable that
+        # initially creates an instance of this object
+        self.target = None
+
+        # this test might not have a deduction if it's inside a test set
+        if 'deduction' in dict_:
+            self.deduction = dict_['deduction']
+
+        # add optional components, if present (except 'arguments' and
+        # 'output', which are special and handled below)
+        for a in ['input', 'value', 'random_seed']:
+            if a in dict_:
+                setattr(self, a, dict_[a])
+            else:
+                setattr(self, a, None)
 
         self.arguments = []
-        if arguments:
-            if type(arguments) is list:
-                self.arguments = arguments
-            elif type(arguments) is dict:
-                for param_name, param_val in arguments.items():
+        if 'arguments' in dict_:
+            if type(dict_['arguments']) is list:
+                self.arguments = dict_['arguments']
+            elif type(dict_['arguments']) is dict:
+                for param_name, param_val in dict_['arguments'].items():
                     self.arguments.append((param_name, param_val))
             else:
                 raise ValueError("arguments must be in a list or dictionary")
 
-        self.input = input              # what input to send
-        self.value = value              # expected return value
-
-        # get expected output; this may be an exact string or a regex
-        if type(output) is dict and 'match' in output:
-            import re
-            pattern = re.compile(output['match'])
-            self.output = {'match': pattern}
+        # store expected output; this may be an exact string or a regex
+        if 'output' in dict_:
+            if type(dict_['output']) is dict and 'match' in dict_['output']:
+                import re
+                pattern = re.compile(dict_['output']['match'])
+                self.output = {'match': pattern}
+            else:
+                self.output = dict_['output']
         else:
-            self.output = output
+            self.output = None
 
 
     def __str__(self):
         return "eval of {} ({} pts.)".format(self.target,
                                              self.deduction)
-
-
-    @staticmethod
-    def from_dict(dict_obj, file_type):
-        args = {'target': None,
-                'description': dict_obj['description']}
-
-        # this test might not have a deduction if it's inside a test set
-        if 'deduction' in dict_obj:
-            args['deduction'] = dict_obj['deduction']
-
-        # add optional components, if present
-        for a in ['arguments', 'input', 'value', 'output', 'random_seed']:
-            if a in dict_obj:
-                args[a] = dict_obj[a]
-
-        return EvalTest(**args)
 
 
     def run(self, cxt):
@@ -84,17 +83,39 @@ class EvalTest(BaseTest):
 
         fn_call = "{}.{}({})".format(mod_name, fn_name, formatted_args)
 
+        building_desc = False
+        if not self.description:
+            building_desc = True
+            self.description = fn_call + " should "
+
         if self.input:
             in_buf = io.StringIO(self.input)
             sys.stdin = in_buf
+
+            if building_desc:
+                self.description = "on input {}, ".format(repr(self.input)) + \
+                                   self.description
 
         if self.output:
             out_buf = io.StringIO()
             sys.stdout = out_buf
 
+            if building_desc:
+                self.description += "output {} ".format(repr(self.output))
+
+        if self.value and building_desc:
+            if self.output:
+                self.description += "and "
+
+            self.description += "return {}".format(repr(self.value))
+
         if self.random_seed:
             import random
             random.seed(self.random_seed)
+
+            if building_desc:
+                self.description = "with random seed {}, ".format(
+                                   self.random_seed) + self.description
 
         try:
             return_value = eval(fn_call, globals(), {mod_name:context})
@@ -280,26 +301,19 @@ class EvalTest(BaseTest):
 
 
 class PythonReviewTest(ReviewTest):
-    def __init__(self, target, description, deduction, print_target=True):
-        super().__init__(description, deduction)
+    def __init__(self, dict_, file_type):
+        super().__init__(dict_, file_type)
 
-        # target can be a PythonFile or PythonFunction
-        # TODO this is None initially (confusing)
-        self.target = target
+        if 'print_target' in dict_:
+            self.print_target = dict_['print_target']
+        else:
+            self.print_target = True
 
-        self.print_target = print_target
-
-
-    @staticmethod
-    def from_dict(dict_obj, file_type):
-        args = {'description': dict_obj['description'],
-                'deduction': dict_obj['deduction'],
-                'target': None}
-
-        if 'print_target' in dict_obj:
-            args['print_target'] = dict_obj['print_target']
-
-        return PythonReviewTest(**args)
+        # target could be a PythonFile, a PythonFunction or a PythonVariable
+        # potentially confusing: this is None initially, but it should be
+        # set by the PythonFile, PythonFunction, or PythonVariable that
+        # initially creates an instance of this object
+        self.target = None
 
 
     def run(self, context):
@@ -350,75 +364,55 @@ class PythonReviewTest(ReviewTest):
                 temp.write((var_src + '\n').encode('utf-8'))
                 temp.flush()
 
+        else:
+            raise ValueError("invalid target for this review test")
 
         return super().run(temp.name)
 
 
 
 class PythonFile(PlainFile):
-    json_type = 'python'
+    yaml_type = 'python'
     extensions = ['py']
     supported_tests = PlainFile.supported_tests.copy()
     supported_tests.append(PythonReviewTest)
     supported_tests.append(EvalTest)
 
 
-    def __init__(self, path, point_value=0, error_deduction=None, tests=None,
-                 functions=None, variables=None):
-        self.path = path
-        self.tests = tests if tests else []
-        self.functions = functions if functions else []
-        self.variables = variables if variables else []
-        self.error_deduction = error_deduction
+    def __init__(self, dict_):
+        BaseFile.__init__(self, dict_)
 
-        if point_value:
-            self.point_value = point_value
+        self.functions = []
+        self.variables = []
+
+        if 'error_deduction' in dict_:
+            self.error_deduction = dict_['error_deduction']
+        else:
+            self.error_deduction = None
+
+        if 'tests' in dict_:
+            for t in dict_['tests']:
+                test_cls = filetypes.find_test_class(PythonFile.yaml_type,
+                                                     t['type'])
+                self.tests.append(test_cls(t, PythonFile.yaml_type))
+
+        if 'functions' in dict_:
+            for f in dict_['functions']:
+                self.functions.append(PythonFunction(f))
+
+        if 'variables' in dict_:
+            for v in dict_['variables']:
+                self.variables.append(PythonVariable(v))
+
+        # set target of tests for module to this new PythonFile object
+        for test in self.tests:
+            test.target = self
+
+        if 'point_value' in dict_:
+            self.point_value = dict_['point_value']
         else:
             self.point_value = sum([f.point_value for f in self.functions]) + \
                                sum([v.point_value for v in self.variables])
-
-
-    @staticmethod
-    def from_dict(dict_obj):
-        args = {'path': dict_obj['path'],
-                'tests': [],
-                'functions': [],
-                'variables': []}
-
-        if 'point_value' in dict_obj:
-            args['point_value'] = dict_obj['point_value']
-
-        if 'error_deduction' in dict_obj:
-            args['error_deduction'] = dict_obj['error_deduction']
-
-        if 'tests' in dict_obj:
-            for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(PythonFile.json_type, t['type'])
-                args['tests'].append(test_cls.from_dict(t, PythonFile.json_type))
-
-        if 'functions' in dict_obj:
-            for f in dict_obj['functions']:
-                args['functions'].append(PythonFunction.from_dict(f))
-
-        if 'variables' in dict_obj:
-            for v in dict_obj['variables']:
-                args['variables'].append(PythonVariable.from_dict(v))
-
-
-        # set target of tests for module to this new PythonFile object
-        new = PythonFile(**args)
-        for test in new.tests:
-            test.target = new
-
-        return new
-
-
-    def to_dict(self):
-        return {'path': self.path,
-                'type': self.json_type,
-                'point_value': self.point_value,
-                'tests': [t.to_dict() for t in self.tests],
-                'functions': [f.to_dict() for f in self.functions]}
 
 
     def run_tests(self):
@@ -581,13 +575,21 @@ class PythonFunction:
     type 'python'.
     """
 
-    def __init__(self, name, parameters, point_value, tests=None):
-        self.name = name
-        self.parameters = parameters                # list of strings
-        self.point_value = point_value
+    def __init__(self, dict_):
+        self.name = dict_['function_name']
+        self.parameters = dict_['parameters']
+        self.point_value = dict_['point_value']
 
-        # function-level tests
-        self.tests = [] if not tests else tests
+        self.tests = []
+        if 'tests' in dict_:
+            for t in dict_['tests']:
+                test_cls = filetypes.find_test_class(PythonFile.yaml_type,
+                                                     t['type'])
+                self.tests.append(test_cls(t, PythonFile.yaml_type))
+
+        # set target of tests for module to this new PythonFunction object
+        for test in self.tests:
+            test.target = self
 
 
     def __str__(self):
@@ -600,33 +602,6 @@ class PythonFunction:
         return "function {}".format(name)
 
 
-    @staticmethod
-    def from_dict(dict_obj):
-        args = {'name': dict_obj['function_name'],
-                'parameters': dict_obj['parameters'],
-                'point_value': dict_obj['point_value'],
-                'tests': []}
-
-        if 'tests' in dict_obj:
-            for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(PythonFile.json_type, t['type'])
-                args['tests'].append(test_cls.from_dict(t, PythonFile.json_type))
-
-        # set target of tests for module to this new PythonFunction object
-        new = PythonFunction(**args)
-        for test in new.tests:
-            test.target = new
-
-        return new
-
-
-    def to_dict(self):
-        return {'function_name': self.name,
-                'parameters': self.parameters,
-                'point_value': self.point_value,
-                'tests': [t.to_dict() for t in self.tests]}
-
-
 
 class PythonVariable:
     """Utility class representing a Python variable that the criteria specifies
@@ -634,35 +609,24 @@ class PythonVariable:
     type 'python'.
     """
 
-    def __init__(self, name, point_value, tests=None):
-        self.name = name
-        self.point_value = point_value
+    def __init__(self, dict_):
+        self.name = dict_['variable_name']
+        self.point_value = dict_['point_value']
 
-        # variable-level tests
-        self.tests = [] if not tests else tests
+        self.tests = []
+        if 'tests' in dict_:
+            for t in dict_['tests']:
+                test_cls = filetypes.find_test_class(PythonFile.yaml_type,
+                                                     t['type'])
+                self.tests.append(test_cls(t, PythonFile.yaml_type))
+
+        # set target of tests for module to this new PythonVariable object
+        for test in self.tests:
+            test.target = self
 
 
     def __str__(self):
         return "variable {}".format(self.name)
-
-
-    @staticmethod
-    def from_dict(dict_obj):
-        args = {'name': dict_obj['variable_name'],
-                'point_value': dict_obj['point_value'],
-                'tests': []}
-
-        if 'tests' in dict_obj:
-            for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(PythonFile.json_type, t['type'])
-                args['tests'].append(test_cls.from_dict(t, PythonFile.json_type))
-
-        # set target of tests for module to this new PythonVariable object
-        new = PythonVariable(**args)
-        for test in new.tests:
-            test.target = new
-
-        return new
 
 
     def to_dict(self):

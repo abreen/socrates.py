@@ -1,35 +1,22 @@
-from abc import ABCMeta, abstractmethod
-
 import filetypes
 from filetypes.basetest import BaseTest
 
 
 class TestSet(BaseTest):
-    json_type = 'set'
+    yaml_type = 'set'
 
-    def __init__(self, deductions, members):
-        super().__init__("", 0)
+    def __init__(self, dict_, file_type):
+        super().__init__(dict_, file_type)
+        self.deductions = dict_['deductions']
 
-        self.deductions = deductions
-        self.members = members
+        self.members = []
+        for m in dict_['members']:
+            cls = filetypes.find_test_class(file_type, m['type'])
+            self.members.append(cls(m, file_type))
 
 
     def __str__(self):
         return "test set"
-
-
-    @staticmethod
-    def from_dict(dict_obj, file_type):
-        args = {'deductions': dict_obj['deductions']}
-
-        members = []
-        for m in dict_obj['members']:
-            cls = filetypes.find_test_class(file_type, m['type'])
-            members.append(cls.from_dict(m, file_type))
-
-        args['members'] = members
-
-        return TestSet(**args)
 
 
     def run(self, context):
@@ -69,48 +56,25 @@ class TestSet(BaseTest):
 
 
 class BaseFile:
-    __metaclass__ = ABCMeta
+    # the file's type in the YAML file (e.g., 'plain')
+    yaml_type = None
 
-    # the file's type in the JSON object (e.g., 'plain')
-    json_type = None
-
-    # list of extensions this type uses (e.g., 'txt') (not currently used)
+    # list of extensions this type uses (e.g., 'txt')
     extensions = None
 
     # list of test classes that can be used on the file
     supported_tests = [TestSet]
 
 
-    def __init__(self, path, point_value, tests=None):
-        self.path = path
-        self.point_value = point_value
-        self.tests = tests if tests else []
+    def __init__(self, dict_):
+        self.path = dict_['path']
+        self.point_value = dict_['point_value']
+        self.tests = []
 
 
-    @classmethod
-    def from_dict(cls, dict_obj):
-        args = {'path': dict_obj['path'],
-                'point_value': dict_obj['point_value'],
-                'tests': []}
-
-        if 'tests' in dict_obj:
-            for t in dict_obj['tests']:
-                test_cls = filetypes.find_test_class(cls.json_type, t['type'])
-                args['tests'].append(test_cls.from_dict(t, cls.json_type))
-
-        return cls(**args)
-
-
-    def to_dict(self):
-        return {'path': self.path,
-                'type': self.json_type,
-                'point_value': self.point_value,
-                'tests': [t.to_dict() for t in self.tests]}
+    def __str__(self):
+        return "{} ({} file)".format(self.path, self.yaml_type)
 
 
     def run_tests(self):
         return [t.run() for t in self.tests]
-
-
-    def __str__(self):
-        return "{} ({} file)".format(self.path, self.json_type)
