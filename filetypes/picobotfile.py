@@ -1,6 +1,7 @@
 import filetypes
 from filetypes.plainfile import PlainFile
 from filetypes.basetest import BaseTest
+from filetypes.basefile import BaseFile
 import util
 
 MAX_STEPS = 1e4
