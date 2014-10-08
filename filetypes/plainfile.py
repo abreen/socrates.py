@@ -73,7 +73,7 @@ class ReviewTest(BaseTest):
                            self.deduction)]
             got = prompt.prompt(choices, '1')
 
-            if got == 0:
+            if got == [1]:
                 return {'deduction': self.deduction,
                         'description': self.description}
             else:
