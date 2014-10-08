@@ -1,6 +1,6 @@
 from util import *
 
-PROMPT_MODES = [1, '1', '*', '+']
+PROMPT_MODES = [1, '1', '*', '+', '?']
 
 def prompt(choices, mode='*'):
     if mode not in PROMPT_MODES:
@@ -20,6 +20,10 @@ def prompt(choices, mode='*'):
     elif mode in [1, '1']:
         header = "select one:"
         max, min = 1, 1
+
+    elif mode == '?':
+        header = "select zero or one:"
+        max, min = 1, 0
 
     letters = list(map(lambda x: chr(ord('a') + x), range(len(choices))))
 

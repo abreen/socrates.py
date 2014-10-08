@@ -1,12 +1,13 @@
 from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
+import prompt
 
 from util import sprint, plural, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
                  COLOR_INVERTED, COLOR_RESET
 
 
-DEDUCTION_MODE_TYPES = [1, '1', '*', '+']
+DEDUCTION_MODE_TYPES = prompt.PROMPT_MODES
 
 def _print_file(path):
     f = open(path, 'rb')
