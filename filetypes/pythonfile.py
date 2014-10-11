@@ -88,7 +88,7 @@ class EvalTest(BaseTest):
             building_desc = True
             self.description = fn_call + " should "
 
-        if self.input:
+        if self.input is not None:
             in_buf = io.StringIO(self.input)
             sys.stdin = in_buf
 
@@ -96,14 +96,14 @@ class EvalTest(BaseTest):
                 self.description = "on input {}, ".format(repr(self.input)) + \
                                    self.description
 
-        if self.output:
+        if self.output is not None:
             out_buf = io.StringIO()
             sys.stdout = out_buf
 
             if building_desc:
                 self.description += "output {} ".format(repr(self.output))
 
-        if self.value and building_desc:
+        if self.value is not None and building_desc:
             if self.output:
                 self.description += "and "
 
