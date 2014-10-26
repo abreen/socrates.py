@@ -1,5 +1,5 @@
 __all__ = ['basefile', 'plainfile', 'pythonfile', 'picobotfile',
-           'logisimfile']
+           'logisimfile', 'hmmmfile']
 
 from filetypes import basefile
 from filetypes import basetest
