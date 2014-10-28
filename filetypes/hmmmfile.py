@@ -7,6 +7,9 @@ import filetypes
 import hmc
 
 
+def _not_boring(s):
+    return s.strip() not in ['', '\t', '\n']
+
 class HMMMEvalTest(BaseTest):
     yaml_type = 'eval'
 
@@ -46,7 +49,14 @@ class HMMMEvalTest(BaseTest):
             out_buf = io.StringIO()
             sys.stdout = out_buf
 
-        hmc.run(self.file.binary_name, debug=False)
+        try:
+            hmc.run(self.file.binary_name, debug=False)
+        except SystemExit:
+            sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+            err = filter(_not_boring, out_buf.getvalue().split('\n')[-5:-1])
+            return {'deduction': self.deduction,
+                    'description': "simluator exited with an error",
+                    'notes': err}
 
         # restore default standard in/out
         sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
