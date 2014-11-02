@@ -2,6 +2,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
+from util import sprint, COLOR_YELLOW, COLOR_RESET
 
 # for HMMM assembler and simulator
 import hmc
@@ -41,6 +42,8 @@ class HMMMEvalTest(BaseTest):
         import io
         import sys
 
+        sprint("running HMMM test...")
+
         if self.input is not None:
             in_buf = io.StringIO(self.input)
             sys.stdin = in_buf
@@ -53,7 +56,12 @@ class HMMMEvalTest(BaseTest):
             hmc.run(self.file.binary_name, debug=False)
         except SystemExit:
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+
+            sprint(COLOR_YELLOW + "failing test because the simulator "
+                   "exited uncleanly" + COLOR_RESET)
+
             err = filter(_not_boring, out_buf.getvalue().split('\n')[-5:-1])
+
             return {'deduction': self.deduction,
                     'description': "simluator exited with an error",
                     'notes': err}
