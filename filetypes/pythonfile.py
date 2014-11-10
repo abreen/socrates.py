@@ -81,6 +81,14 @@ class EvalTest(BaseTest):
 
         formatted_args = self.__format_args(context)
 
+        if type(formatted_args) is tuple:
+            return {'deduction': self.deduction,
+                    'description': self.description,
+                    'notes': ["cannot test function",
+                              "unexpected number of parameters "
+                              "(expected {}, submission has {})".format(
+                              formatted_args[0], formatted_args[1])]}
+
         fn_call = "{}.{}({})".format(mod_name, fn_name, formatted_args)
 
         building_desc = False
@@ -175,6 +183,13 @@ class EvalTest(BaseTest):
                 func_obj = _find_function_from_cxt(cxt, self.target.name)
                 student_param_names = list(signature(func_obj).parameters)
                 altered_args = []
+
+                # if the number of parameters in the criteria file does not
+                # match the number of the student's submission, there's no way
+                # to format the arguments
+                if len(self.target.parameters) != len(student_param_names):
+                    t = (len(self.target.parameters), len(student_param_names))
+                    return t
 
                 # for each parameter in the criteria
                 for i in range(len(self.target.parameters)):
