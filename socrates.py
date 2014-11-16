@@ -118,7 +118,7 @@ if __name__ == '__main__':
                         "set up for this assignment", error=True)
             sys.exit(util.ERR_NO_DROPBOX)
 
-        os.umask(0o022)
+        os.umask(0o002)
         try:
             util.makedirs(submit_dir)
         except:
