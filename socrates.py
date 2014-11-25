@@ -106,10 +106,8 @@ if __name__ == '__main__':
         import tarfile
         import random
 
-        chars = [str(i) for i in range(10)] + \
-                [chr(ord('a') + i) for i in range(26)]
-
-        rand = reduce(str.__add__, [random.choice(chars) for _ in range(32)])
+        choices = [random.choice(util.ALPHANUMERICS) for _ in range(32)]
+        rand = reduce(str.__add__, choices)
         submit_dir = config.dropbox_dir + os.sep + c.name + \
                      os.sep + rand + (os.sep + c.group if c.group else "")
 

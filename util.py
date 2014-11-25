@@ -25,6 +25,11 @@ ERR_BAD_DROPBOX = 10
 EXIT_WITH_MISSING = 100
 EXIT_WITH_DEFER = 101
 
+ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
+           [chr(ord('A') + i) for i in range(26)]
+
+ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
+
 quiet_mode = False
 log_file = None
 sprint_prefix = ""
