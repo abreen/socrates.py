@@ -3,7 +3,33 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 
-from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, COLOR_RESET
+from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, \
+                 COLOR_RED, COLOR_RESET, ALPHABET
+
+import yaml
+
+BASIC_TYPES = [str, int, float, bool, list, dict]
+
+class CriteriaObject:
+    """An object type specified by the criteria is represented using an
+    instance of this class. When the student's module is loaded, this
+    object is "converted" to an instance of a class from the student
+    submission.
+    """
+
+    def __init__(self, class_name, attrs):
+        self.class_name = class_name
+        self.attrs = attrs
+
+
+def crit_obj_constructor(loader, suffix, node):
+    class_name = suffix.split(':')[-1]
+    attrs = loader.construct_mapping(node)
+    return CriteriaObject(class_name=class_name, attrs=attrs)
+
+
+yaml.add_multi_constructor(u'!object', crit_obj_constructor)
+
 
 
 class EvalTest(BaseTest):
@@ -16,7 +42,7 @@ class EvalTest(BaseTest):
         # specified in the YAML file; this is okay, since we can construct
         # a default one after self.target is set
 
-        # target could be a PythonFunction or a PythonVariable
+        # target could be a PythonFunction, PythonVariable or PythonMethod
         # potentially confusing: this is None initially, but it should be
         # set by the PythonFunction or PythonVariable that
         # initially creates an instance of this object
@@ -37,12 +63,15 @@ class EvalTest(BaseTest):
         self.arguments = []
         if 'arguments' in dict_:
             if type(dict_['arguments']) is list:
-                self.arguments = dict_['arguments']
+                raise ValueError("specifying arguments positionally is no "
+                                 "longer allowed; specify them as a dict")
+
             elif type(dict_['arguments']) is dict:
                 for param_name, param_val in dict_['arguments'].items():
                     self.arguments.append((param_name, param_val))
             else:
-                raise ValueError("arguments must be in a list or dictionary")
+                raise ValueError("arguments to this eval test must "
+                                 "be specified")
 
         # store expected output; this may be an exact string or a regex
         if 'output' in dict_:
@@ -55,6 +84,17 @@ class EvalTest(BaseTest):
         else:
             self.output = None
 
+        # need prestate and poststate attributes if we are testing a
+        # method so that we can check how a method might affect the
+        # called object
+        self.before = None
+        if 'before' in dict_:
+            self.before = dict_['before']
+
+        self.after = None
+        if 'after' in dict_:
+            self.after = dict_['after']
+
 
     def __str__(self):
         return "eval of {} ({} pts.)".format(self.target,
@@ -62,7 +102,9 @@ class EvalTest(BaseTest):
 
 
     def run(self, cxt):
-        if type(self.target) is PythonFunction:
+        sprint("running eval test on {}".format(self.target))
+
+        if type(self.target) in [PythonFunction, PythonMethod]:
             return self.__run_function(cxt)
         elif type(self.target) is PythonVariable:
             return self.__run_variable(cxt)
@@ -75,58 +117,71 @@ class EvalTest(BaseTest):
     def __run_function(self, context):
         import sys
         import io
+        import random
 
         mod_name = context.__name__
         fn_name = self.target.name
+        testing_method = type(self.target) is PythonMethod
 
-        formatted_args = self.__format_args(context)
+        before = self.before
+        after = self.after
 
-        if type(formatted_args) is tuple:
+        if before and type(before) is CriteriaObject:
+            before = _convert_using_cxt(context, before)
+
+        if after and type(after) is CriteriaObject:
+            after = _convert_using_cxt(context, after)
+
+        args = self.__get_args(mod_name, context)
+
+        if type(args) is tuple:
             return {'deduction': self.deduction,
                     'description': self.description,
                     'notes': ["cannot test function",
                               "unexpected number of parameters "
                               "(expected {}, submission has {})".format(
-                              formatted_args[0], formatted_args[1])]}
+                              args[0], args[1])]}
 
-        fn_call = "{}.{}({})".format(mod_name, fn_name, formatted_args)
+        locals = {mod_name: context}
+        vars = ALPHABET[:len(args)]
+        args_strings = []
 
-        building_desc = False
+        for i in range(len(vars)):
+            locals[vars[i]] = args[i][1]
+            args_strings.append("{}={}".format(args[i][0], vars[i]))
+
+        fn_call = "{}({})".format(fn_name, ', '.join(args_strings))
+
+        if testing_method:
+            locals["obj"] = before
+            code = "obj." + fn_call
+        else:
+            code = mod_name + "." + fn_call
+
         if not self.description:
-            building_desc = True
-            self.description = fn_call + " should "
+            self.description = self.__build_description()
 
         if self.input is not None:
             in_buf = io.StringIO(self.input)
             sys.stdin = in_buf
 
-            if building_desc:
-                self.description = "on input {}, ".format(repr(self.input)) + \
-                                   self.description
-
         if self.output is not None:
             out_buf = io.StringIO()
             sys.stdout = out_buf
 
-            if building_desc:
-                self.description += "output {} ".format(repr(self.output))
-
-        if self.value is not None and building_desc:
-            if self.output:
-                self.description += "and "
-
-            self.description += "return {}".format(repr(self.value))
-
         if self.random_seed:
-            import random
             random.seed(self.random_seed)
 
-            if building_desc:
-                self.description = "with random seed {}, ".format(
-                                   self.random_seed) + self.description
-
         try:
-            return_value = eval(fn_call, globals(), {mod_name:context})
+            return_value = eval(code, globals(), locals)
+        except KeyboardInterrupt:
+            sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+
+            sprint(COLOR_RED + "interrupting a test" + COLOR_RESET)
+
+            return {'deduction': self.deduction,
+                    'description': self.description,
+                    'notes': ["test was interrupted by the grader"]}
         except:
             import sys
             err = sys.exc_info()
@@ -135,6 +190,7 @@ class EvalTest(BaseTest):
 
             sprint(COLOR_YELLOW + "failing a test due to an "
                    "error ({})".format(err[1]) + COLOR_RESET)
+
             return {'deduction': self.deduction,
                     'description': self.description,
                     'notes': [str(err[1]) + " (" + str(err[0].__name__) + ")"]}
@@ -151,12 +207,37 @@ class EvalTest(BaseTest):
         if self.output is not None:
             passed = passed and self.__output_matches(output)
 
+        # if we are testing a method and there are post-state requirements
+        # for the method, fail the test if the object doesn't match the
+        # required post-state
+        if testing_method and after is not None:
+            # TODO should not be using object's own __eq__ here
+            if locals["obj"] != after:
+                passed = False
+
         if passed:
             return None
         else:
-            result =  {'deduction': self.deduction,
-                       'description': self.description,
-                       'notes': []}
+            result = {'deduction': self.deduction,
+                      'description': self.description,
+                      'notes': []}
+
+            if self.arguments:
+                for arg, val in self.arguments:
+                    if type(val) in BASIC_TYPES:
+                        s = "where '{}' is {}".format(arg, repr(val))
+                    elif type(val) is CriteriaObject:
+                        s = "where '{}' has attributes {}".format(
+                            arg, val.attrs)
+                    else:
+                        s = "where '{}' is {}".format(arg, val)
+
+                    result['notes'].append(s)
+
+            if testing_method and before is not None:
+                result['notes'].append("called object before "
+                                       "the method call: "
+                                       "{}".format(before))
 
             if self.value is not None:
                 result['notes'].append("expected value: " + repr(self.value))
@@ -169,49 +250,116 @@ class EvalTest(BaseTest):
                 result['notes'].append("expected output: " + eo)
                 result['notes'].append("produced output: " + po)
 
+            if testing_method and after is not None:
+                result['notes'].append("expected object after "
+                                       "the method runs: "
+                                       "{}".format(after))
+
             return result
 
 
-    def __format_args(self, cxt):
-        if self.arguments:
-            # the student may have chosen different names for their function's
-            # parameters; we must create a mapping from the names in the
-            # criteria to the names in the submission
-            if type(self.arguments[0]) is tuple:
-                from inspect import signature
+    def __build_description(self):
+        """Builds a description automatically from the target of this eval
+        test, using the arguments to the function or method (if applicable),
+        any expected output on given input, return values, and object state
+        before and after (if applicable).
+        """
+        s = ""
 
-                func_obj = _find_function_from_cxt(cxt, self.target.name)
-                student_param_names = list(signature(func_obj).parameters)
-                altered_args = []
+        if self.random_seed is not None:
+            s += "on random seed {}, ".format(self.random_seed)
 
-                # if the number of parameters in the criteria file does not
-                # match the number of the student's submission, there's no way
-                # to format the arguments
-                if len(self.target.parameters) != len(student_param_names):
-                    t = (len(self.target.parameters), len(student_param_names))
-                    return t
+        if self.input is not None:
+            s += "with input {}, ".format(repr(self.input))
 
-                # for each parameter in the criteria
-                for i in range(len(self.target.parameters)):
-                    # find the index of argument value from the eval test
-                    for j in range(len(self.arguments)):
-                        if self.arguments[j][0] == self.target.parameters[i]:
-                            break
+        if self.before is not None:
+            s += "with a called object with attributes {}, ".format(
+                 self.before.attrs)
 
-                    # val holds the value of this parameter from the eval test
-                    val = self.arguments[j][1]
+        s += str(self.target)    # e.g. "function test(a, b)"
+        s += " should "
 
-                    # add this value with the student-given name
-                    altered_args.append((student_param_names[i], val))
+        if self.output is not None:
+            s += "output {}".format(repr(self.output))
 
-                args = ["{}={}".format(k, repr(v)) for (k, v) in altered_args]
-                return ', '.join(args)
-            else:
-                # will not use keyword arguments, just positional
-                return ', '.join(self.arguments)
-        else:
-            # function takes no arguments
-            return ''
+        if self.value is not None:
+            if self.output is not None:
+                s += " and "
+
+            s += "return {}".format(repr(self.value))
+
+        if self.after is not None:
+            s += ", ending with the attributes {}".format(
+                 self.after.attrs)
+
+        if self.output is not None and \
+           self.value is not None and \
+           self.after is not None:
+            s += "should work correctly"
+
+        return s
+
+
+    def __get_arg_value(self, param_name):
+        """Given the name of a parameter to a function or method, find the
+        value of the actual argument to that parameter as specified by this
+        eval test, or None if there is no such parameter.
+        """
+        for arg_name, val in self.arguments:
+            if arg_name == param_name:
+                return val
+
+        return None
+
+
+    def __get_args(self, mod_name, cxt):
+        """Given a particular module context (the student's submitted
+        module, after being imported), construct and return a list of
+        tuples (n, m) such that all n are the parameter names used by
+        the student and all m are the values for those parameters
+        (i.e., arguments) specified by this eval test in the criteria
+        file. Importantly, this function "converts" CriteriaObject objects
+        that were created at the time the YAML file was loaded into actual
+        instances of the desired class. (This has to happen here, as opposed
+        to when the YAML file is loaded, since the student's module is now
+        imported.) If the function or method in the context has the incorrect
+        number of parameters, a tuple (a, b) is returned, where a is the
+        expected number of parameters and b is the student's number of
+        parameters. For methods, this function does not return a tuple
+        containing "self".
+        """
+        if not self.arguments:
+            return []
+
+        from inspect import signature
+
+        func_obj = _find_function_from_cxt(cxt, self.target)
+        student_param_names = list(signature(func_obj).parameters)
+
+        # for methods, we should remove "self" from the
+        # parameter list
+        if type(self.target) is PythonMethod:
+            del student_param_names[0]
+
+        args = []
+
+        # if the number of parameters in the criteria file does not
+        # match the number of the student's submission, we return
+        # an error tuple
+        if len(self.target.parameters) != len(student_param_names):
+            t = (len(self.target.parameters), len(student_param_names))
+            return t
+
+        for i in range(len(self.target.parameters)):
+            param_name = self.target.parameters[i]
+            arg_val = self.__get_arg_value(param_name)
+
+            if type(arg_val) is CriteriaObject:
+                arg_val = _convert_using_cxt(cxt, arg_val)
+
+            args.append((student_param_names[i], arg_val))
+
+        return args
 
 
     def __run_variable(self, context):
@@ -344,9 +492,9 @@ class PythonReviewTest(ReviewTest):
                 temp.write(open(self.target.path, 'rb').read())
                 temp.flush()
 
-        elif type(self.target) is PythonFunction:
+        elif type(self.target) in [PythonFunction, PythonMethod]:
             import inspect
-            func_obj = _find_function_from_cxt(context, self.target.name)
+            func_obj = _find_function_from_cxt(context, self.target)
 
             if not func_obj:
                 return {'deduction': self.deduction,
@@ -398,6 +546,7 @@ class PythonFile(PlainFile):
         BaseFile.__init__(self, dict_)
 
         self.functions = []
+        self.classes = []
         self.variables = []
 
         if 'error_deduction' in dict_:
@@ -414,6 +563,10 @@ class PythonFile(PlainFile):
         if 'functions' in dict_:
             for f in dict_['functions']:
                 self.functions.append(PythonFunction(f))
+
+        if 'classes' in dict_:
+            for c in dict_['classes']:
+                self.classes.append(PythonClass(c))
 
         if 'variables' in dict_:
             for v in dict_['variables']:
@@ -499,6 +652,7 @@ class PythonFile(PlainFile):
                      'notes': ["encountered {}".format(err[0].__name__)]}]
 
         found_functions = self.__get_members(module_context, 'functions')
+        found_classes = self.__get_members(module_context, 'classes')
         found_variables = self.__get_members(module_context, 'variables')
 
         for test in self.tests:
@@ -523,6 +677,26 @@ class PythonFile(PlainFile):
                 result = test.run(module_context)
                 if result is not None:
                     add_to(result, results[func])
+
+        for cls in self.classes:
+            results[cls] = []
+            if cls not in found_classes:
+                results[cls].append({'deduction': cls.point_value,
+                                     'description': "missing class "
+                                                    "'{}'".format(cls)})
+                continue
+
+            for method in cls.methods:
+                results[method] = []
+                for test in method.tests:
+                    # TODO fix this hacky thing
+                    if type(test) is TestSet:
+                        for m in test.members:
+                            m.target = method
+
+                    result = test.run(module_context)
+                    if result is not None:
+                        add_to(result, results[method])
 
         for var in self.variables:
             results[var] = []
@@ -563,6 +737,12 @@ class PythonFile(PlainFile):
                 for f in self.functions:
                     if f.name == m[0]:
                         members.append(f)
+
+        if kind == 'classes':
+            for m in inspect.getmembers(cxt, inspect.isclass):
+                for c in self.classes:
+                    if c.name == m[0]:
+                        members.append(c)
 
         elif kind == 'variables':
             import types
@@ -651,11 +831,120 @@ class PythonVariable:
 
 
 
-def _find_function_from_cxt(context, name):
-    from inspect import getmembers, isfunction
+def _find_function_from_cxt(context, target):
+    """This function inspects the passed-in context for a function
+    or a method using the passed-in target, either a PythonFunction
+    or a PythonMethod.
+    """
+    from inspect import getmembers, isfunction, ismethod, isclass
 
-    for m in getmembers(context, isfunction):
-        if m[0] == name:
-            return m[1]
+    name = target.name
+
+    if type(target) is PythonFunction:
+        for m in getmembers(context, isfunction):
+            if m[0] == name:
+                return m[1]
+
+    if type(target) is PythonMethod:
+        cls_name = target.class_name
+
+        for c in getmembers(context, isclass):
+            if c[0] == cls_name:
+                break
+        else:
+            raise ValueError("cannot find class {}".format(cls_name))
+
+        for m in getmembers(c[1], isfunction):
+            if m[0] == name:
+                return m[1]
 
     return None
+
+
+
+def _find_class_from_cxt(context, name):
+    """This function inspects the passed-in context for a class
+    object that matches the specified class name.
+    """
+    from inspect import getmembers, isclass
+
+    for c in getmembers(context, isclass):
+        if c[0] == name:
+            return c[1]
+
+    return None
+
+
+
+def _convert_using_cxt(cxt, crit_obj):
+    """Given a module context (resulting from importing a student's
+    code) and an instance of CriteriaObject, return an object instance
+    using the student's class definition, filling the object with the
+    attributes found in the CriteriaObject object.
+    """
+    cls = _find_class_from_cxt(cxt, crit_obj.class_name)
+    obj = cls.__new__(cls)
+
+    for attr, val in crit_obj.attrs.items():
+        setattr(obj, attr, val)
+
+    return obj
+
+
+
+class PythonClass:
+    """Utility class representing a Python class that the criteria specifies
+    should be in a module of a student's submission. Used only with files of
+    type 'python'.
+    """
+
+    def __init__(self, dict_):
+        self.name = dict_['class_name']
+        self.point_value = dict_['point_value']
+
+        self.methods = []
+        for m in dict_['methods']:
+            obj = PythonMethod(m)
+            obj.class_name = self.name
+            self.methods.append(obj)
+
+        # note: class-level tests not yet supported
+
+
+    def __str__(self):
+        return self.name
+
+
+class PythonMethod:
+    """Utility class representing a Python method that the criteria specifies
+    should be in a module of a student's submission. Used only with files of
+    type 'python'.
+    """
+
+    def __init__(self, dict_):
+        self.name = dict_['method_name']
+
+        # note: not counting "self"!
+        self.parameters = dict_['parameters']
+        self.point_value = dict_['point_value']
+
+        self.tests = []
+        if 'tests' in dict_:
+            for t in dict_['tests']:
+                test_cls = filetypes.find_test_class(PythonFile.yaml_type,
+                                                     t['type'])
+                self.tests.append(test_cls(t, PythonFile.yaml_type))
+
+        # set target of tests for module to this new PythonMethod object
+        for test in self.tests:
+            test.target = self
+
+
+    def __str__(self):
+        if self.parameters:
+            params = ', '.join(["self"] + self.parameters)
+        else:
+            params = "self"
+
+        name = "{}({})".format(self.name, params)
+        return "method {}".format(name)
