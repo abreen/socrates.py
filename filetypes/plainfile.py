@@ -61,13 +61,10 @@ class ReviewTest(BaseTest):
 
 
     def run(self, path):
-        import os
         from functools import reduce
         import prompt
         _print_file(path)
 
-        sprint("reviewing '{}' (in directory '{}')".format(
-               path, os.getcwd()))
         sprint("description: " + self.description)
 
         if type(self.deduction) is int:
