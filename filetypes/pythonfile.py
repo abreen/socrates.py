@@ -124,13 +124,9 @@ class EvalTest(BaseTest):
         testing_method = type(self.target) is PythonMethod
 
         before = self.before
-        after = self.after
 
         if before and type(before) is CriteriaObject:
             before = _convert_using_cxt(context, before)
-
-        if after and type(after) is CriteriaObject:
-            after = _convert_using_cxt(context, after)
 
         args = self.__get_args(mod_name, context)
 
@@ -161,13 +157,17 @@ class EvalTest(BaseTest):
         if not self.description:
             self.description = self.__build_description()
 
+        # redirect standard in to buffer
         if self.input is not None:
             in_buf = io.StringIO(self.input)
-            sys.stdin = in_buf
+        else:
+            in_buf = io.StringIO()
 
-        if self.output is not None:
-            out_buf = io.StringIO()
-            sys.stdout = out_buf
+        sys.stdin = in_buf
+
+        # redirect standard out to buffer
+        out_buf = io.StringIO()
+        sys.stdout = out_buf
 
         if self.random_seed:
             random.seed(self.random_seed)
@@ -210,9 +210,8 @@ class EvalTest(BaseTest):
         # if we are testing a method and there are post-state requirements
         # for the method, fail the test if the object doesn't match the
         # required post-state
-        if testing_method and after is not None:
-            # TODO should not be using object's own __eq__ here
-            if locals["obj"] != after:
+        if testing_method and self.after is not None:
+            if not _attributes_equal(locals["obj"], self.after):
                 passed = False
 
         if passed:
@@ -224,24 +223,19 @@ class EvalTest(BaseTest):
 
             if self.arguments:
                 for arg, val in self.arguments:
-                    if type(val) in BASIC_TYPES:
-                        s = "where '{}' is {}".format(arg, repr(val))
-                    elif type(val) is CriteriaObject:
-                        s = "where '{}' has attributes {}".format(
-                            arg, val.attrs)
-                    else:
-                        s = "where '{}' is {}".format(arg, val)
-
+                    s = "where '{}' is {}".format(arg, _safe_str(val))
                     result['notes'].append(s)
 
             if testing_method and before is not None:
                 result['notes'].append("called object before "
                                        "the method call: "
-                                       "{}".format(before))
+                                       "{}".format(_safe_str(before)))
 
             if self.value is not None:
-                result['notes'].append("expected value: " + repr(self.value))
-                result['notes'].append("produced value: " + repr(return_value))
+                result['notes'].append("expected value: " + \
+                                       _safe_str(self.value))
+                result['notes'].append("produced value: " + \
+                                       _safe_str(return_value))
 
             if self.output is not None and type(self.output) is str:
                 import util
@@ -250,10 +244,10 @@ class EvalTest(BaseTest):
                 result['notes'].append("expected output: " + eo)
                 result['notes'].append("produced output: " + po)
 
-            if testing_method and after is not None:
+            if testing_method and self.after is not None:
                 result['notes'].append("expected object after "
                                        "the method runs: "
-                                       "{}".format(after))
+                                       "{}".format(_safe_str(self.after)))
 
             return result
 
@@ -273,8 +267,7 @@ class EvalTest(BaseTest):
             s += "with input {}, ".format(repr(self.input))
 
         if self.before is not None:
-            s += "with a called object with attributes {}, ".format(
-                 self.before.attrs)
+            s += "on the called object: {}, ".format(_safe_str(self.before))
 
         s += str(self.target)    # e.g. "function test(a, b)"
         s += " should "
@@ -286,11 +279,10 @@ class EvalTest(BaseTest):
             if self.output is not None:
                 s += " and "
 
-            s += "return {}".format(repr(self.value))
+            s += "return {}".format(_safe_str(self.value))
 
         if self.after is not None:
-            s += ", ending with the attributes {}".format(
-                 self.after.attrs)
+            s += ", ending with {}".format(_safe_str(self.after))
 
         if self.output is not None and \
            self.value is not None and \
@@ -889,6 +881,57 @@ def _convert_using_cxt(cxt, crit_obj):
         setattr(obj, attr, val)
 
     return obj
+
+
+
+def _attributes_equal(target, expected):
+    """Given a "target" object of any type (e.g., the object left over after
+    a student's method was called on it), consult the CriteriaObject
+    specified second for its attributes, and return True if the target
+    object has all the attributes expected and the values of the attributes
+    match. Otherwise, return False.
+    """
+    for attr, val in expected.attrs.items():
+        if not hasattr(target, attr) or getattr(target, attr) != val:
+            return False
+
+    return True
+
+
+def _safe_str(obj):
+    """Given any object, return a "safe" string representation of the object
+    if calling its __str__() method might be considered unsafe. If the object
+    is considered a "basic" type (e.g., an integer or a string), the object's
+    repr() is used. If the object is a CriteriaObject, the output string is
+    indistinguishable from its "converted" form (i.e., "CriteriaObject" will
+    be replaced by the underlying class). For non-basic object types, function
+    attributes (e.g., methods) are not included in the list of attributes.
+    """
+    if type(obj) in BASIC_TYPES:
+        return repr(obj)
+
+    attrs = []
+
+    if type(obj) is CriteriaObject:
+        s = obj.class_name + " {"
+        for attr, val in obj.attrs.items():
+            attrs.append("{}: {}".format(attr, _safe_str(val)))
+    else:
+        from inspect import isfunction, ismethod
+
+        s = type(obj).__name__ + " {"
+        for attr in dir(obj):
+            if attr[0] == '_':
+                continue
+            val = getattr(obj, attr)
+
+            if isfunction(val) or ismethod(val):
+                continue
+
+            attrs.append("{}: {}".format(attr, _safe_str(val)))
+
+    s += ', '.join(attrs) + "}"
+    return s
 
 
 
