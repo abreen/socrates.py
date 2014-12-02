@@ -656,8 +656,8 @@ class PythonFile(PlainFile):
             results[func] = []
             if func not in found_functions:
                 results[func].append({'deduction': func.point_value,
-                                      'description': "missing function "
-                                                     "'{}'".format(func)})
+                                      'description': "missing "
+                                                     "{}".format(func)})
                 continue
 
             for test in func.tests:
@@ -674,12 +674,30 @@ class PythonFile(PlainFile):
             results[cls] = []
             if cls not in found_classes:
                 results[cls].append({'deduction': cls.point_value,
-                                     'description': "missing class "
-                                                    "'{}'".format(cls)})
+                                     'description': "missing "
+                                                    "{}".format(cls)})
                 continue
+
+            # TODO move this into __get_members
+            cls_obj = _find_class_from_cxt(module_context, cls.name)
+            import inspect
+
+            found_methods = []
+            for m in inspect.getmembers(cls_obj, inspect.isfunction):
+                for method in cls.methods:
+                    if method.name == m[0]:
+                        found_methods.append(method)
+
 
             for method in cls.methods:
                 results[method] = []
+
+                if method not in found_methods:
+                    results[method].append({'deduction': method.point_value,
+                                            'description': "missing "
+                                                        "{}".format(method)})
+                    continue
+
                 for test in method.tests:
                     # TODO fix this hacky thing
                     if type(test) is TestSet:
@@ -694,8 +712,8 @@ class PythonFile(PlainFile):
             results[var] = []
             if var not in found_variables:
                 results[var].append({'deduction': var.point_value,
-                                     'description': "missing variable "
-                                                    "'{}'".format(var)})
+                                     'description': "missing "
+                                                    "{}".format(var)})
                 continue
 
             for test in var.tests:
