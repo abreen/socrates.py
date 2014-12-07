@@ -93,7 +93,8 @@ if __name__ == '__main__':
             sys.exit(util.ERR_GRADE_FILE_EXISTS)
 
         if not args.submission_files:
-            util.sprint("warning: no submission files specified")
+            util.sprint(util.COLOR_RED + "warning: no submission files "
+                        "specified" + util.COLOR_RESET)
 
         any_missing = grader.grade(c, args.submission_files, grade_filename)
         if any_missing:
