@@ -1,11 +1,25 @@
 from filetypes.basefile import BaseFile
 from filetypes.plainfile import PlainFile
+from filetypes.plainfile import ReviewTest
 import filetypes
+
+class JFLAPReviewTest(ReviewTest):
+    def __init__(self, dict_, file_type):
+        super().__init__(dict_, file_type)
+
+    def run(self, path):
+        """A JFLAP review test calls the ReviewTest run() method but
+        suppresses printing the file.
+        """
+        return super().run(path, False)
+
+
 
 class JFLAPFile(PlainFile):
     yaml_type = 'jflap'
     extensions = ['jff']
     supported_tests = PlainFile.supported_tests.copy()
+    supported_tests.append(JFLAPReviewTest)
 
     def __init__(self, dict_):
         BaseFile.__init__(self, dict_)

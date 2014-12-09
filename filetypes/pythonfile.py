@@ -459,6 +459,7 @@ class PythonReviewTest(ReviewTest):
     def __init__(self, dict_, file_type):
         super().__init__(dict_, file_type)
 
+        # TODO get rid of this
         if 'print_target' in dict_:
             self.print_target = dict_['print_target']
         else:

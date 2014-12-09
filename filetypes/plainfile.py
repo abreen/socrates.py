@@ -60,10 +60,12 @@ class ReviewTest(BaseTest):
                                                self.deduction)
 
 
-    def run(self, path):
+    def run(self, path, print_file=True):
         from functools import reduce
         import prompt
-        _print_file(path)
+
+        if print_file:
+            _print_file(path)
 
         sprint("description: " + self.description)
 

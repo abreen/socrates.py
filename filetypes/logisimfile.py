@@ -1,11 +1,25 @@
 from filetypes.basefile import BaseFile
 from filetypes.plainfile import PlainFile
+from filetypes.plainfile import ReviewTest
 import filetypes
+
+class LogisimReviewTest(ReviewTest):
+    def __init__(self, dict_, file_type):
+        super().__init__(dict_, file_type)
+
+    def run(self, path):
+        """A Logisim review test calls the ReviewTest run() method but
+        suppresses printing the file.
+        """
+        return super().run(path, False)
+
+
 
 class LogisimFile(PlainFile):
     yaml_type = 'logisim'
     extensions = ['circ']
     supported_tests = PlainFile.supported_tests.copy()
+    supported_tests.append(LogisimReviewTest)
 
     def __init__(self, dict_):
         BaseFile.__init__(self, dict_)
