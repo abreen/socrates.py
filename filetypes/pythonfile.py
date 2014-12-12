@@ -4,7 +4,7 @@ from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 
 from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, \
-                 COLOR_RED, COLOR_RESET, ALPHABET
+                 COLOR_RED, COLOR_RESET, ALPHABET, plural
 
 import yaml
 
@@ -94,6 +94,11 @@ class EvalTest(BaseTest):
         self.after = None
         if 'after' in dict_:
             self.after = dict_['after']
+
+        # if 'prompt' is specified and is True, the eval test will not fail
+        # unless a human confirms the failure
+        if 'prompt' in dict_:
+            self.prompt = dict_['prompt']
 
 
     def __str__(self):
@@ -249,7 +254,37 @@ class EvalTest(BaseTest):
                                        "the method runs: "
                                        "{}".format(_safe_str(self.after)))
 
-            return result
+            if self.prompt:
+                if self.__should_fail(result):
+                    return result
+                else:
+                    return None
+            else:
+                return result
+
+
+    def __should_fail(self, result):
+        """Called before an eval test is about to be failed, but the criteria
+        specifies that a human should confirm the failure before taking
+        any points. If this method returns True, the points are ultimately
+        taken.
+        """
+        import sys
+        from grader import write_results
+        from prompt import prompt
+
+        sprint(COLOR_YELLOW + "about to fail a test with the following "
+               "reasoning:" + COLOR_RESET)
+
+        write_results(sys.stdout, [result])
+
+        points = result['deduction']
+        s = plural("point", points)
+        fail_msg = "fail this test (-{} {})".format(points, s)
+
+        choices = [fail_msg, "do not fail this test"]
+
+        return prompt(choices, '1') == 0
 
 
     def __build_description(self):
@@ -437,21 +472,6 @@ class EvalTest(BaseTest):
         if 'match' in self.output:
             import re
             return self.output['match'].match(out_string)
-
-        # TODO this might be a bad idea
-        if 'prompt' in self.output:
-            sprint("deduction description: {}".format(self.description))
-            sprint("deduction value: {}".format(self.deduction))
-
-            ans = input("should this deduction be taken? (y/yes/n/no) ")
-
-            if ans in ['y', 'yes']:
-                return {'deduction': self.deduction,
-                        'description': self.description,
-                        'notes': ["failed human review"]}
-            else:
-                sprint("taking no deduction")
-
 
 
 

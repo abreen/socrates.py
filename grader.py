@@ -92,7 +92,7 @@ def grade(criteria, submissions, filename):
             sprint("running tests for " + str(f))
 
             points_taken = 0
-            points_taken += _write_results(out, f.run_tests())
+            points_taken += write_results(out, f.run_tests())
 
             file_stat = os.stat(f.path)
             mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
@@ -149,7 +149,7 @@ def grade(criteria, submissions, filename):
     return num_missing
 
 
-def _write_results(f, results, indent='\t'):
+def write_results(f, results, indent='\t'):
     if not results:
         return 0
 
@@ -169,7 +169,7 @@ def _write_results(f, results, indent='\t'):
 
         if 'subresults' in r and r['subresults']:
             for subr in r['subresults']:
-                total += _write_results(f, [subr], '\t' + indent)
+                total += write_results(f, [subr], '\t' + indent)
 
     return total
 
