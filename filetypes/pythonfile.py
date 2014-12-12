@@ -97,6 +97,7 @@ class EvalTest(BaseTest):
 
         # if 'prompt' is specified and is True, the eval test will not fail
         # unless a human confirms the failure
+        self.prompt = None
         if 'prompt' in dict_:
             self.prompt = dict_['prompt']
 
