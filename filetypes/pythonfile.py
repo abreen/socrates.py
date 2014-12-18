@@ -284,8 +284,7 @@ class EvalTest(BaseTest):
         fail_msg = "fail this test (-{} {})".format(points, s)
 
         choices = [fail_msg, "do not fail this test"]
-
-        return prompt(choices, '1') == 0
+        return prompt(choices, '1') == [0]
 
 
     def __build_description(self):
