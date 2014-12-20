@@ -103,14 +103,11 @@ if __name__ == '__main__':
             sys.exit()
 
     elif args.mode == 'submit':
-        from functools import reduce
         import tarfile
-        import random
 
-        choices = [random.choice(util.ALPHANUMERICS) for _ in range(32)]
-        rand = reduce(str.__add__, choices)
-        submit_dir = config.dropbox_dir + os.sep + c.name + \
-                     os.sep + rand + (os.sep + c.group if c.group else "")
+        submit_dir = config.dropbox_dir + os.sep + c.name
+        if c.group:
+            submit_dir += os.sep + c.group
 
         if not os.path.isdir(config.dropbox_dir + os.sep + c.name):
             util.sprint("cannot submit: dropbox directory has not been "
