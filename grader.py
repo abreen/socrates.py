@@ -97,22 +97,14 @@ def grade(criteria, submissions, filename):
             file_stat = os.stat(f.path)
             mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
 
-            if mtime > criteria.due:
-                if mtime > criteria.due + datetime.timedelta(hours=24):
-                    sprint(COLOR_YELLOW + "taking all points for >24-hour "
-                           "late-submitted {}".format(f) + COLOR_RESET)
+            multiplier = criteria.get_late_penalty(mtime)
+            late_penalty = f.point_value * multiplier
 
-                    late_penalty = f.point_value
-                    out.write("-{}\tsubmitted >24 hours "
-                              "late\n".format(late_penalty))
+            if late_penalty != 0:
+                sprint(COLOR_YELLOW + "taking {}% late "
+                       "penalty".format(multiplier * 100) + COLOR_RESET)
 
-                else:
-                    sprint(COLOR_YELLOW + "taking 10% penalty for "
-                           "late-submitted {}".format(f) + COLOR_RESET)
-
-                    late_penalty = f.point_value * 0.10
-                    out.write("-{}\tsubmitted late\n".format(late_penalty))
-
+                out.write("-{}\tsubmitted late\n".format(late_penalty))
                 points_taken += late_penalty
 
             total -= min(f.point_value, points_taken)
