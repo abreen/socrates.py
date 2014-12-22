@@ -11,3 +11,6 @@ static_dir: .
 
 # the destination to which the final grading files are sent
 dropbox_dir: .
+
+# the directory from which criteria YAML files are read
+criteria_dir: .

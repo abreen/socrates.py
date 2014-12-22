@@ -47,6 +47,10 @@ def _print_grader_activity(short_name, dropbox):
                     fullname, name, group, on))
 
 
+def _parse_assignment_name(name):
+    return name[:-1], name[-1]
+
+
 if __name__ == '__main__':
     args = cmdline.get_args()
 
@@ -66,10 +70,22 @@ if __name__ == '__main__':
 
         sys.exit()
 
+    if args.mode in ['grade', 'submit', 'batch']:
+        ps, group = _parse_assignment_name(args.assignment)
+        criteria_path = config.criteria_dir + os.sep + \
+                        ps + os.sep + \
+                        ps + group + '.yml'
+
+        if not os.path.isfile(criteria_path):
+            print(criteria_path)
+            util.sprint("invalid assignment name "
+                        "'{}'".format(args.assignment), error=True)
+            sys.exit(util.ERR_CRITERIA_MISSING)
+
     if args.mode in ['grade', 'submit']:
         import grader
         try:
-            c = criteria.Criteria.from_yaml(args.criteria_file)
+            c = criteria.Criteria.from_yaml(criteria_path)
         except FileNotFoundError:
             util.sprint("criteria file does not exist", error=True)
             sys.exit(util.ERR_CRITERIA_MISSING)
@@ -151,7 +167,6 @@ if __name__ == '__main__':
         import subprocess
 
         proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
-        crit_path = os.path.abspath(args.criteria_file)
 
         for subdir in args.submission_dirs:
             if not os.path.isdir(subdir):
@@ -164,8 +179,8 @@ if __name__ == '__main__':
             util.sprint("running socrates in '{}'".format(subdir))
 
             try:
-                rv = subprocess.call([proc, "--log", "grade", crit_path] +
-                                     files_here)
+                rv = subprocess.call([proc, "--log", "grade",
+                                      args.assignment] + files_here)
             except KeyboardInterrupt:
                 util.sprint("\nparent stopping (received interrupt)")
                 util.sprint("stopped while grading '{}'".format(subdir))

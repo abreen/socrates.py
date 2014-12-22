@@ -22,8 +22,8 @@ def get_args():
     norm_mode_opts = {'description': "Start an interactive grading session"}
     norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
 
-    criteria_opts = {'help': "criteria file in JSON or YAML format"}
-    norm_mode_parser.add_argument('criteria_file', **criteria_opts)
+    assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
+    norm_mode_parser.add_argument('assignment', **assignment_opts)
 
     input_opts = {'help': "submission file(s) to grade",
                   'nargs': '*'}
@@ -34,8 +34,8 @@ def get_args():
     batch_mode_opts = {'description': "Start grading in batch mode"}
     batch_mode_parser = subparsers.add_parser('batch', **batch_mode_opts)
 
-    criteria_opts = {'help': "criteria file in JSON or YAML format"}
-    batch_mode_parser.add_argument('criteria_file', **criteria_opts)
+    assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
+    batch_mode_parser.add_argument('assignment', **assignment_opts)
 
     input_opts = {'help': "submission directories, one per student",
                   'nargs': '*'}
@@ -46,8 +46,8 @@ def get_args():
     submit_mode_opts = {'description': "Submit graded files"}
     submit_mode_parser = subparsers.add_parser('submit', **submit_mode_opts)
 
-    criteria_opts = {'help': "criteria file in JSON or YAML format"}
-    submit_mode_parser.add_argument('criteria_file', **criteria_opts)
+    assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
+    submit_mode_parser.add_argument('assignment', **assignment_opts)
 
     input_opts = {'help': "submission directories, one per student",
                   'nargs': '*'}
@@ -65,7 +65,7 @@ def get_args():
                     'aliases': ['ws']}
     ws_mode_parser = subparsers.add_parser('websubmit', **ws_mode_opts)
 
-    assignment_opts = {'help': "the short name for the assignment",
+    assignment_opts = {'help': "the name of the assignment (no group)",
                        'nargs': 1}
     ws_mode_parser.add_argument('assignment_name', **assignment_opts)
 
