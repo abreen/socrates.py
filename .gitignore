@@ -3,6 +3,9 @@ socrates.ini
 static
 dropbox
 
+# Sublime Text stuff
+*.sublime*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
