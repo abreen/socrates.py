@@ -23,7 +23,7 @@ def get_args():
     norm_mode_parser = subparsers.add_parser('grade', **norm_mode_opts)
 
     assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
-    norm_mode_parser.add_argument('assignment', **assignment_opts)
+    norm_mode_parser.add_argument('assignment_with_group', **assignment_opts)
 
     input_opts = {'help': "submission file(s) to grade",
                   'nargs': '*'}
@@ -35,7 +35,7 @@ def get_args():
     batch_mode_parser = subparsers.add_parser('batch', **batch_mode_opts)
 
     assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
-    batch_mode_parser.add_argument('assignment', **assignment_opts)
+    batch_mode_parser.add_argument('assignment_with_group', **assignment_opts)
 
     input_opts = {'help': "submission directories, one per student",
                   'nargs': '*'}
@@ -47,7 +47,7 @@ def get_args():
     submit_mode_parser = subparsers.add_parser('submit', **submit_mode_opts)
 
     assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
-    submit_mode_parser.add_argument('assignment', **assignment_opts)
+    submit_mode_parser.add_argument('assignment_with_group', **assignment_opts)
 
     input_opts = {'help': "submission directories, one per student",
                   'nargs': '*'}
@@ -59,19 +59,15 @@ def get_args():
     config_mode_parser = subparsers.add_parser('config', **config_mode_opts)
 
 
-    # parser for WebSubmit mode
-    ws_mode_opts = {'description': "Collect individual grades into one "
-                                   "directory for upload to WebSubmit",
-                    'aliases': ['ws']}
-    ws_mode_parser = subparsers.add_parser('websubmit', **ws_mode_opts)
+    # parser for activity mode
+    act_mode_opts = {'description': "See what grades graders have submitted "
+                                    "for a given assignment"}
+    act_mode_parser = subparsers.add_parser('activity', **act_mode_opts)
 
-    assignment_opts = {'help': "the name of the assignment (no group)",
+    assignment_opts = {'help': "the short name of the assignment, "
+                               "with no group",
                        'nargs': 1}
-    ws_mode_parser.add_argument('assignment_name', **assignment_opts)
-
-    activity_opts = {'help': "see log of grader submission activity",
-                     'action': 'store_true'}
-    ws_mode_parser.add_argument('--activity', **activity_opts)
+    act_mode_parser.add_argument('assignment', **assignment_opts)
 
     args = top_parser.parse_args()
 
