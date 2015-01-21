@@ -47,7 +47,7 @@ def main(args):
         grade_filename = assignment_name
         if group:
             grade_filename += group
-        grade_filename += "-grade.txt"
+        grade_filename += '-grade.txt'
 
         if args.mode == 'grade':
             _grade(args, criteria_object, grade_filename)
@@ -90,52 +90,55 @@ def _grade(args, criteria_object, grade_filename):
         sys.exit(util.EXIT_WITH_MISSING)
 
 
-def _submit(args, criteria_object, grade_filename):
+def _submit(args, criteria_object, grade_filename, umask=0o002):
     """Handles 'submit' mode. Allows a grader to send completed grade files
     to the "dropbox" directory.
     """
-    import tarfile
+    import shutil
 
-    submit_dir = config.dropbox_dir + os.sep + criteria_object.name
-    if criteria_object.group:
-        submit_dir += os.sep + criteria_object.group
-
-    path_to_assignment = config.dropbox_dir + os.sep + criteria_object.name
-    if not os.path.isdir(path_to_assignment):
-        util.sprint("cannot submit: dropbox directory has not been "
-                    "set up for this assignment", error=True)
-        sys.exit(util.ERR_NO_DROPBOX)
-
-    os.umask(0o002)
-    try:
-        util.makedirs(submit_dir)
-    except OSError:
-        util.sprint("error making directories in dropbox", error=True)
-        sys.exit(util.ERR_DROPBOX_MAKEDIRS)
+    os.umask(umask)
 
     num_submitted = 0
-    for subdir in args.submission_dirs:
-        if subdir[-1] == os.sep:
-            subdir = subdir[:-1]
 
-        if not os.path.isdir(subdir):
-            util.sprint("'{}' is not a directory".format(subdir),
+    # args.submission_dirs should contain a list of directories whose names
+    # are student user names
+    for username in args.submission_dirs:
+        if username[-1] == os.sep:
+            username = username[:-1]            # removes ending '/'
+
+        # check if specified file is a directory
+        if not os.path.isdir(username):
+            util.sprint("'{}' is not a directory".format(username),
                         error=True)
             continue
-        elif not os.path.isfile(subdir + os.sep + grade_filename):
+
+        grade_file_path = username + os.sep + grade_filename
+        if not os.path.isfile(grade_file_path):
             util.sprint("not submitting '{}': directory has no "
                         "grade file".format(subdir))
             continue
 
-        tar_path = submit_dir + os.sep + subdir + '.tgz'
-        with tarfile.open(tar_path, 'w:gz') as tar:
-            tar.add(subdir)
+        # TODO check if directory name is a valid student name
+
+        dest_path = config.dropbox_dir + os.sep + username
+
+        # if this is the first time this user's grades are being submitted,
+        # we may need to create the directory in the dropbox
+        try:
+            util.makedirs(dest_path)
+        except OSError:
+            util.sprint("error making user directory in dropbox", error=True)
+            sys.exit(util.ERR_DROPBOX_MAKEDIRS)
+
+        dest_path += os.sep + grade_filename
+        shutil.copyfile(grade_file_path, dest_path)
 
         num_submitted += 1
 
-        util.sprint("wrote '{}' to dropbox".format(tar_path))
+        util.sprint("wrote '{}' to dropbox".format(dest_path))
 
-    util.sprint("submitted {} graded directories".format(num_submitted))
+    util.sprint("submitted {} {}".format(num_submitted,
+                                         util.plural('grade', num_submitted)))
 
 
 def _batch(args):
