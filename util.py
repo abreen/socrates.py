@@ -3,13 +3,13 @@
 import sys
 
 
-COLOR_RED='\033[91m'
-COLOR_GREEN='\033[92m'
-COLOR_YELLOW='\033[93m'
-COLOR_BLUE='\033[94m'
-COLOR_CYAN='\033[96m'
-COLOR_INVERTED='\033[7m'
-COLOR_RESET='\033[0m'
+COLOR_RED = '\033[91m'
+COLOR_GREEN = '\033[92m'
+COLOR_YELLOW = '\033[93m'
+COLOR_BLUE = '\033[94m'
+COLOR_CYAN = '\033[96m'
+COLOR_INVERTED = '\033[7m'
+COLOR_RESET = '\033[0m'
 
 ERR_ARGS = 1
 ERR_INTERRUPTED = 2
@@ -31,12 +31,17 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
+# TODO these should go to config?
 quiet_mode = False
 log_file = None
 sprint_prefix = ""
 
 
 def sprint(string, error=False, color=COLOR_BLUE):
+    """A utility function for printing messages to the standard out
+    or standard error. Implementation note: always use this function
+    for printing, unless "raw" output from a file is being displayed.
+    """
     pre = COLOR_RED if error else color
     post = COLOR_RESET
 
@@ -64,11 +69,18 @@ def heading(string, level=1):
         return ('#' * level) + ' ' + string + '\n'
 
 
-def escape(s):
-    return s.replace('\n', '\\n').replace('\t', '\\t')
+def escape(str_):
+    """Given a string, return a string where any newlines or tab characters
+    have been replaced with their backslashed strings (e.g., "\\t").
+    """
+    return str_.replace('\n', '\\n').replace('\t', '\\t')
 
 
 def prepend_lines(lines, pre):
+    """Given a list of strings, each a "line" of some block of text,
+    return a new list of strings, where each string in the list is
+    prepended with the specified string.
+    """
     return '\n'.join(map(lambda x: pre + x, lines.split('\n')))
 
 
@@ -91,17 +103,19 @@ def makedirs(dirpath):
             os.mkdir(dirpath)
 
 
-def add_to(a, b):
-    """Add the first argument (a) to the second argument (b), where the
-    b is a list. If a is not a list, it is appended to b. If a is a
-    list, the items of a are appended to b, in order.
+def add_to(item, list_):
+    """Add an item to a list. If the item is a list itself, the list is
+    extended. Otherwise, the item is appended to the list.
     """
-    if type(a) is list:
-        for i in a:
-            b.append(i)
+    if type(item) is list:
+        list_.extend(item)
     else:
-        b.append(a)
+        list_.append(item)
 
 
-def plural(s, n):
-    return s + ("s" if n != 1 else "")
+def plural(str_, num):
+    """Return the pluralized version of the specified string, given the
+    specified quantity. If the quantity is not 1, the returned string is
+    pluralized.
+    """
+    return str_ + ("s" if num != 1 else "")

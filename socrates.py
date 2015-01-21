@@ -12,9 +12,11 @@ import cmdline
 import util
 import criteria
 
-# loads configuration file
 import config
 
+
+# conditions that are deemed "okay" to be returned by a subprocess when
+# socrates is run in batch mode
 OKAY_CONDITIONS = [util.EXIT_WITH_MISSING, util.ERR_GRADE_FILE_EXISTS,
                    util.EXIT_WITH_DEFER]
 

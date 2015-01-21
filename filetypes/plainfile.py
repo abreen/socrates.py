@@ -146,6 +146,7 @@ class PlainFile(BaseFile):
                                                      t['type'])
                 self.tests.append(test_cls(t, PlainFile.yaml_type))
 
+
     def run_tests(self):
         results = []
         for t in self.tests:

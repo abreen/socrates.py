@@ -56,7 +56,7 @@ def get_args():
 
     # parser for config mode
     config_mode_opts = {'description': "Print current configuration"}
-    config_mode_parser = subparsers.add_parser('config', **config_mode_opts)
+    subparsers.add_parser('config', **config_mode_opts)
 
 
     # parser for activity mode
