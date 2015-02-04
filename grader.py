@@ -104,8 +104,9 @@ def grade(criteria, submissions, filename):
                 sprint(COLOR_YELLOW + "taking {}% late "
                        "penalty".format(multiplier * 100) + COLOR_RESET)
 
-                out.write("-{}\tsubmitted late\n".format(late_penalty))
-                points_taken += late_penalty
+                adjusted = min(f.point_value - points_taken, late_penalty)
+                out.write("-{}\tsubmitted late\n".format(adjusted))
+                points_taken += adjusted
 
             total -= min(f.point_value, points_taken)
 
