@@ -75,7 +75,12 @@ def _grade(args, criteria_object, grade_filename):
     """Handles 'grade' mode. Most of the work is handed off
     to the 'grader' module, which runs interactively.
     """
+    import subprocess
+    import shutil
+
     import grader
+    from prompt import prompt
+
     if os.path.isfile(grade_filename):
         util.sprint("refusing to overwrite existing grade file",
                     color=util.COLOR_RED)
@@ -87,6 +92,32 @@ def _grade(args, criteria_object, grade_filename):
 
     any_missing = grader.grade(criteria_object, args.submission_files,
                                grade_filename)
+
+    util.sprint("please review the following grade file ({}) "
+                "for issues:".format(grade_filename),
+                color=util.COLOR_GREEN)
+
+    with open(grade_filename) as f:
+        print(f.read())
+
+    choices = ["edit the grade file now", "do not edit the grade file"]
+    selections = prompt(choices, mode='1')
+
+    if 0 in selections:
+        if 'EDITOR' in os.environ:
+            # run $EDITOR with the grade file
+            subprocess.call([os.environ['EDITOR'], grade_filename])
+
+        elif shutil.which('vi') is not None:
+            # try to run vi
+            subprocess.call(['vi', grade_filename])
+
+        else:
+            util.sprint("could not open your favorite text editor or vi",
+                        color=util.COLOR_RED)
+
+            sys.exit(util.ERR_NO_EDITOR)
+
     if any_missing:
         sys.exit(util.EXIT_WITH_MISSING)
 
