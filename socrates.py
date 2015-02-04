@@ -77,12 +77,13 @@ def _grade(args, criteria_object, grade_filename):
     """
     import grader
     if os.path.isfile(grade_filename):
-        util.sprint("refusing to overwrite existing grade file")
+        util.sprint("refusing to overwrite existing grade file",
+                    color=util.COLOR_RED)
         sys.exit(util.ERR_GRADE_FILE_EXISTS)
 
     if not args.submission_files:
-        util.sprint(util.COLOR_RED + "warning: no submission files "
-                    "specified" + util.COLOR_RESET)
+        util.sprint("warning: no submission files specified",
+                    color=util.COLOR_RED)
 
     any_missing = grader.grade(criteria_object, args.submission_files,
                                grade_filename)
@@ -234,8 +235,12 @@ def _form_criteria_path(short_name, group):
         criteria_path += '.yml'
 
     if not os.path.isfile(criteria_path):
-        message = "could not find criteria file for assignment '{}'"
+        message = "could not find criteria file for {}"
         message = message.format(short_name)
+
+        if group:
+            message += ", group " + group
+
         util.sprint(message, error=True)
         sys.exit(util.ERR_CRITERIA_MISSING)
 
