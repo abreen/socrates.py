@@ -58,9 +58,6 @@ def main(args):
     elif args.mode == 'batch':
         _batch(args)
 
-    elif args.mode == 'activity':
-        _activity(args)
-
 
 def _config():
     """Handles 'config' mode."""
@@ -213,34 +210,6 @@ def _batch(args):
         os.chdir(os.pardir)
 
 
-def _activity(args):
-    """Handles 'activity' mode."""
-    import pwd
-
-    dropbox_path = _get_dropbox_path(args)
-
-    found_grader_subs = []
-    for hash_dir in os.listdir(dropbox_path):
-        if hash_dir[0] == '.':
-            continue
-
-        dirpath = dropbox_path + os.sep + hash_dir
-
-        dir_st = os.stat(dirpath)
-        dir_ctime = dir_st.st_mtime
-
-        grader_pw = pwd.getpwuid(dir_st.st_uid)
-        grader_name = grader_pw.pw_name
-        grader_fullname = grader_pw.pw_gecos
-
-        group = os.listdir(dirpath)[0]
-
-        tup = (grader_name, grader_fullname, group, dir_ctime)
-        found_grader_subs.append(tup)
-
-    _print_submission_activity(found_grader_subs)
-
-
 def _parse_assignment_name(short_name_with_group):
     """Given a short assignment name with a group (e.g., "ps4a"),
     return the assignment's short name ("ps4") and the group
@@ -314,23 +283,6 @@ def _get_dropbox_path(args):
         sys.exit(util.ERR_BAD_DROPBOX)
 
     return dropbox_path
-
-
-def _print_submission_activity(found_grader_subs):
-    """Given a list of tuples containing a grader user name, full name,
-    grading group, and submission time, print this information to the
-    standard out.
-    """
-    if len(found_grader_subs) == 0:
-        util.sprint("No grader submissions.")
-        return
-
-    util.sprint("grader submission activity:")
-    for name, fullname, group, time in found_grader_subs:
-        submitted_on = datetime.datetime.fromtimestamp(time)
-        message = "{} ({}) submitted group {} on {}"
-        message = message.format(fullname, name, group, submitted_on)
-        util.sprint(message)
 
 
 if __name__ == '__main__':

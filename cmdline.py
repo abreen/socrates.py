@@ -58,17 +58,6 @@ def get_args():
     config_mode_opts = {'description': "Print current configuration"}
     subparsers.add_parser('config', **config_mode_opts)
 
-
-    # parser for activity mode
-    act_mode_opts = {'description': "See what grades graders have submitted "
-                                    "for a given assignment"}
-    act_mode_parser = subparsers.add_parser('activity', **act_mode_opts)
-
-    assignment_opts = {'help': "the short name of the assignment, "
-                               "with no group",
-                       'nargs': 1}
-    act_mode_parser.add_argument('assignment', **assignment_opts)
-
     args = top_parser.parse_args()
 
     if not args.mode:
