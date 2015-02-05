@@ -147,7 +147,7 @@ def _submit(args, criteria_object, grade_filename, umask=0o002):
         grade_file_path = username + os.sep + grade_filename
         if not os.path.isfile(grade_file_path):
             util.sprint("not submitting '{}': directory has no "
-                        "grade file".format(subdir))
+                        "grade file".format(username))
             continue
 
         # TODO check if directory name is a valid student name
