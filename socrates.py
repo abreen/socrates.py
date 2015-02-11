@@ -154,6 +154,7 @@ def _submit(args, criteria_object, grade_filename, umask=0o002):
         # if this is the first time this user's grades are being submitted,
         # we may need to create the directory in the dropbox
         try:
+            os.umask(0o000)
             util.makedirs(dest_path)
         except OSError:
             util.sprint("error making user directory in dropbox", error=True)
@@ -161,6 +162,7 @@ def _submit(args, criteria_object, grade_filename, umask=0o002):
 
         dest_path += os.sep + grade_filename
         shutil.copyfile(grade_file_path, dest_path)
+        os.chmod(dest_path, 0o666)
 
         num_submitted += 1
 
