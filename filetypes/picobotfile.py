@@ -4,7 +4,7 @@ from filetypes.basetest import BaseTest
 from filetypes.basefile import BaseFile
 import util
 
-MAX_STEPS = 1e4
+MAX_STEPS = 1e5
 
 NUM_ROWS = 25
 NUM_COLS = 25
@@ -47,7 +47,7 @@ def _parse_rules(path):
 
     f = open(path, 'r')
     rule_pattern = re.compile("(\d+) ([\*xXnN])([\*xXeE])([\*xXwW])([\*xXsS]) "
-                              "-> ([xXnNeEwWsS]) (\d)")
+                              "-> ([xXnNeEwWsS]) (\d+)")
     rules = dict()
     i = -1
 
