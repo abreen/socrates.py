@@ -33,6 +33,9 @@ def main(args):
     if args.mode == 'config':
         _config()
 
+    if args.mode == 'edit':
+        _edit(args)
+
     if args.mode in ['grade', 'submit']:
         try:
             sname, group = _parse_assignment_name(args.assignment_with_group)
@@ -68,13 +71,67 @@ def _config():
             print("{}: {}".format(member_name, member_val))
 
 
+def _edit(args):
+    """Handles 'edit' mode. This function creates a temporary file and
+    tries to use the user's default editor to edit the specified criteria
+    file. If the new file has a syntax error or is missing essential
+    components, the user is prompted to edit again or stop.
+    """
+    import tempfile
+    import shutil
+    import subprocess
+
+    import criteria
+    from prompt import prompt
+
+    short_name, group = _parse_assignment_name(args.assignment_with_group)
+    existing_path = _form_criteria_path(short_name, group)
+
+    temp_file, temp_path = tempfile.mkstemp(suffix='.yml')
+
+    # copy contents of existing file into temp file
+    shutil.copyfile(existing_path, temp_path)
+
+    while True:
+        # try to open editor with file
+        _edit_file(temp_path)
+
+        try:
+            _ = criteria.Criteria.from_yaml(temp_path)
+        except Exception as e:
+            util.sprint("proposed criteria file produced an error",
+                        color=util.COLOR_RED)
+
+            print("{} ({})".format(e, type(e).__name__))
+
+            choices = ["return to the editor to fix the problem",
+                       "abort the change (existing file will not change)"]
+
+            selections = prompt(choices, mode='1')
+
+            if 0 in selections:
+                continue
+            else:
+                util.sprint("exiting without changing anything",
+                            color=util.COLOR_YELLOW)
+                break
+
+        else:
+            # temporary file contains new version of the criteria file;
+            # we will copy it back now
+            shutil.copyfile(temp_path, existing_path)
+
+            # remove temporary file
+            os.remove(temp_path)
+
+            util.sprint("{} updated".format(existing_path))
+            break
+
+
 def _grade(args, criteria_object, grade_filename):
     """Handles 'grade' mode. Most of the work is handed off
     to the 'grader' module, which runs interactively.
     """
-    import subprocess
-    import shutil
-
     import grader
     from prompt import prompt
 
@@ -101,19 +158,7 @@ def _grade(args, criteria_object, grade_filename):
     selections = prompt(choices, mode='1')
 
     if 0 in selections:
-        if 'EDITOR' in os.environ:
-            # run $EDITOR with the grade file
-            subprocess.call([os.environ['EDITOR'], grade_filename])
-
-        elif shutil.which('vi') is not None:
-            # try to run vi
-            subprocess.call(['vi', grade_filename])
-
-        else:
-            util.sprint("could not open your favorite text editor or vi",
-                        color=util.COLOR_RED)
-
-            sys.exit(util.ERR_NO_EDITOR)
+        _edit_file(grade_filename)
 
     if any_missing:
         sys.exit(util.EXIT_WITH_MISSING)
@@ -285,6 +330,30 @@ def _get_dropbox_path(args):
         sys.exit(util.ERR_BAD_DROPBOX)
 
     return dropbox_path
+
+
+def _edit_file(path):
+    """Attempts to consult the $EDITOR environment variable for the user's
+    favorite text editor (otherwise trying to use vi) to edit the file
+    specfied by the given path. socrates will wait for the editor to exit
+    before continuing.
+    """
+    import os
+    import subprocess
+    import shutil
+
+    if 'EDITOR' in os.environ:
+        # run $EDITOR with the grade file
+        subprocess.call([os.environ['EDITOR'], path])
+
+    elif shutil.which('vi') is not None:
+        # try to run vi
+        subprocess.call(['vi', path])
+
+    else:
+        util.sprint("could not open your favorite text editor or vi",
+                    color=util.COLOR_RED)
+        sys.exit(util.ERR_NO_EDITOR)
 
 
 if __name__ == '__main__':

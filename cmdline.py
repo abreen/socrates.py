@@ -58,6 +58,15 @@ def get_args():
     config_mode_opts = {'description': "Print current configuration"}
     subparsers.add_parser('config', **config_mode_opts)
 
+
+    # parser for edit mode
+    edit_mode_opts = {'description': "Safely edit a criteria file"}
+    edit_mode_parser = subparsers.add_parser('edit', **edit_mode_opts)
+
+    assignment_opts = {'help': 'assignment name, with group (e.g., "ps2a")'}
+    edit_mode_parser.add_argument('assignment_with_group', **assignment_opts)
+
+
     args = top_parser.parse_args()
 
     if not args.mode:
