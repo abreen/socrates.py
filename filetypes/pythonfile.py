@@ -8,7 +8,7 @@ from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, \
 
 import yaml
 
-BASIC_TYPES = [str, int, float, bool, list, dict]
+BASIC_TYPES = [str, int, float, bool, list, dict, type(None)]
 
 class CriteriaObject:
     """An object type specified by the criteria is represented using an
@@ -947,7 +947,10 @@ def _safe_str(obj):
     attributes (e.g., methods) are not included in the list of attributes.
     """
     if type(obj) in BASIC_TYPES:
-        return repr(obj)
+        if type(obj) is bool:
+            return repr(obj) + " (a Boolean)"
+        else:
+            return repr(obj)
 
     attrs = []
 
