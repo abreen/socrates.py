@@ -87,6 +87,7 @@ def grade(criteria, submissions, filename):
             if f not in found:
                 total -= f.point_value
                 out.write("-{}\tnot submitted\n".format(f.point_value))
+                out.write("\n\n")
                 continue
 
             sprint("running tests for " + str(f))
@@ -163,6 +164,8 @@ def write_results(f, results, indent='\t'):
         if 'subresults' in r and r['subresults']:
             for subr in r['subresults']:
                 total += write_results(f, [subr], '\t' + indent)
+
+        f.write("\n")
 
     return total
 

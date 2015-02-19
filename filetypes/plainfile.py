@@ -87,7 +87,8 @@ class ReviewTest(BaseTest):
                        x, y in self.deduction]
             got = prompt.prompt(choices, self.deduction_mode)
 
-            if sum(map(lambda x: self.deduction[x][0], got)) > 0:
+            total_deducted = sum(map(lambda x: self.deduction[x][0], got))
+            if total_deducted > 0:
                 deductions = []
 
                 for s in got:
@@ -96,7 +97,8 @@ class ReviewTest(BaseTest):
                              'description': self.deduction[s][1]}
                         deductions.append(d)
 
-                return deductions
+                return {'description': self.description + ':',
+                        'subresults': deductions}
             else:
                 sprint("taking no points")
                 return None
