@@ -346,12 +346,12 @@ def _edit_file(path):
         # run $EDITOR with the grade file
         subprocess.call([os.environ['EDITOR'], path])
 
-    elif shutil.which('vi') is not None:
-        # try to run vi
-        subprocess.call(['vi', path])
+    elif shutil.which('nano') is not None:
+        # try to run nano
+        subprocess.call(['nano', path])
 
     else:
-        util.sprint("could not open your favorite text editor or vi",
+        util.sprint("could not open your favorite text editor or nano",
                     color=util.COLOR_RED)
         sys.exit(util.ERR_NO_EDITOR)
 
