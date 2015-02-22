@@ -79,6 +79,7 @@ def _edit(args):
     """
     import tempfile
     import shutil
+    import filecmp
     import subprocess
 
     import criteria
@@ -117,14 +118,26 @@ def _edit(args):
                 break
 
         else:
-            # temporary file contains new version of the criteria file;
-            # we will copy it back now
-            shutil.copyfile(temp_path, existing_path)
+            # temporary file contains valid, new version of the criteria file;
+            # if the temporary file is any different, we will copy it over
+            # the old file
 
-            # remove temporary file
-            os.remove(temp_path)
+            if filecmp.cmp(temp_path, existing_path, shallow=False):
+                # files seem to be the same
+                util.sprint("no changes made; exiting without " +
+                            "changing original", color=util.COLOR_YELLOW)
+                os.remove(temp_path)
 
-            util.sprint("{} updated".format(existing_path))
+            else:
+                # files are different; copy over the old file
+                shutil.copyfile(temp_path, existing_path)
+
+                # remove temporary file
+                os.remove(temp_path)
+
+                util.sprint("{} updated".format(existing_path),
+                            color=util.COLOR_YELLOW)
+
             break
 
 
@@ -349,6 +362,8 @@ def _edit_file(path):
     elif shutil.which('nano') is not None:
         # try to run nano
         subprocess.call(['nano', path])
+        util.sprint("your $EDITOR environment variable is not set")
+        util.sprint("if you set $EDITOR, socrates will use that editor")
 
     else:
         util.sprint("could not open your favorite text editor or nano",
