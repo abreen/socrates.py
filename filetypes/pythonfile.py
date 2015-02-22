@@ -750,10 +750,20 @@ class PythonFile(PlainFile):
         for target, failures in results.items():
             sum = 0
             for f in failures:
-                sum += f['deduction']
+                if 'deduction' in f:
+                    # deduction is at top level
+                    sum += f['deduction']
 
-                if sum > target.point_value:
-                    f['deduction'] = 0
+                    if sum > target.point_value:
+                        f['deduction'] = 0
+
+                elif 'subresults' in f:
+                    # deduction for this failure is made up of subresults
+                    for subfailure in f['subresults']:
+                        sum += subfailure['deduction']
+
+                        if sum > target.point_value:
+                            subfailure['deduction'] = 0
 
         return [item for subl in results.values() for item in subl]
 
