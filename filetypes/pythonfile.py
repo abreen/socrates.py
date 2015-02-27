@@ -108,16 +108,24 @@ class EvalTest(BaseTest):
 
 
     def run(self, cxt):
-        sprint("running eval test on {}".format(self.target))
+        sprint("running eval test on {}... ".format(self.target), end='')
 
+        result = None
         if type(self.target) in [PythonFunction, PythonMethod]:
-            return self.__run_function(cxt)
+            result = self.__run_function(cxt)
         elif type(self.target) is PythonVariable:
-            return self.__run_variable(cxt)
+            result = self.__run_variable(cxt)
         elif type(self.target) is PythonFile:
-            return self.__run_module(cxt)
+            result = self.__run_module(cxt)
         else:
             raise ValueError("invalid target type")
+
+        if result:
+            sprint("failed", color=COLOR_RED)
+        else:
+            sprint("passed", color=COLOR_GREEN)
+
+        return result
 
 
     def __run_function(self, context):

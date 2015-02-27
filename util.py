@@ -38,7 +38,7 @@ log_file = None
 sprint_prefix = ""
 
 
-def sprint(string, error=False, color=COLOR_BLUE):
+def sprint(string, error=False, color=COLOR_BLUE, end='\n'):
     """A utility function for printing messages to the standard out
     or standard error. Implementation note: always use this function
     for printing, unless "raw" output from a file is being displayed.
@@ -51,10 +51,10 @@ def sprint(string, error=False, color=COLOR_BLUE):
     stream = sys.stderr if error else sys.stdout
 
     if log_file:
-        print(err + string, file=log_file)
+        print(err + string, file=log_file, end=end)
 
     if not quiet_mode:
-        print(pre + sprint_prefix + err + string + post, file=stream)
+        print(pre + sprint_prefix + err + string + post, file=stream, end=end)
 
 
 def heading(string, level=1):
