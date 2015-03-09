@@ -42,17 +42,17 @@ else:
 _f = False
 if not os.path.isdir(static_dir):
     _f = True
-    util.sprint("config file specifies nonexistent static directory",
+    util.sprint("static directory does not exist or cannot be accessed",
                 error=True)
 
 if not os.path.isdir(dropbox_dir):
     _f = True
-    util.sprint("config file specifies nonexistent dropbox directory",
+    util.sprint("dropbox directory does not exist or cannot be accessed",
                 error=True)
 
 if not os.path.isdir(criteria_dir):
     _f = True
-    util.sprint("config file specifies nonexistent criteria directory",
+    util.sprint("criteria directory does not exist or cannot be accessed",
                 error=True)
 
 if _f: sys.exit(util.ERR_BAD_CONFIG)
