@@ -2,7 +2,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
-from util import sprint, COLOR_YELLOW, COLOR_RESET
+from util import sprint, warn
 
 # for HMMM assembler and simulator
 import hmc
@@ -57,8 +57,7 @@ class HMMMEvalTest(BaseTest):
         except SystemExit:
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
-            sprint(COLOR_YELLOW + "failing test because the simulator "
-                   "exited uncleanly" + COLOR_RESET)
+            warn("failing test because the simulator exited uncleanly")
 
             err = filter(_not_boring, out_buf.getvalue().split('\n')[-5:-1])
 

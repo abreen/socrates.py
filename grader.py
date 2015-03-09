@@ -26,8 +26,7 @@ def grade(criteria, submissions, filename):
             # the grader to pick the incorrect file name or declare
             # the file missing
 
-            sprint(COLOR_YELLOW + "could not find "
-                   "file '{}'".format(f.path) + COLOR_RESET)
+            warn("could not find file '{}'".format(f.path))
 
             if len(submissions) < 1:
                 continue
@@ -102,8 +101,7 @@ def grade(criteria, submissions, filename):
             late_penalty = f.point_value * multiplier
 
             if late_penalty != 0:
-                sprint(COLOR_YELLOW + "taking {}% late "
-                       "penalty".format(multiplier * 100) + COLOR_RESET)
+                warn("taking {}% late penalty".format(multiplier * 100))
 
                 adjusted = min(f.point_value - points_taken, late_penalty)
                 out.write("-{}\tsubmitted late\n".format(adjusted))

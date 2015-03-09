@@ -3,7 +3,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 
-from util import sprint, add_to, COLOR_GREEN, COLOR_YELLOW, \
+from util import sprint, add_to, warn, COLOR_GREEN, \
                  COLOR_RED, COLOR_RESET, ALPHABET, plural
 
 import yaml
@@ -202,8 +202,7 @@ class EvalTest(BaseTest):
 
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
-            sprint(COLOR_YELLOW + "failing a test due to an "
-                   "error ({})".format(err[1]) + COLOR_RESET)
+            warn("failing a test due to an error ({})".format(err[1]))
 
             return {'deduction': self.deduction,
                     'description': self.description,
@@ -282,8 +281,7 @@ class EvalTest(BaseTest):
         from grader import write_results
         from prompt import prompt
 
-        sprint(COLOR_YELLOW + "about to fail a test with the following "
-               "reasoning:" + COLOR_RESET)
+        warn("about to fail a test with the following reasoning:")
 
         write_results(sys.stdout, [result])
 
@@ -665,8 +663,7 @@ class PythonFile(PlainFile):
             else:
                 deduction = self.point_value
 
-            sprint(COLOR_YELLOW + "deducting {} points for error during "
-                   "import".format(deduction) + COLOR_RESET)
+            warn("deducting {} points for import error".format(deduction))
 
             return [{'deduction': deduction,
                      'description': "error importing '{}'".format(self.path),
