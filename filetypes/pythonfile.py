@@ -1,14 +1,16 @@
+import sys
+import yaml
+
 import filetypes
 from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
-
 from util import sprint, add_to, warn, COLOR_GREEN, \
                  COLOR_RED, COLOR_RESET, ALPHABET, plural
 
-import yaml
-
+MAX_STACK_SIZE = sys.getrecursionlimit()
 BASIC_TYPES = [str, int, float, bool, list, dict, type(None)]
+
 
 class CriteriaObject:
     """An object type specified by the criteria is represented using an
@@ -16,7 +18,6 @@ class CriteriaObject:
     object is "converted" to an instance of a class from the student
     submission.
     """
-
     def __init__(self, class_name, attrs):
         self.class_name = class_name
         self.attrs = attrs
@@ -27,9 +28,7 @@ def crit_obj_constructor(loader, suffix, node):
     attrs = loader.construct_mapping(node)
     return CriteriaObject(class_name=class_name, attrs=attrs)
 
-
 yaml.add_multi_constructor(u'!object', crit_obj_constructor)
-
 
 
 class EvalTest(BaseTest):
@@ -480,7 +479,6 @@ class EvalTest(BaseTest):
             return self.output['match'].match(out_string)
 
 
-
 class PythonReviewTest(ReviewTest):
     def __init__(self, dict_, file_type):
         super().__init__(dict_, file_type)
@@ -552,7 +550,6 @@ class PythonReviewTest(ReviewTest):
         return super().run(temp.name)
 
 
-
 class PythonFile(PlainFile):
     yaml_type = 'python'
     extensions = ['py']
@@ -618,7 +615,7 @@ class PythonFile(PlainFile):
             if new_val < old_val:
                 sprint("keeping stack size at " + str(old_val))
                 return
-            if new_val > 30000:
+            if new_val > MAX_STACK_SIZE:
                 sprint("code wants to set stack size too large")
                 sprint("keeping stack size at " + str(old_val))
                 return
@@ -809,7 +806,6 @@ class PythonFile(PlainFile):
         return self.path + " (Python file)"
 
 
-
 class PythonFunction:
     """Utility class representing a Python function that the criteria specifies
     should be in a module of a student's submission. Used only with files of
@@ -841,7 +837,6 @@ class PythonFunction:
 
         name = "{}({})".format(self.name, params)
         return "function {}".format(name)
-
 
 
 class PythonVariable:
@@ -876,7 +871,6 @@ class PythonVariable:
                 'tests': [t.to_dict() for t in self.tests]}
 
 
-
 def _find_function_from_cxt(context, target):
     """This function inspects the passed-in context for a function
     or a method using the passed-in target, either a PythonFunction
@@ -907,7 +901,6 @@ def _find_function_from_cxt(context, target):
     return None
 
 
-
 def _find_class_from_cxt(context, name):
     """This function inspects the passed-in context for a class
     object that matches the specified class name.
@@ -919,7 +912,6 @@ def _find_class_from_cxt(context, name):
             return c[1]
 
     return None
-
 
 
 def _convert_using_cxt(cxt, crit_obj):
@@ -935,7 +927,6 @@ def _convert_using_cxt(cxt, crit_obj):
         setattr(obj, attr, val)
 
     return obj
-
 
 
 def _attributes_equal(target, expected):
@@ -991,7 +982,6 @@ def _safe_str(obj):
     return s
 
 
-
 class PythonClass:
     """Utility class representing a Python class that the criteria specifies
     should be in a module of a student's submission. Used only with files of
@@ -1020,7 +1010,6 @@ class PythonMethod:
     should be in a module of a student's submission. Used only with files of
     type 'python'.
     """
-
     def __init__(self, dict_):
         self.name = dict_['method_name']
 
