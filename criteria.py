@@ -1,14 +1,9 @@
 import yaml
-import util
 from datetime import datetime, timedelta
+import util
+import config
 
 DATE_FORMAT = '%B %d, %Y %I:%M %p'
-
-# note: if using Apollo with socrates, this constant should match
-# Apollo's setting for the grace period, so that submissions will be
-# allowed inside this window
-# TODO this should probably go in the configuration file
-GRACE_PERIOD_WINDOW = timedelta(minutes=10)
 
 
 class Criteria:
@@ -46,11 +41,11 @@ class Criteria:
         """Given a datetime object representing the date and time that
         a file was last modified, return the deduction multiplier
         (e.g., 0.10 for a 10 percent late penalty). This method takes
-        into account the grace period (GRACE_PERIOD_WINDOW).
+        into account the grace period (config.grace_period).
         """
         mult = 0.0
         for multiplier, date in self.due:
-            if mdate > date + GRACE_PERIOD_WINDOW:
+            if mdate > date + config.grace_period:
                 mult = multiplier
             else:
                 break

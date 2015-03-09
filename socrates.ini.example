@@ -1,16 +1,24 @@
-# socrates configuration file
-# copy this file to socrates.ini and edit that file
+; socrates configuration file
+; copy this file to socrates.ini and edit that file
 
-# this file is read using Python's configparser library
-# the [socrates] section is required
+; this file is read using Python's configparser library
+; the [socrates] section is required
 
 [socrates]
-# if tests need any additional data to run their tests, they
-# can read from this directory (e.g., solution files to diff against)
-static_dir: .
+; if tests need any additional data to run their tests, they
+; can read from this directory (e.g., solution files to diff against)
+static_dir = "."
 
-# the destination to which the final grading files are sent
-dropbox_dir: .
+; the destination to which the final grading files are sent
+dropbox_dir = "."
 
-# the directory from which criteria YAML files are read
-criteria_dir: .
+; the directory from which criteria YAML files are read
+criteria_dir = "."
+
+; a period of time that is added at the end of all due dates to
+; give students extra time to submit files
+; note: this should be an integer representing the
+; **number of seconds** to add to due dates
+; note: if you are also using Apollo (http://github.com/abreen/Apollo),
+; you should set this grace period to be the same as Apollo's
+grace_period = 600

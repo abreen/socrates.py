@@ -30,6 +30,14 @@ dropbox_dir = _parser.get('socrates', 'dropbox_dir',
 criteria_dir = _parser.get('socrates', 'criteria_dir',
                            fallback=SOCRATES_DIR + os.sep + 'criteria')
 
+from datetime import timedelta as _td
+if _parser.has_option('socrates', 'grace_period'):
+    _grace_str = _parser.get('socrates', 'grace_period')
+    grace_period = _td(seconds=int(_grace_str))
+
+else:
+    grace_period = _td(seconds=0)
+
 
 _f = False
 if not os.path.isdir(static_dir):
