@@ -7,13 +7,13 @@
 [socrates]
 ; if tests need any additional data to run their tests, they
 ; can read from this directory (e.g., solution files to diff against)
-static_dir = "."
+static_dir = .
 
 ; the destination to which the final grading files are sent
-dropbox_dir = "."
+dropbox_dir = .
 
 ; the directory from which criteria YAML files are read
-criteria_dir = "."
+criteria_dir = .
 
 ; a period of time that is added at the end of all due dates to
 ; give students extra time to submit files
