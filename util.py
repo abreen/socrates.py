@@ -57,6 +57,10 @@ def sprint(string, error=False, color=COLOR_BLUE, end='\n'):
         print(pre + sprint_prefix + err + string + post, file=stream, end=end)
 
 
+def warn(string):
+    sprint(string, color=COLOR_YELLOW)
+
+
 def heading(string, level=1):
     """Given a string and an optional heading level, return a string
     in setext/atx style (setext for levels 1 and 2, and atx style for
