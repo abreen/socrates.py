@@ -91,7 +91,7 @@ class EvalTest(BaseTest):
             sprint("passed", color=COLOR_GREEN)
 
 
-class LogisimFile(PlainFile):
+class LogisimFile(BaseFile):
     yaml_type = 'logisim'
     extensions = ['circ']
     supported_tests = [LogisimReviewTest, EvalTest]
@@ -118,7 +118,6 @@ class LogisimFile(PlainFile):
             if circuit is None:
                 results[c].append({'deduction': c.point_value,
                                    'description': "missing " + str(c)})
-                results.append(result)
                 continue
 
             for t in c.tests:
@@ -142,6 +141,7 @@ class LogisimCircuit:
         self.name = dict_['circuit_name']
         self.input_pins = dict_['input_pins']
         self.output_pins = dict_['output_pins']
+        self.point_value = dict_['point_value']
 
         tests = []
         if 'tests' in dict_:
@@ -152,7 +152,7 @@ class LogisimCircuit:
         self.tests = tests
 
     def __str__(self):
-        return repr(self.name)
+        return "circuit " + repr(self.name)
 
     @property
     def name(self):
@@ -203,3 +203,14 @@ class LogisimCircuit:
             raise ValueError("invalid tests: not subclasses of BaseTest")
 
         self._tests = new_tests
+
+    @property
+    def point_value(self):
+        return self._point_value
+
+    @point_value.setter
+    def point_value(self, new_val):
+        if type(new_val) not in [int, float]:
+            raise ValueError("invalid point value")
+
+        self._point_value = new_val
