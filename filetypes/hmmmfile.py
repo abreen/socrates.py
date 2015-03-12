@@ -3,9 +3,7 @@ from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
 from util import sprint, warn
-
-# for HMMM assembler and simulator
-import hmc
+import hmc                              # for HMMM assembler and simulator
 
 
 def _not_boring(s):
