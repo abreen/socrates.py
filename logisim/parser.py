@@ -11,14 +11,12 @@ LOGISIM_ATTRIBUTES = ['facing', 'size', 'inputs', 'label', 'loc']
 def from_xml(root, circuit_root):
     circuit_name = circuit_root.attrib['name']
 
-    # the wire graph is a mapping from (int, int) -> (int, int) where
-    # a key (x, y) mapping to (a, b) means that a wire is present starting
-    # at (a, b) and ending at (x, y); this allows us to "follow" wires
-    # from their endpoints at a particular gate or subcircuit input back to
-    # the gate or subcircuit from which it originates
+    # the wire graph is a mapping from (int, int) -> [Wire objects] where
+    # a key (x, y) represents an "end" of one or more wires, and the wires
+    # themselves are stored in the value list
     wire_graph = dict()
 
-    # for non-wire components, like pins and gates
+    # components are all non-wire objects in the circuit
     components = []
     in_pins, out_pins = [], []
 
@@ -68,8 +66,9 @@ def from_xml(root, circuit_root):
             pass
 
     # all circuit components are instantiated
-    # for each component with any input pins, "follow" any wires ending
-    # at the location of those pins to the gate or pin that is its source
+    # for each component with any input pins, find the components
+    # connected via a wire to it and add the source component to this
+    # component's 'input_components' list
     for comp in components:
         if type(comp) is InputPin:
             # has no input wires
@@ -82,19 +81,25 @@ def from_xml(root, circuit_root):
 
                 source_comps = []
                 for source_loc in source_locs:
+
+                    # see whether any other component has an output pin
+                    # at this location ('source_loc')
                     for other_comp in components:
                         if other_comp is comp:
                             continue
 
+                        # found the output pin of another component
                         if source_loc == other_comp.loc:
-                            # an output pin of another component is here
                             source_comps.append(other_comp)
 
+                # inspected all source locations
                 if len(source_comps) > 1:
                     raise ValueError("one pin has multiple inputs")
+
                 elif len(source_comps) == 1:
                     comp.input_components.append(source_comps[0])
-                # else: all ends of the wire don't connect to another component
+
+                # else: all ends don't connect to any other components
 
     return Circuit(circuit_name, in_pins, out_pins)
 
