@@ -6,6 +6,7 @@
 # Logisim's names for component attributes (i.e., the 'a' elements that
 # are children of 'tool' or 'comp' elements)
 LOGISIM_ATTRIBUTES = ['facing', 'size', 'inputs', 'label', 'loc']
+IGNORED_COMPONENTS = ['Text']
 
 
 def from_xml(root, circuit_root):
@@ -21,6 +22,9 @@ def from_xml(root, circuit_root):
     in_pins, out_pins = [], []
 
     for child in circuit_root:
+        if child.tag == 'a':
+            continue
+
         cls = _get_class(child)
 
         if cls is Wire:
@@ -39,7 +43,7 @@ def from_xml(root, circuit_root):
             else:
                 wire_graph[frm].append(obj)
 
-        elif cls in [NOTGate, ANDGate, ORGate, InputPin, OutputPin]:
+        elif cls in [NOTGate, ANDGate, ORGate, Constant, InputPin, OutputPin]:
             # if the XML file specified attributes different than the
             # global defaults, we obtain and set them using the constructor
             attrs = _get_all_attributes(child)
@@ -65,16 +69,21 @@ def from_xml(root, circuit_root):
             #subcircuit = from_xml(root, get_circuit(root, name))
             pass
 
+        else:
+            if child.attrib['name'] not in IGNORED_COMPONENTS:
+                raise ValueError("unknown component: " + child.attrib['name'])
+
     # all circuit components are instantiated
     # for each component with any input pins, find the components
     # connected via a wire to it and add the source component to this
     # component's 'input_components' list
     for comp in components:
-        if type(comp) is InputPin:
-            # has no input wires
+        input_locations = comp.get_input_locations()
+        if len(input_locations) == 0:
+            # component has no input wires (e.g., input pin)
             continue
 
-        for loc in comp.get_input_locations():
+        for loc in input_locations:
             if loc in wire_graph:
                 # there is a wire here; find its source locations
                 source_locs = _follow_wire(loc, wire_graph)
@@ -101,6 +110,7 @@ def from_xml(root, circuit_root):
 
                 # else: all ends don't connect to any other components
 
+    _print_components(components)
     return Circuit(circuit_name, in_pins, out_pins)
 
 
@@ -229,9 +239,9 @@ class LogisimObject:
     def get_input_locations(self):
         """Return a list of (x, y) coordinate pairs corresponding to the
         locations of the input pins for this gate. If this LogisimObject
-        represents an InputPin, this method returns None. The number of
-        pairs returned by this method should be equal to this object's
-        'num_inputs' attribute.
+        represents an InputPin or a Constant, this method returns the
+        empty list. The number of pairs returned by this method should
+        be equal to this object's 'num_inputs' attribute.
         """
         locs = []
         x, y = self.loc
@@ -245,8 +255,8 @@ class LogisimObject:
         elif type(self) is OutputPin:
             return [self.loc]
         else:
-            # should be InputPin
-            return None
+            # should be input pin/constant
+            return []
 
         if self.facing == 'north':
             y -= size
@@ -309,6 +319,14 @@ class NOTGate(LogisimObject):
             raise ValueError("NOT gate has more than one input")
 
         return not self.input_components[0].eval()
+
+
+class Constant(LogisimObject):
+    facing = 'south'
+    value = 0
+
+    def __init__(self, defaults=None):
+        LogisimObject.__init__(self, defaults)
 
 
 class InputPin(LogisimObject):
@@ -405,10 +423,25 @@ def _get_attribute(el, attribute_name, fallback=None):
     specify such an attribute, this function returns the fallback
     value, which, when unspecified, is None.
     """
+    from re import match
+    num_literal_pat = r'^\d+$'
+    hex_literal_pat = r'^0x\d+$'
+
     val = fallback
     for a in el.getchildren():
         if a.attrib['name'] == attribute_name:
             val = a.attrib['val']
+
+            m = match(num_literal_pat, val)
+            if m:
+                # value is numerical
+                val = eval(a)
+
+            m = match(hex_literal_pat, val)
+            if m:
+                # value is hex (e.g., '0x0')
+                val = eval(a, base=16)
+
             break
 
     return val
@@ -422,19 +455,11 @@ def _get_all_attributes(el):
     the properties defined in sublcasses of LogisimObject.
     Only attributes defined in LOGISIM_ATTRIBUTES are searched for.
     """
-    from re import match
-    num_pat = r'^\d+$'
-
     attrs = dict()
     for attr in LOGISIM_ATTRIBUTES:
         a = _get_attribute(el, attr)
         if a is not None:
-            m = match(num_pat, a)
-            if m:
-                # value is numerical
-                attrs[attr] = eval(a)
-            else:
-                attrs[attr] = a
+            attrs[attr] = a
 
     return attrs
 
@@ -476,15 +501,19 @@ def _get_class(el):
     function returns the Wire class. If the element represents something
     else, None is returned.
     """
-    if el.tag == 'wire':
+    tag = el.tag
+
+    if tag == 'wire':
         return Wire
 
-    if el.tag in ['comp', 'tool']:
+    name = el.attrib['name']
+
+    if tag in ['comp', 'tool']:
         if 'lib' not in el.attrib:
             # must be user-defined subcircuit
             return Subcircuit
 
-        if 'Gate' in el.attrib['name']:
+        if 'Gate' in name:
             gate_type = _gate_type(el)
             if gate_type == 'not':
                 return NOTGate
@@ -493,12 +522,15 @@ def _get_class(el):
             else: # gate_type == 'or'
                 return ORGate
 
-        elif el.attrib['name'] == 'Pin':
+        elif name == 'Pin':
             pin_type = _pin_type(el)
             if pin_type == 'input':
                 return InputPin
             else: # pin_type == 'output'
                 return OutputPin
+
+        elif name == 'Constant':
+            return Constant
 
     return None
 
