@@ -14,6 +14,8 @@ class Subcircuit(Component):
         # reference to Circuit object
         self.circuit = circuit
 
+        self.label = circuit.name
+
         # TODO custom subcircuit appearance
         self.appearance = None
 
