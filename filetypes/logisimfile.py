@@ -42,8 +42,11 @@ class EvalTest(BaseTest):
             s += "on" if value else "off"
             outputs.append(s)
 
-        return "with " + " and ".join(inputs) + ", " + \
-               " and ".join(outputs)
+        inputs.sort()
+        outputs.sort()
+
+        return "with " + "\nand ".join(inputs) + ",\n" + \
+               "\nand ".join(outputs)
 
     def __check_pin_vals(self, dict_):
         if type(dict_) is not dict:
@@ -83,10 +86,13 @@ class EvalTest(BaseTest):
         sprint("running eval test on '{}'... ".format(circuit.name), end='')
 
         output_vals = circuit.eval(self.input)
+
         if output_vals != self.output:
             sprint("failed", color=COLOR_RED)
+
             return {'deduction': self.deduction,
-                    'description': self.description}
+                    'description': "did not produce the correct output",
+                    'notes': self.description.split('\n')}
         else:
             sprint("passed", color=COLOR_GREEN)
 
@@ -108,6 +114,8 @@ class LogisimFile(BaseFile):
         self.circuits = circuits
 
     def run_tests(self):
+        from logisim.errors import NoSuchPinLabelError
+
         logisim_file = logisim.load(self.path)
 
         results = dict()
@@ -120,13 +128,22 @@ class LogisimFile(BaseFile):
                                    'description': "missing " + str(c)})
                 continue
 
-            for t in c.tests:
-                result = t.run(circuit)
-                if result:
-                    outer_result = {'description': "circuit " + str(c) + \
-                                                   " failed a test"}
-                    outer_result['subresults'] = [result]
-                    results[c].append(outer_result)
+            try:
+                for t in c.tests:
+                    result = t.run(circuit)
+                    if result:
+                        outer_result = {'description': str(c) + \
+                                                       " failed a test"}
+
+                        outer_result['subresults'] = [result]
+                        results[c].append(outer_result)
+
+            except NoSuchPinLabelError:
+                sprint("failed", color=COLOR_RED)
+
+                desc = str(c) + " has missing or incorrect input pin labels"
+                results[c].append({'deduction': c.error_deduction,
+                                   'description': desc})
 
         return [item for subl in results.values() for item in subl]
 
@@ -142,6 +159,7 @@ class LogisimCircuit:
         self.input_pins = dict_['input_pins']
         self.output_pins = dict_['output_pins']
         self.point_value = dict_['point_value']
+        self.error_deduction = dict_['error_deduction']
 
         tests = []
         if 'tests' in dict_:
@@ -214,3 +232,18 @@ class LogisimCircuit:
             raise ValueError("invalid point value")
 
         self._point_value = new_val
+
+    @property
+    def error_deduction(self):
+        return self._error_deduction
+
+    @error_deduction.setter
+    def error_deduction(self, new_val):
+        if type(new_val) not in [int, float]:
+            raise ValueError("invalid error deduction")
+
+        if new_val > self.point_value:
+            raise ValueError("error deduction cannot be greater than the " + \
+                             "circuit's point value")
+
+        self._error_deduction = new_val

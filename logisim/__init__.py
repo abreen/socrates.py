@@ -1,16 +1,19 @@
-from logisim.parser import Circuit
+from logisim.circuit import Circuit
 
 
 class LogisimFile:
     def __init__(self, path):
         import xml.etree.ElementTree as ET
-        import logisim.parser
+        from logisim.parser import from_xml
 
         tree = ET.parse(path)
         root = tree.getroot()
 
         circuits = [c for c in root.getchildren() if c.tag == 'circuit']
-        circuit_objs = [logisim.parser.from_xml(root, c) for c in circuits]
+                    #c.attrib['name'] == 'XOR']
+                    #c.attrib['name'] == '4-Bit Ripple-Carry Adder']
+
+        circuit_objs = [from_xml(root, c) for c in circuits]
 
         self.circuits = {c.name: c for c in circuit_objs}
 
