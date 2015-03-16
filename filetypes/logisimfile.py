@@ -52,13 +52,18 @@ class EvalTest(BaseTest):
         if type(dict_) is not dict:
             raise ValueError("pin values must be a dictionary")
 
-        def valid_item(item):
-            key, val = item
-            return type(key) is str and type(val) is bool
+        def valid_key(key):
+            return type(key) is str
 
-        if not all(map(valid_item, dict_.items())):
-            raise ValueError("pin values must be mapping from strings " +
-                             "(pin labels) to Boolean values")
+        if not all(map(valid_key, dict_.keys())):
+            raise ValueError("pin keys must be strings (pin labels)")
+
+        def valid_val(val):
+            return type(val) is bool or (type(val) is int and \
+                   val in [0, 1])
+
+        if not all(map(valid_val, dict_.values())):
+            raise ValueError("pin values must be Booleans or 0/1")
 
     @property
     def input(self):
@@ -67,7 +72,7 @@ class EvalTest(BaseTest):
     @input.setter
     def input(self, new_input):
         self.__check_pin_vals(new_input)
-        self._input = new_input
+        self._input = {k: bool(v) for k, v in new_input.items()}
 
     @property
     def output(self):
@@ -76,7 +81,7 @@ class EvalTest(BaseTest):
     @output.setter
     def output(self, new_output):
         self.__check_pin_vals(new_output)
-        self._output = new_output
+        self._output = {k: bool(v) for k, v in new_output.items()}
 
     def run(self, circuit):
         """Given a logisim.Circuit object, set its input pins, evaluate
