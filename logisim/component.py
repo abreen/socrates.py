@@ -84,6 +84,10 @@ class Component:
             if hasattr(self, attr):
                 s += "\n\t" + attr + ": " + str(getattr(self, attr))
 
+        s += "\n\toutput locations:"
+        for loc in self.get_output_locations():
+            s += "\n\t\t" + repr(loc)
+
         s += "\n\tcomponents connected:"
         for in_pin_loc in self.input_from:
             comp, out_pin_loc = self.input_from[in_pin_loc]
