@@ -92,7 +92,13 @@ class EvalTest(BaseTest):
 
         output_vals = circuit.eval(self.input)
 
-        if output_vals != self.output:
+        failed = False
+        for label, value in self.output.items():
+            if output_vals[label] != value:
+                failed = True
+                break
+
+        if failed:
             sprint("failed", color=COLOR_RED)
 
             return {'deduction': self.deduction,
