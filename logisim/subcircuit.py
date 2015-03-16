@@ -96,48 +96,65 @@ def _default_subcircuit_locations(subcircuit):
         else:
             pins_facing[facing].sort(key=lambda pin: pin.loc.x)
 
+    # we construct a 2D list representing the subcircuit's appearance
+    top = pins_facing['south']
+    bottom = pins_facing['north']
+    left = pins_facing['east']
+    right = pins_facing['west']
+
+    # n rows, m columns
+    n = max(len(left), len(right))
+    m = max(len(top), len(bottom))
+
+    corner_spacing = (top or bottom) and (left or right)
+
+    if corner_spacing:
+        m += 2
+        top = [None] + top + [None] if top else top
+        bottom = [None] + bottom + [None] if bottom else bottom
+        left = [None] + left + [None] if left else left
+        right = [None] + right + [None] if right else right
+
+    n = max(n, 4)
+    m = max(m, 4)
+
+    pin_layout = _make2d(n, m)
+
+    if top:
+        _overwrite_row(pin_layout, 0, top)
+    if bottom:
+        _overwrite_row(pin_layout, n - 1, bottom)
+    if left:
+        _overwrite_col(pin_layout, 0, left)
+    if right:
+        _overwrite_col(pin_layout, m - 1, right)
+
     # we have the subcircuit's location, which is the location of what
     # Logisim calls its "anchor"; by default, the anchor is placed over
     # the first pin facing west (then south, east, and north, if there
     # is no such pin)
+
+    # we will find the position of the anchor pin (the position being its
+    # row and column index into the 'pin_layout' 2-D list)
     if len(pins_facing['west']) > 0:
-        anchor = 'west'
+        # pins on the right
+        anchor_pos = (1 if corner_spacing else 0, m - 1)
+
     elif len(pins_facing['south']) > 0:
-        anchor = 'south'
+        # pins on the top
+        anchor_pos = (0, 1 if corner_spacing else 0)
+
     elif len(pins_facing['east']) > 0:
-        anchor = 'east'
+        # pins on the left
+        anchor_pos = (1 if corner_spacing else 0, 0)
+
     elif len(pins_facing['north']) > 0:
-        anchor = 'north'
+        # pins on the bottom
+        anchor_pos = (n - 1, 1 if corner_spacing else 0)
+
     else:
-        # circuit actually has no pins
-        return []
-
-    # we construct a 2D list representing the subcircuit's appearance
-    top = [None] + pins_facing['south'] + [None]
-    bottom = [None] + pins_facing['north'] + [None]
-    left = [None] + pins_facing['east'] + [None]
-    right = [None] + pins_facing['west'] + [None]
-
-    # n rows, m columns
-    n = max(4, max(len(left), len(right)))
-    m = max(4, max(len(top), len(bottom)))
-
-    pin_layout = _make2d(n, m)
-
-    _overwrite_row(pin_layout, 0, top)
-    _overwrite_row(pin_layout, n - 1, bottom)
-    _overwrite_col(pin_layout, 0, left)
-    _overwrite_col(pin_layout, m - 1, right)
-
-    # determine position of anchor in pin_layout
-    if anchor == 'west':
-        anchor_pos = (1, m - 1)
-    elif anchor == 'south':
-        anchor_pos = (0, 1)
-    elif anchor == 'east':
-        anchor_pos = (1, 0)
-    else: # anchor == 'north'
-        anchor_pos = (n - 1, 1)
+        # TODO subcircuit has no pins?
+        pass
 
     x, y = subcircuit.loc.x, subcircuit.loc.y
 
@@ -175,19 +192,42 @@ def _make2d(rows, cols):
 
 def _overwrite_row(list_, index, row):
     """Given a reference to a 2-D list and a row index, replace the
-    row with the values in the given row, starting from the left.
-    The length of the new row can be less than the existing row;
-    the old values in that row will remain.
+    row with the values in the new row. If the new row has fewer columns
+    than the existing one, the new row is centered and Nones are added
+    as padding.
     """
-    for c in range(len(row)):
-        list_[index][c] = row[c]
+    cols = len(list_[index])
+
+    if cols < len(row):
+        raise ValueError("row is too big ({}, expected {})".format(len(row),
+                                                                   cols))
+    elif cols == len(row):
+        new_row = row
+    else:
+        left = [None] * ((cols - len(row)) // 2)
+        right = [None] * (cols - len(row) - len(left))
+
+        new_row = left + row + right
+
+    for c in range(cols):
+        list_[index][c] = new_row[c]
 
 
 def _overwrite_col(list_, index, col):
-    """Given a reference to a 2-D list and a column index, replace the
-    column with the values in the given row, starting from the top.
-    The length of the new column can be less than the existing one;
-    the old values in that column will remain.
+    """See overwrite_row(). This function does the same thing, but
+    column-wise.
     """
-    for r in range(len(col)):
-        list_[r][index] = col[r]
+    rows = len(list_)
+
+    if rows < len(col):
+        raise ValueError("column is too big")
+    elif rows == len(col):
+        new_col = col
+    else:
+        above = [None] * ((rows - len(col)) // 2)
+        below = [None] * (rows - len(col) - len(above))
+
+        new_col = above + col + below
+
+    for r in range(rows):
+        list_[r][index] = new_col[r]
