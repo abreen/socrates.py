@@ -139,6 +139,21 @@ class LogisimFile(BaseFile):
                                    'description': "missing " + str(c)})
                 continue
 
+            missing_labels = []
+            for output_label in c.output_pins:
+                if output_label not in circuit.output_pins:
+                    missing_labels.append(repr(output_label) + " (output pin)")
+
+            for input_label in c.input_pins:
+                if input_label not in circuit.input_pins:
+                    missing_labels.append(repr(input_label) + " (input pin)")
+
+            if missing_labels:
+                results[c].append({'deduction': c.error_deduction,
+                                   'description': "missing or mislabeled pins",
+                                   'notes': missing_labels})
+                continue
+
             try:
                 for t in c.tests:
                     result = t.run(circuit)
@@ -152,7 +167,7 @@ class LogisimFile(BaseFile):
             except NoSuchPinLabelError:
                 sprint("failed", color=COLOR_RED)
 
-                desc = str(c) + " has missing or incorrect input pin labels"
+                desc = str(c) + " has incorrect input pin labels"
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc})
 
