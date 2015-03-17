@@ -27,26 +27,7 @@ class EvalTest(BaseTest):
         self.output = dict_['output']
 
         if not self.description:
-            self.description = self.__build_description()
-
-    def __build_description(self):
-        inputs = []
-        for label, value in self.input.items():
-            s = repr(label) + " "
-            s += "on" if value else "off"
-            inputs.append(s)
-
-        outputs = []
-        for label, value in self.output.items():
-            s = repr(label) + " should be "
-            s += "on" if value else "off"
-            outputs.append(s)
-
-        inputs.sort()
-        outputs.sort()
-
-        return "with " + "\nand ".join(inputs) + ",\n" + \
-               "\nand ".join(outputs)
+            _build_description(self.input, self.output)
 
     def __check_pin_vals(self, dict_):
         if type(dict_) is not dict:
@@ -101,9 +82,13 @@ class EvalTest(BaseTest):
         if failed:
             sprint("failed", color=COLOR_RED)
 
+            desc = _build_description(self.input, self.output).split('\n')
+            desc += ["your circuit produced:"]
+            desc += _build_description({}, output_vals).split('\n')
+
             return {'deduction': self.deduction,
                     'description': "did not produce the correct output",
-                    'notes': self.description.split('\n')}
+                    'notes': desc}
         else:
             sprint("passed", color=COLOR_GREEN)
 
@@ -125,7 +110,7 @@ class LogisimFile(BaseFile):
         self.circuits = circuits
 
     def run_tests(self):
-        from logisim.errors import NoSuchPinLabelError
+        from logisim.errors import NoSuchPinLabelError, NoValueGivenError
 
         logisim_file = logisim.load(self.path, lowercase=True)
 
@@ -149,8 +134,9 @@ class LogisimFile(BaseFile):
                     missing_labels.append(repr(input_label) + " (input pin)")
 
             if missing_labels:
+                desc = str(c) + " has missing or mislabeled pins"
                 results[c].append({'deduction': c.error_deduction,
-                                   'description': "missing or mislabeled pins",
+                                   'description': desc,
                                    'notes': missing_labels})
                 continue
 
@@ -170,6 +156,16 @@ class LogisimFile(BaseFile):
                 desc = str(c) + " has incorrect input pin labels"
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc})
+
+            except NoValueGivenError as e:
+                sprint("failed", color=COLOR_RED)
+
+                desc = str(c) + " is missing needed connections to one " + \
+                       "or more input pins"
+                results[c].append({'deduction': c.error_deduction,
+                                   'description': desc,
+                                   'notes': [str(e)]})
+
 
         return [item for subl in results.values() for item in subl]
 
@@ -273,3 +269,28 @@ class LogisimCircuit:
                              "circuit's point value")
 
         self._error_deduction = new_val
+
+
+def _build_description(inputs, outputs):
+    in_strs, out_strs = [], []
+
+    if inputs:
+        for label, value in inputs.items():
+            s = repr(label) + " "
+            s += "on" if value else "off"
+            in_strs.append(s)
+
+    if outputs:
+        for label, value in outputs.items():
+            s = repr(label) + " "
+            s += "on" if value else "off"
+            out_strs.append(s)
+
+    in_strs.sort()
+    out_strs.sort()
+
+    if inputs and outputs:
+        return "given " + "\nand ".join(in_strs) + ", should output\n" + \
+               "\nand ".join(out_strs)
+    else:
+        return "\n".join(in_strs) + "\n".join(out_strs)
