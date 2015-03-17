@@ -81,6 +81,15 @@ def from_xml(root, circuit_root):
 
         # for each input pin location
         for loc in input_locs:
+            # there could be a component at this exact location
+            comp_here = _get_comp_at(loc, components)
+
+            if comp_here:
+                comp.input_from[loc] = (comp_here, loc)
+                continue
+
+            # there's no component here, but there could be wires
+            # from here to another component
             if loc not in wire_graph:
                 # there are no wires here
                 continue
