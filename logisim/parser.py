@@ -15,7 +15,7 @@ from logisim.location import Location
 IGNORED_COMPONENTS = ['Text']
 
 
-def from_xml(root, circuit_root):
+def from_xml(root, circuit_root, lowercase=False):
     circuit_name = circuit_root.attrib['name']
 
     # the wire graph is a mapping from a Location to a list of Wire objects,
@@ -44,6 +44,10 @@ def from_xml(root, circuit_root):
             # if the XML file specified attributes different than the
             # global defaults, we obtain and set them using the constructor
             attrs = _get_all_attributes(child)
+
+            if cls in [InputPin, OutputPin] and lowercase and 'label' in attrs:
+                attrs['label'] = attrs['label'].lower()
+
             obj = cls(attrs)
 
             obj.loc = Location(child.attrib['loc'])

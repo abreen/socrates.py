@@ -127,7 +127,7 @@ class LogisimFile(BaseFile):
     def run_tests(self):
         from logisim.errors import NoSuchPinLabelError
 
-        logisim_file = logisim.load(self.path)
+        logisim_file = logisim.load(self.path, lowercase=True)
 
         results = dict()
         for c in self.circuits:

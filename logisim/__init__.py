@@ -2,7 +2,7 @@ from logisim.circuit import Circuit
 
 
 class LogisimFile:
-    def __init__(self, path):
+    def __init__(self, path, lowercase):
         import xml.etree.ElementTree as ET
         from logisim.parser import from_xml
 
@@ -13,7 +13,7 @@ class LogisimFile:
                     #c.attrib['name'] == 'XOR']
                     #c.attrib['name'] == '4-Bit Ripple-Carry Adder']
 
-        circuit_objs = [from_xml(root, c) for c in circuits]
+        circuit_objs = [from_xml(root, c, lowercase) for c in circuits]
 
         self.circuits = {c.name: c for c in circuit_objs}
 
@@ -24,8 +24,8 @@ class LogisimFile:
             return None
 
 
-def load(path):
+def load(path, lowercase=False):
     """Given a path to a Logisim .circ file, return a LogisimFile object
     containing the circuits saved in the .circ file.
     """
-    return LogisimFile(path)
+    return LogisimFile(path, lowercase)
