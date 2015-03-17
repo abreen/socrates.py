@@ -1,3 +1,4 @@
+from logisim.errors import NoValueGivenError, NoInputsError
 from logisim.debug import narrate
 from logisim.util import rotate90, rotate180, offset_loc
 from logisim.component import Component
@@ -44,7 +45,16 @@ class ANDGate(Component):
         vals = []
         for _, tup in self.input_from.items():
             component, out_pin_loc = tup
-            vals.append(component.eval(at_loc=out_pin_loc))
+
+            try:
+                vals.append(component.eval(at_loc=out_pin_loc))
+            except NoValueGivenError:
+                # this gate might still produce a value, so long as
+                # there is at least one valid input
+                continue
+
+        if not vals:
+            raise NoInputsError("AND gate not given any non-error inputs")
 
         return all(vals)
 
@@ -71,7 +81,16 @@ class ORGate(Component):
         vals = []
         for _, tup in self.input_from.items():
             component, out_pin_loc = tup
-            vals.append(component.eval(at_loc=out_pin_loc))
+
+            try:
+                vals.append(component.eval(at_loc=out_pin_loc))
+            except NoValueGivenError:
+                # this gate might still produce a value, so long as
+                # there is at least one valid input
+                continue
+
+        if not vals:
+            raise NoInputsError("OR gate not given any non-error inputs")
 
         return any(vals)
 

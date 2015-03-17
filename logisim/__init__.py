@@ -10,8 +10,6 @@ class LogisimFile:
         root = tree.getroot()
 
         circuits = [c for c in root.getchildren() if c.tag == 'circuit']
-                    #c.attrib['name'] == 'XOR']
-                    #c.attrib['name'] == '4-Bit Ripple-Carry Adder']
 
         circuit_objs = [from_xml(root, c, lowercase) for c in circuits]
 

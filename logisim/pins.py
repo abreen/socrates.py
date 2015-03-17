@@ -1,6 +1,6 @@
 from logisim.debug import narrate
 from logisim.component import Component
-from logisim.errors import NoInputsError
+from logisim.errors import NoInputsError, NoValueGivenError
 
 
 class InputPin(Component):
@@ -28,7 +28,10 @@ class InputPin(Component):
         return self._str_simple()
 
     def eval(self, at_loc):
-        return self.value
+        try:
+            return self.value
+        except AttributeError:
+            raise NoValueGivenError("input pin was not given a value")
 
     def get_output_locations(self):
         return [self.loc]

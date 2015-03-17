@@ -59,15 +59,12 @@ class Circuit:
         set to True, causes this method to return a dict of OutputPin objects
         to Boolean values, instead of using labels.
         """
-        all_pins = []
-
         for label_or_pin, value in input_dict.items():
             if type(label_or_pin) is str:
                 label = label_or_pin
 
                 try:
                     self.input_pins[label].value = value
-                    all_pins.append(self.input_pins[label])
                 except KeyError:
                     raise NoSuchPinLabelError
 
@@ -79,11 +76,6 @@ class Circuit:
                                      "in this circuit")
 
                 pin.value = value
-                all_pins.append(pin)
-
-        for pin in self.input_pins.values():
-            if pin not in all_pins:
-                raise ValueError("not all input pins were given values")
 
         if pins:
             return {pin: pin.eval() for pin in self.output_pins.values()}

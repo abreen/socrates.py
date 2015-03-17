@@ -1,3 +1,4 @@
+from logisim.errors import NoValueGivenError
 from logisim.debug import narrate, suppress_narration
 from logisim.location import Location
 from logisim.component import Component
@@ -65,7 +66,14 @@ class Subcircuit(Component):
                 component, out_pin_loc = tup
 
                 in_pin = pins[in_pin_loc]
-                input_vals[in_pin] = component.eval(at_loc=out_pin_loc)
+
+                try:
+                    input_vals[in_pin] = component.eval(at_loc=out_pin_loc)
+                except NoValueGivenError:
+                    # this subcircuit might still work, if this input pin is
+                    # never used in the underlying circuit, so we don't
+                    # do anything now
+                    continue
 
             output_vals = self.circuit.eval(input_vals, pins=True)
 

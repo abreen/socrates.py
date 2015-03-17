@@ -1,3 +1,4 @@
+from logisim.errors import NoValueGivenError
 from logisim.debug import narrate
 from logisim.component import Component
 
@@ -29,7 +30,10 @@ class Constant(Component):
         return self._str_simple()
 
     def eval(self, at_loc):
-        return self.value
+        try:
+            return self.value
+        except AttributeError:
+            raise NoValueGivenError("constant was not given a value")
 
     def get_output_locations(self):
         return [self.loc]

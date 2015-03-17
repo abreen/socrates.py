@@ -29,7 +29,7 @@ def from_xml(root, circuit_root, lowercase=False):
 
     # create instances of all components in this circuit
     for child in circuit_root:
-        if child.tag == 'a':
+        if child.tag in ['a', 'appear']:
             continue
 
         cls = _get_class(child)
