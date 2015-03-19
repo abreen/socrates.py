@@ -1,3 +1,4 @@
+from logisim.util import num_rotations
 from logisim.errors import NoValueGivenError
 from logisim.debug import narrate, suppress_narration
 from logisim.location import Location
@@ -164,7 +165,11 @@ def _default_subcircuit_locations(subcircuit):
         # TODO subcircuit has no pins?
         pass
 
-    # TODO rotate circuit if not facing east
+    # if this subcircuit is not facing east (the default), rotate the
+    # 2-D list and change the anchor position accordingly
+    rotations = num_rotations('east', subcircuit.facing)
+    if rotations != 0:
+        pin_layout, anchor_pos = _rotate(pin_layout, anchor_pos, rotations)
 
     x, y = subcircuit.loc.x, subcircuit.loc.y
 
@@ -241,3 +246,29 @@ def _overwrite_col(list_, index, col):
 
     for r in range(rows):
         list_[r][index] = new_col[r]
+
+
+def _rotate(pin_layout, anchor_pos, times):
+    for n in range(times):
+        anchor_pos = _rotate90_pos(anchor_pos, len(pin_layout))
+        pin_layout = _rotate90_2d(pin_layout)
+
+    return pin_layout, anchor_pos
+
+
+def _rotate90_pos(anchor_pos, num_rows):
+    row_index, col_index = anchor_pos
+    return (col_index, num_rows - row_index - 1)
+
+
+def _rotate90_2d(list_):
+    rows, cols = len(list_), len(list_[0])
+
+    rotated = [[None for _ in range(rows)] for _ in range(cols)]
+
+    for r in range(rows):
+        for c in range(cols):
+            new_r, new_c = _rotate90_pos((r, c), rows)
+            rotated[new_r][new_c] = list_[r][c]
+
+    return rotated

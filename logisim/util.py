@@ -31,3 +31,16 @@ def rotate90(facing):
 
 def rotate180(facing):
     return rotate90(rotate90(facing))
+
+
+def num_rotations(start, end):
+    """Return the number of times required to rotate by 90 degrees
+    clockwise from 'start' and end up at 'end'. If the two facing directions
+    are equal, this function returns 0.
+    """
+    m = 0
+    while start != end:
+        start = rotate90(start)
+        m += 1
+
+    return m
