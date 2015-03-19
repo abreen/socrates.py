@@ -2,7 +2,7 @@ from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
 from filetypes.plainfile import ReviewTest, PlainFile
 import filetypes
-from util import sprint, COLOR_RED, COLOR_GREEN
+from util import sprint, warn, COLOR_RED, COLOR_GREEN
 import logisim                          # for parsing Logisim .circ files
 
 
@@ -124,6 +124,8 @@ class LogisimFile(BaseFile):
 
             circuit = logisim_file.get_circuit(c.name)
             if circuit is None:
+                warn("missing " + str(c))
+
                 results[c].append({'deduction': c.point_value,
                                    'description': "missing " + str(c)})
                 continue
