@@ -164,6 +164,8 @@ def _default_subcircuit_locations(subcircuit):
         # TODO subcircuit has no pins?
         pass
 
+    # TODO rotate circuit if not facing east
+
     x, y = subcircuit.loc.x, subcircuit.loc.y
 
     # finds location of each pin given the subcircuit's anchor
