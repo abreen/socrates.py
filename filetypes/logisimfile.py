@@ -128,6 +128,18 @@ class LogisimFile(BaseFile):
                                    'description': "missing " + str(c)})
                 continue
 
+            without_labels = []
+            for pin in circuit.input_pins + circuit.output_pins:
+                if not hasattr(pin, 'label'):
+                    without_labels.append(repr(pin))
+
+            if without_labels:
+                desc = "pin(s) are missing labels in " + str(c)
+                results[c].append({'deduction': c.error_deduction,
+                                   'description': desc,
+                                   'notes': without_labels})
+                continue
+
             label_errors = []
             for label in c.output_pins:
                 try:
