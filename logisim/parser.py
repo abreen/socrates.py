@@ -266,6 +266,9 @@ def _get_all_attributes(el):
     for attr in LOGISIM_ATTRIBUTES:
         a = _get_attribute(el, attr)
         if a is not None:
+            if attr == 'label':
+                a = str(a)
+
             attrs[attr] = a
 
     return attrs
