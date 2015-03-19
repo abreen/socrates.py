@@ -69,9 +69,20 @@ class EvalTest(BaseTest):
         the circuit, and determine if its output matches the expected
         output.
         """
+        from logisim.errors import NoInputsError
+
         sprint("running eval test on '{}'... ".format(circuit.name), end='')
 
-        output_vals = circuit.eval(self.input)
+        try:
+            output_vals = circuit.eval(self.input)
+        except NoInputsError as e:
+            sprint("failed", color=COLOR_RED)
+
+            desc = "a component is missing an input value"
+
+            return {'deduction': self.deduction,
+                    'description': desc,
+                    'notes': str(e)}
 
         failed = False
         for label, value in self.output.items():
