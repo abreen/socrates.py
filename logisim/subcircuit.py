@@ -119,6 +119,7 @@ def _default_subcircuit_locations(subcircuit):
 
     if corner_spacing:
         m += 2
+        n += 2
         top = [None] + top + [None] if top else top
         bottom = [None] + bottom + [None] if bottom else bottom
         left = [None] + left + [None] if left else left
@@ -238,7 +239,8 @@ def _overwrite_col(list_, index, col):
     rows = len(list_)
 
     if rows < len(col):
-        raise ValueError("column is too big")
+        raise ValueError("column is too big ({}, expected {})".format(len(col),
+                                                                      rows))
     elif rows == len(col):
         new_col = col
     else:
