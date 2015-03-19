@@ -117,12 +117,23 @@ class LogisimFile(BaseFile):
                                    DuplicatePinLabelError
 
         logisim_file = logisim.load(self.path, lowercase=True)
+        broken = logisim_file.broken
 
         results = dict()
         for c in self.circuits:
             results[c] = []
 
+            if c.name in broken:
+                desc = str(c) + " has major wiring issues"
+
+                warn(desc)
+
+                results[c].append({'deduction': c.error_deduction,
+                                   'description': desc})
+                continue
+
             circuit = logisim_file.get_circuit(c.name)
+
             if circuit is None:
                 warn("missing " + str(c))
 
@@ -181,8 +192,7 @@ class LogisimFile(BaseFile):
             except NoValueGivenError as e:
                 sprint("failed", color=COLOR_RED)
 
-                desc = str(c) + " is missing needed connections to one " + \
-                       "or more input pins"
+                desc = str(c) + " could not be tested"
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
                                    'notes': [str(e)]})

@@ -5,15 +5,27 @@ class LogisimFile:
     def __init__(self, path, lowercase):
         import xml.etree.ElementTree as ET
         from logisim.parser import from_xml
+        from logisim.errors import InvalidWiringError
 
         tree = ET.parse(path)
         root = tree.getroot()
 
         circuits = [c for c in root.getchildren() if c.tag == 'circuit']
 
-        circuit_objs = [from_xml(root, c, lowercase) for c in circuits]
+        objs = []
+        broken = []
+        for c in circuits:
+            name = c.attrib['name']
 
-        self.circuits = {c.name: c for c in circuit_objs}
+            try:
+                obj = from_xml(root, c, lowercase)
+                objs.append(obj)
+
+            except InvalidWiringError:
+                broken.append(name)
+
+        self.circuits = {c.name: c for c in objs}
+        self.broken = broken
 
     def get_circuit(self, circuit_name):
         try:

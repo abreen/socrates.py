@@ -3,6 +3,7 @@
 # NOTE Logisim (http://www.cburch.com/logisim/) was written
 # by Dr. Carl Burch (http://www.cburch.com) and is licensed under the GPL.
 
+from logisim.errors import InvalidWiringError
 from logisim.component import LOGISIM_ATTRIBUTES
 from logisim.gates import NOTGate, ANDGate, ORGate
 from logisim.pins import InputPin, OutputPin
@@ -121,7 +122,11 @@ def from_xml(root, circuit_root, lowercase=False):
                 source_comps[src_loc] = c
 
             if num > 1:
-                raise ValueError("one pin has multiple inputs")
+                desc = "in circuit " + repr(circuit_name) + ", the " + \
+                       "component " + repr(comp) + " has multiple " + \
+                       "conflicting inputs"
+
+                raise InvalidWiringError(desc)
 
             elif num == 1:
                 # found the one other component that connects to this

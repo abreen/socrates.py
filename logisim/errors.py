@@ -19,3 +19,6 @@ class DuplicatePinLabelError(LogisimError):
 
 class NoValueGivenError(LogisimError):
     pass
+
+class InvalidWiringError(LogisimError):
+    pass
