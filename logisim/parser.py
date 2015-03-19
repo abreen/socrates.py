@@ -304,10 +304,8 @@ def _follow_wire(end, wire_graph):
     while len(queue) > 0:
         loc = queue.pop(0)
 
-        if loc != end and len(wire_graph[loc]) == 1:
-            # found a source
+        if loc != end:
             sources.append(loc)
-            continue
 
         for wire in wire_graph[loc]:
             if wire in seen_wires:
