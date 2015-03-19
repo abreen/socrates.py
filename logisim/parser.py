@@ -61,9 +61,14 @@ def from_xml(root, circuit_root, lowercase=False):
 
         elif cls is Subcircuit:
             name = child.attrib['name']
+
             circuit_obj = from_xml(root, get_circuit(root, name))
 
-            subcircuit_obj = Subcircuit(circuit_obj)
+            # need to get attributes for this subcircuit
+            # (e.g., facing direction)
+            attrs = _get_all_attributes(child)
+            subcircuit_obj = Subcircuit(circuit_obj, attrs)
+
             subcircuit_obj.loc = Location(child.attrib['loc'])
 
             components.append(subcircuit_obj)
