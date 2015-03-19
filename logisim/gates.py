@@ -54,7 +54,7 @@ class ANDGate(Component):
                 continue
 
         if not vals:
-            raise NoInputsError("AND gate not given any non-error inputs")
+            raise NoInputsError(repr(self) + " not given any valid inputs")
 
         return all(vals)
 
@@ -90,7 +90,7 @@ class ORGate(Component):
                 continue
 
         if not vals:
-            raise NoInputsError("OR gate not given any non-error inputs")
+            raise NoInputsError(repr(self) + " not given any valid inputs")
 
         return any(vals)
 
