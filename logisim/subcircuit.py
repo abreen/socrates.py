@@ -75,7 +75,7 @@ class Subcircuit(Component):
                     # do anything now
                     continue
 
-            output_vals = self.circuit.eval(input_vals, pins=True)
+            output_vals = self.circuit.eval(input_vals)
 
             return output_vals[pins[at_loc]]
         else:
@@ -90,10 +90,10 @@ def _default_subcircuit_locations(subcircuit):
     # the actual circuit
     pins_facing = {'north': [], 'east': [], 'south': [], 'west': []}
 
-    for pin in circuit.input_pins.values():
+    for pin in circuit.input_pins:
         pins_facing[pin.facing].append(pin)
 
-    for pin in circuit.output_pins.values():
+    for pin in circuit.output_pins:
         pins_facing[pin.facing].append(pin)
 
     # sort the pins the way Logisim would sort them (for each facing

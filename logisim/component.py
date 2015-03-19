@@ -84,6 +84,10 @@ class Component:
             if hasattr(self, attr):
                 s += "\n\t" + attr + ": " + str(getattr(self, attr))
 
+        s += "\n\tinput locations:"
+        for loc in self.get_input_locations():
+            s += "\n\t\t" + repr(loc)
+
         s += "\n\toutput locations:"
         for loc in self.get_output_locations():
             s += "\n\t\t" + repr(loc)

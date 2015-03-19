@@ -53,10 +53,10 @@ class OutputPin(Component):
         needed, since the output pin itself has no output pin.
         """
         if len(self.input_from) == 0:
-            raise NoInputsError
+            raise NoInputsError(repr(self))
 
         if len(self.input_from) > 1:
-            raise TooManyInputsError
+            raise TooManyInputsError(repr(self))
 
         component, out_pin_loc = list(self.input_from.values())[0]
 

@@ -75,7 +75,9 @@ class EvalTest(BaseTest):
 
         failed = False
         for label, value in self.output.items():
-            if output_vals[label] != value:
+            pin = _get_pin_with_label(output_vals.keys(), label)
+
+            if output_vals[pin] != value:
                 failed = True
                 break
 
@@ -110,7 +112,9 @@ class LogisimFile(BaseFile):
         self.circuits = circuits
 
     def run_tests(self):
-        from logisim.errors import NoSuchPinLabelError, NoValueGivenError
+        from logisim.errors import NoSuchPinLabelError, \
+                                   NoValueGivenError, \
+                                   DuplicatePinLabelError
 
         logisim_file = logisim.load(self.path, lowercase=True)
 
@@ -124,20 +128,30 @@ class LogisimFile(BaseFile):
                                    'description': "missing " + str(c)})
                 continue
 
-            missing_labels = []
-            for output_label in c.output_pins:
-                if output_label not in circuit.output_pins:
-                    missing_labels.append(repr(output_label) + " (output pin)")
+            label_errors = []
+            for label in c.output_pins:
+                try:
+                    _ = circuit.get_output_pin(label)
+                except NoSuchPinLabelError:
+                    label_errors.append("missing " + repr(label) + \
+                                        " (output pin)")
+                except DuplicatePinLabelError:
+                    label_errors.append("duplicate label: " + repr(label))
 
-            for input_label in c.input_pins:
-                if input_label not in circuit.input_pins:
-                    missing_labels.append(repr(input_label) + " (input pin)")
+            for label in c.input_pins:
+                try:
+                    _ = circuit.get_input_pin(label)
+                except NoSuchPinLabelError:
+                    label_errors.append("missing " + repr(label) + \
+                                        " (input pin)")
+                except DuplicatePinLabelError:
+                    label_errors.append("duplicate label: " + repr(label))
 
-            if missing_labels:
-                desc = str(c) + " has missing or mislabeled pins"
+            if label_errors:
+                desc = str(c) + " has missing or duplicated pin labels"
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
-                                   'notes': missing_labels})
+                                   'notes': label_errors})
                 continue
 
             try:
@@ -150,13 +164,6 @@ class LogisimFile(BaseFile):
                         outer_result['subresults'] = [result]
                         results[c].append(outer_result)
 
-            except NoSuchPinLabelError:
-                sprint("failed", color=COLOR_RED)
-
-                desc = str(c) + " has incorrect input pin labels"
-                results[c].append({'deduction': c.error_deduction,
-                                   'description': desc})
-
             except NoValueGivenError as e:
                 sprint("failed", color=COLOR_RED)
 
@@ -165,7 +172,6 @@ class LogisimFile(BaseFile):
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
                                    'notes': [str(e)]})
-
 
         return [item for subl in results.values() for item in subl]
 
@@ -294,3 +300,11 @@ def _build_description(inputs, outputs):
                "\nand ".join(out_strs)
     else:
         return "\n".join(in_strs) + "\n".join(out_strs)
+
+
+def _get_pin_with_label(pins, label):
+    for pin in pins:
+        if pin.label == label:
+            return pin
+    else:
+        return None

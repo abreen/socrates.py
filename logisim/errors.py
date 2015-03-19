@@ -14,5 +14,8 @@ class TooManyInputsError(LogisimError):
 class NoSuchPinLabelError(LogisimError):
     pass
 
+class DuplicatePinLabelError(LogisimError):
+    pass
+
 class NoValueGivenError(LogisimError):
     pass
