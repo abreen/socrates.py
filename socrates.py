@@ -158,20 +158,22 @@ def _grade(args, criteria_object, grade_filename):
                     color=util.COLOR_RED)
 
     any_missing = grader.grade(criteria_object, args.submission_files,
-                               grade_filename)
+                               grade_filename,
+                               assume_missing=args.assume_missing)
 
-    util.sprint("please review the following grade file ({}) "
-                "for issues:".format(grade_filename),
-                color=util.COLOR_GREEN)
+    if not args.no_edit:
+        util.sprint("please review the following grade file ({}) "
+                    "for issues:".format(grade_filename),
+                    color=util.COLOR_GREEN)
 
-    with open(grade_filename) as f:
-        print(f.read())
+        with open(grade_filename) as f:
+            print(f.read())
 
-    choices = ["edit the grade file now", "do not edit the grade file"]
-    selections = prompt(choices, mode='1')
+        choices = ["edit the grade file now", "do not edit the grade file"]
+        selections = prompt(choices, mode='1')
 
-    if 0 in selections:
-        _edit_file(grade_filename)
+        if 0 in selections:
+            _edit_file(grade_filename)
 
     if any_missing:
         sys.exit(util.EXIT_WITH_MISSING)
@@ -251,10 +253,19 @@ def _batch(args):
 
         util.sprint("running socrates in '{}'".format(subdir))
 
+        sub_args = [proc, '--log', 'grade']
+
+        if args.no_edit:
+            sub_args.append("--no-edit")
+
+        if args.assume_missing:
+            sub_args.append("--assume-missing")
+
+        sub_args.append(args.assignment_with_group)
+
         try:
-            return_val = subprocess.call([proc, "--log", "grade",
-                                          args.assignment_with_group] + \
-                                          files_here)
+            return_val = subprocess.call(sub_args + files_here)
+
         except KeyboardInterrupt:
             util.sprint("\nparent stopping (received interrupt)")
             util.sprint("stopped while grading '{}'".format(subdir))

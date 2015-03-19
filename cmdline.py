@@ -29,6 +29,13 @@ def get_args():
                   'nargs': '*'}
     norm_mode_parser.add_argument('submission_files', **input_opts)
 
+    norm_mode_parser.add_argument('--assume-missing',
+                                  help="do not prompt for misnamed files",
+                                  action='store_true')
+    norm_mode_parser.add_argument('--no-edit',
+                                  help="do not ask to edit grade file",
+                                  action='store_true')
+
 
     # parser for batch mode
     batch_mode_opts = {'description': "Start grading in batch mode"}
@@ -40,6 +47,13 @@ def get_args():
     input_opts = {'help': "submission directories, one per student",
                   'nargs': '*'}
     batch_mode_parser.add_argument('submission_dirs', **input_opts)
+
+    batch_mode_parser.add_argument('--assume-missing',
+                                   help="do not prompt for misnamed files",
+                                   action='store_true')
+    batch_mode_parser.add_argument('--no-edit',
+                                   help="do not ask to edit grade file",
+                                   action='store_true')
 
 
     # parser for submit mode

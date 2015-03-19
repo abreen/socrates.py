@@ -7,7 +7,7 @@ from util import *
 from prompt import prompt
 
 
-def grade(criteria, submissions, filename):
+def grade(criteria, submissions, filename, assume_missing=False):
     found = []
     num_missing = 0
     total = criteria.total_points
@@ -22,59 +22,59 @@ def grade(criteria, submissions, filename):
                 found.append(f)
                 break
         else:
-            # in the case that the file is missing, we should prompt
-            # the grader to pick the incorrect file name or declare
-            # the file missing
 
             warn("could not find file '{}'".format(f.path))
 
             if len(submissions) < 1:
                 continue
 
-            # find the submission directory (it could be the
-            # current working directory, but maybe not)
-            submission_dir, _ = os.path.split(submissions[0])
+            if not assume_missing:
+                # find the submission directory (it could be the
+                # current working directory, but maybe not)
+                submission_dir, _ = os.path.split(submissions[0])
 
-            if not submission_dir:
-                submission_dir = os.path.abspath(os.curdir)
+                if not submission_dir:
+                    submission_dir = os.path.abspath(os.curdir)
 
-            choices = [f for f in os.listdir(submission_dir)
-                       if os.path.isfile(os.path.join(submission_dir, f))]
-            choices.append("skip grading this submission now")
-            choices.append("mark the file as missing")
+                choices = [f for f in os.listdir(submission_dir)
+                           if os.path.isfile(os.path.join(submission_dir, f))]
+                choices.append("skip grading this submission now")
+                choices.append("mark the file as missing")
 
-            sprint("this student may have named the file incorrectly...")
+                sprint("this student may have named the file incorrectly...")
 
-            # we prompt the grader for zero or one choice
-            got = prompt(choices, '1')
-            got = got[0]
+                # we prompt the grader for zero or one choice
+                got = prompt(choices, '1')
+                got = got[0]
 
-            if got == len(choices) - 1:
-                # declare the file missing
-                num_missing += 1
-                continue
+                if got == len(choices) - 1:
+                    # declare the file missing
+                    num_missing += 1
+                    continue
 
-            elif got == len(choices) - 2:
-                sprint("skipping this submission; no grade file written")
-                sys.exit(EXIT_WITH_DEFER)
+                elif got == len(choices) - 2:
+                    sprint("skipping this submission; no grade file written")
+                    sys.exit(EXIT_WITH_DEFER)
 
-            else:
-                # get absolute path to the old and new files
-                sname = choices[got]
+                else:
+                    # get absolute path to the old and new files
+                    sname = choices[got]
 
-                opath = os.path.join(submission_dir, sname)
-                npath = os.path.join(submission_dir, crit_name)
+                    opath = os.path.join(submission_dir, sname)
+                    npath = os.path.join(submission_dir, crit_name)
 
-                try:
-                    os.rename(opath, npath)
-                except:
-                    import traceback
+                    try:
+                        os.rename(opath, npath)
+                    except:
+                        import traceback
 
-                    sprint("error renaming incorrectly named file", error=True)
-                    traceback.print_exc()
-                    sys.exit(ERR_GRADING_MISC)
+                        sprint("error renaming incorrectly named file",
+                               error=True)
 
-                found.append(f)
+                        traceback.print_exc()
+                        sys.exit(ERR_GRADING_MISC)
+
+                    found.append(f)
 
     out = io.StringIO()
 
