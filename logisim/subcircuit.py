@@ -171,6 +171,9 @@ def _default_subcircuit_locations(subcircuit):
     if rotations != 0:
         pin_layout, anchor_pos = _rotate(pin_layout, anchor_pos, rotations)
 
+        # redefine: n rows, m columns, if this rotate changed them
+        n, m = len(pin_layout), len(pin_layout[0])
+
     x, y = subcircuit.loc.x, subcircuit.loc.y
 
     # finds location of each pin given the subcircuit's anchor
