@@ -66,10 +66,7 @@ class Location:
 
 def _check_coord(coord):
     if type(coord) is not int:
-        raise ValueError("coordinate must be an integer")
-
-    if coord % 10 != 0:
-        raise ValueError("coordinate must be a multiple of 10")
+        raise ValueError("coordinate must be an integer: " + str(coord))
 
     if coord < 0:
-        raise ValueError("coordinate must be positive")
+        raise ValueError("coordinate must be positive: " + str(coord))
