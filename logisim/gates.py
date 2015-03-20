@@ -157,3 +157,11 @@ def _input_locations(start, facing, num_inputs, spacing):
         locs.append(offset_loc(start, facing, -delta))
 
     return locs
+
+
+class NORGate(ORGate):
+    def __init__(self, defaults=None):
+        ORGate.__init__(self, defaults)
+
+    def eval(self, at_loc):
+        return not ORGate.eval(self, at_loc)

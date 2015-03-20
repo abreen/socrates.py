@@ -5,7 +5,7 @@
 
 from logisim.errors import InvalidWiringError
 from logisim.component import LOGISIM_ATTRIBUTES
-from logisim.gates import NOTGate, ANDGate, ORGate
+from logisim.gates import NOTGate, ANDGate, ORGate, NORGate
 from logisim.pins import InputPin, OutputPin
 from logisim.constant import Constant
 from logisim.circuit import Circuit
@@ -41,7 +41,8 @@ def from_xml(root, circuit_root):
 
             _add_to_wire_graph(Wire(frm, to), wire_graph)
 
-        elif cls in [NOTGate, ANDGate, ORGate, Constant, InputPin, OutputPin]:
+        elif cls in [NOTGate, ANDGate, ORGate, NORGate, Constant, \
+                     InputPin, OutputPin]:
             # if the XML file specified attributes different than the
             # global defaults, we obtain and set them using the constructor
             attrs = _get_all_attributes(child)
@@ -201,6 +202,8 @@ def _get_class(el):
                 return NOTGate
             elif gate_type == 'and':
                 return ANDGate
+            elif gate_type == 'nor':
+                return NORGate
             else: # gate_type == 'or'
                 return ORGate
 
@@ -237,13 +240,13 @@ def _get_attribute(el, attribute_name, fallback=None):
             m = match(num_literal_pat, val)
             if m:
                 # value is numerical
-                val = eval(val)
+                val = int(val)
                 break
 
             m = match(hex_literal_pat, val)
             if m:
                 # value is hex (e.g., '0x0')
-                val = eval(val, base=16)
+                val = int(val, base=16)
                 break
 
             break
@@ -293,6 +296,8 @@ def _gate_type(el):
         return 'not'
     elif name == 'AND Gate':
         return 'and'
+    elif name == 'NOR Gate':
+        return 'nor'
     elif name == 'OR Gate':
         return 'or'
 
