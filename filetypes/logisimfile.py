@@ -406,8 +406,8 @@ def _check_labels(c, circuit):
                         continue
                     else:
                         # found a working alternate
-                        c.output_pins.remove(label)
-                        c.output_pins.append(alt)
+                        index = c.output_pins.index(label)
+                        c.output_pins[index] = alt
 
                         for t in c.tests:
                             t.rename_output_pin(label, alt)
@@ -440,8 +440,8 @@ def _check_labels(c, circuit):
                         continue
                     else:
                         # found a working alternate
-                        c.input_pins.remove(label)
-                        c.input_pins.append(alt)
+                        index = c.input_pins.index(label)
+                        c.input_pins[index] = alt
 
                         for t in c.tests:
                             t.rename_input_pin(label, alt)
