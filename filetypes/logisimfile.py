@@ -82,7 +82,7 @@ class EvalTest(BaseTest):
 
             return {'deduction': self.deduction,
                     'description': desc,
-                    'notes': str(e)}
+                    'notes': [str(e)]}
 
         failed = False
         for label, value in self.output.items():
