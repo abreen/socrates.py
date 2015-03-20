@@ -2,7 +2,7 @@ from logisim.circuit import Circuit
 
 
 class LogisimFile:
-    def __init__(self, path, lowercase):
+    def __init__(self, path):
         import xml.etree.ElementTree as ET
         from logisim.parser import from_xml
         from logisim.errors import InvalidWiringError
@@ -18,7 +18,7 @@ class LogisimFile:
             name = c.attrib['name']
 
             try:
-                obj = from_xml(root, c, lowercase)
+                obj = from_xml(root, c)
                 objs.append(obj)
 
             except InvalidWiringError:
@@ -34,8 +34,8 @@ class LogisimFile:
             return None
 
 
-def load(path, lowercase=False):
+def load(path):
     """Given a path to a Logisim .circ file, return a LogisimFile object
     containing the circuits saved in the .circ file.
     """
-    return LogisimFile(path, lowercase)
+    return LogisimFile(path)

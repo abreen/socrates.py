@@ -64,6 +64,14 @@ class EvalTest(BaseTest):
         self.__check_pin_vals(new_output)
         self._output = {k: bool(v) for k, v in new_output.items()}
 
+    def rename_output_pin(self, old, new):
+        if old in self.output:
+            self.output[new] = self.output.pop(old)
+
+    def rename_input_pin(self, old, new):
+        if old in self.input:
+            self.input[new] = self.input.pop(old)
+
     def run(self, circuit):
         """Given a logisim.Circuit object, set its input pins, evaluate
         the circuit, and determine if its output matches the expected
@@ -123,11 +131,9 @@ class LogisimFile(BaseFile):
         self.circuits = circuits
 
     def run_tests(self):
-        from logisim.errors import NoSuchPinLabelError, \
-                                   NoValueGivenError, \
-                                   DuplicatePinLabelError
+        from logisim.errors import NoValueGivenError
 
-        logisim_file = logisim.load(self.path, lowercase=True)
+        logisim_file = logisim.load(self.path)
         broken = logisim_file.broken
 
         results = dict()
@@ -188,25 +194,7 @@ class LogisimFile(BaseFile):
                 continue
 
             # check that the circuit has the pins we require
-            label_errors = []
-            for label in c.output_pins:
-                try:
-                    _ = circuit.get_output_pin(label)
-                except NoSuchPinLabelError:
-                    label_errors.append("missing " + repr(label) + \
-                                        " (output pin)")
-                except DuplicatePinLabelError:
-                    label_errors.append("duplicate label: " + repr(label))
-
-            for label in c.input_pins:
-                try:
-                    _ = circuit.get_input_pin(label)
-                except NoSuchPinLabelError:
-                    label_errors.append("missing " + repr(label) + \
-                                        " (input pin)")
-                except DuplicatePinLabelError:
-                    label_errors.append("duplicate label: " + repr(label))
-
+            label_errors = _check_labels(c, circuit)
             if label_errors:
                 desc = str(c) + " is missing required pins"
 
@@ -251,6 +239,11 @@ class LogisimCircuit:
         self.output_pins = dict_['output_pins']
         self.point_value = dict_['point_value']
         self.error_deduction = dict_['error_deduction']
+
+        if 'alternate_labels' in dict_:
+            self.alternate_labels = dict_['alternate_labels']
+        else:
+            self.alternate_labels = {}
 
         tests = []
         if 'tests' in dict_:
@@ -339,6 +332,24 @@ class LogisimCircuit:
 
         self._error_deduction = new_val
 
+    @property
+    def alternate_labels(self):
+        return self._alternate_labels
+
+    @alternate_labels.setter
+    def alternate_labels(self, new_alts):
+        if type(new_alts) is not dict:
+            raise ValueError("alternate pin labels must be dict")
+
+        def valid_item(item):
+            key, val = item
+            return type(key) is str and type(val) is list
+
+        if not all(map(valid_item, new_alts.items())):
+            raise ValueError("invalid alternates: must map string to list")
+
+        self._alternate_labels = new_alts
+
 
 def _build_description(inputs, outputs):
     in_strs, out_strs = [], []
@@ -371,3 +382,78 @@ def _get_pin_with_label(pins, label):
             return pin
     else:
         return None
+
+
+def _check_labels(c, circuit):
+    from logisim.errors import DuplicatePinLabelError, NoSuchPinLabelError
+
+    label_errors = []
+    for label in c.output_pins:
+        try:
+            _ = circuit.get_output_pin(label)
+
+        except DuplicatePinLabelError:
+            label_errors.append("duplicate label: " + repr(label))
+
+        except NoSuchPinLabelError:
+            # try to find alternate labels
+            if label in c.alternate_labels:
+                for alt in c.alternate_labels[label]:
+                    try:
+                        _ = circuit.get_output_pin(alt)
+                    except:
+                        # try another alternate
+                        continue
+                    else:
+                        # found a working alternate
+                        c.output_pins.remove(label)
+                        c.output_pins.append(alt)
+
+                        for t in c.tests:
+                            t.rename_output_pin(label, alt)
+
+                        break
+                else:
+                    # never found a working alternate
+                    label_errors.append("missing " + repr(label) + \
+                                        " (output pin)")
+            else:
+                # no alternates to find
+                label_errors.append("missing " + repr(label) + \
+                                    " (output pin)")
+
+    for label in c.input_pins:
+        try:
+            _ = circuit.get_input_pin(label)
+
+        except DuplicatePinLabelError:
+            label_errors.append("duplicate label: " + repr(label))
+
+        except NoSuchPinLabelError:
+            # try to find alternate labels
+            if label in c.alternate_labels:
+                for alt in c.alternate_labels[label]:
+                    try:
+                        _ = circuit.get_output_pin(alt)
+                    except:
+                        # try another alternate
+                        continue
+                    else:
+                        # found a working alternate
+                        c.input_pins.remove(label)
+                        c.input_pins.append(alt)
+
+                        for t in c.tests:
+                            t.rename_input_pin(label, alt)
+
+                        break
+                else:
+                    # never found a working alternate
+                    label_errors.append("missing " + repr(label) + \
+                                        " (input pin)")
+            else:
+                # no alternates to find
+                label_errors.append("missing " + repr(label) + \
+                                    " (input pin)")
+
+    return label_errors
