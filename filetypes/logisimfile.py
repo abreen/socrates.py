@@ -134,6 +134,7 @@ class LogisimFile(BaseFile):
         for c in self.circuits:
             results[c] = []
 
+            # check if circuit couldn't be parsed
             if c.name in broken:
                 desc = str(c) + " has major wiring issues"
 
@@ -145,6 +146,7 @@ class LogisimFile(BaseFile):
 
             circuit = logisim_file.get_circuit(c.name)
 
+            # check if circuit is missing
             if circuit is None:
                 warn("missing " + str(c))
 
@@ -152,18 +154,40 @@ class LogisimFile(BaseFile):
                                    'description': "missing " + str(c)})
                 continue
 
+            # check if circuit's output pins have any input
+            for pin in circuit.output_pins:
+                if len(pin.input_from) > 0:
+                    break
+            else:
+                desc = "output pins of " + str(c) + " are not connected " + \
+                       "to anything"
+
+                warn(desc)
+
+                results[c].append({'deduction': c.error_deduction,
+                                   'description': desc})
+                continue
+
+            # check that the circuit's pins have labels
             without_labels = []
             for pin in circuit.input_pins + circuit.output_pins:
                 if not hasattr(pin, 'label'):
                     without_labels.append(repr(pin))
 
             if without_labels:
-                desc = "pin(s) are missing labels in " + str(c)
+                if len(without_labels) == 1:
+                    desc = "a pin is missing a label in " + str(c)
+                else:
+                    desc = "pins are missing labels in " + str(c)
+
+                warn(desc)
+
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
                                    'notes': without_labels})
                 continue
 
+            # check that the circuit has the pins we require
             label_errors = []
             for label in c.output_pins:
                 try:
@@ -184,12 +208,16 @@ class LogisimFile(BaseFile):
                     label_errors.append("duplicate label: " + repr(label))
 
             if label_errors:
-                desc = str(c) + " has missing or duplicated pin labels"
+                desc = str(c) + " is missing required pins"
+
+                warn(desc)
+
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
                                    'notes': label_errors})
                 continue
 
+            # actually run any tests
             try:
                 for t in c.tests:
                     result = t.run(circuit)
