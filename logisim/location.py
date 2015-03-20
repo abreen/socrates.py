@@ -1,4 +1,7 @@
 class Location:
+
+    __slots__ = ['x', 'y']
+
     def __init__(self, x_or_obj=None, y=None):
         self.x = 0
         self.y = 0
@@ -9,6 +12,8 @@ class Location:
             if type(y) is str:
                 y = int(y)
 
+            _check_coord(x_or_obj)
+            _check_coord(y)
             self.x, self.y = x_or_obj, y
 
         elif x_or_obj is not None:
@@ -23,33 +28,25 @@ class Location:
                 if not m:
                     raise ValueError("invalid location string: " + repr(obj))
 
-                self.x = int(m.group(1))
-                self.y = int(m.group(2))
+                x = int(m.group(1))
+                y = int(m.group(2))
+
+                _check_coord(x)
+                _check_coord(y)
+
+                self.x, self.y = x, y
 
             elif type(obj) is tuple:
                 if len(obj) != 2 or type(obj[0]) is not int or \
                    type(obj[1]) is not int:
                     raise ValueError("tuple must contain two integers")
 
-                self.x, self.y = obj
+                x, y = obj
 
-    @property
-    def x(self):
-        return self._x
+                _check_coord(x)
+                _check_coord(y)
 
-    @x.setter
-    def x(self, new_x):
-        _check_coord(new_x)
-        self._x = new_x
-
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, new_y):
-        _check_coord(new_y)
-        self._y = new_y
+                self.x, self.y = x, y
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
