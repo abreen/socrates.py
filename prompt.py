@@ -39,8 +39,13 @@ def prompt(choices, mode='*'):
             else:
                 sprint("   {}. {}".format(letters[i], choices[i]))
 
-        sel = input(COLOR_CYAN + "make a selection (or ! "
-                    "to commit): " + COLOR_RESET)
+        try:
+            sel = input(COLOR_CYAN + "make a selection (or ! "
+                        "to commit): " + COLOR_RESET)
+        except KeyboardInterrupt:
+            print()
+            sprint("exiting due to a keyboard interrupt", error=True)
+            sys.exit(ERR_INTERRUPTED)
 
         if sel == '!':
             if num_selections < min:
