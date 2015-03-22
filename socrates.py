@@ -11,14 +11,15 @@ import datetime
 import cmdline
 import util
 import criteria
-
 import config
-
 
 # conditions that are deemed "okay" to be returned by a subprocess when
 # socrates is run in batch mode
 OKAY_CONDITIONS = [util.EXIT_WITH_MISSING, util.ERR_GRADE_FILE_EXISTS,
                    util.EXIT_WITH_DEFER]
+
+CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
+
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
@@ -40,7 +41,8 @@ def main(args):
         try:
             sname, group = _parse_assignment_name(args.assignment_with_group)
         except ValueError as err:
-            util.sprint("invalid assignment: " + str(err), error=True)
+            util.sprint(str(err) + ': ' + args.assignment_with_group,
+                        error=True)
             sys.exit(util.ERR_BAD_ASSIGNMENT)
 
         criteria_path = _form_criteria_path(sname, group)
@@ -98,11 +100,16 @@ def _edit(args):
 
     isfile = os.path.isfile
 
-    short_name, group = _parse_assignment_name(args.assignment_with_group)
+    try:
+        short_name, group = _parse_assignment_name(args.assignment_with_group)
+    except ValueError as err:
+        util.sprint(str(err) + ': ' + args.assignment_with_group, error=True)
+        sys.exit(util.ERR_BAD_ASSIGNMENT)
+
     existing_path = _form_criteria_path(short_name, group)
 
     if not isfile(existing_path):
-        util.warn("the file {} does not exist".format(existing_path))
+        util.warn("the file '{}' does not exist".format(existing_path))
 
         choices = ["create and edit this criteria file now",
                    "exit without creating anything"]
@@ -313,9 +320,11 @@ def _parse_assignment_name(short_name_with_group):
     return the assignment's short name ("ps4") and the group
     ("a") in a tuple.
     """
-    # TODO use regex here
-    if short_name_with_group[-1] not in util.ALPHABET:
-        raise ValueError("group not specified")
+    from re import match
+
+    m = match(CRITERIA_FILE_PATTERN, short_name_with_group)
+    if not m:
+        raise ValueError("invalid assignment name")
 
     return short_name_with_group[:-1], short_name_with_group[-1]
 
