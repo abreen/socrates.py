@@ -44,6 +44,17 @@ def main(args):
             sys.exit(util.ERR_BAD_ASSIGNMENT)
 
         criteria_path = _form_criteria_path(sname, group)
+
+        if not os.path.isfile(criteria_path):
+            message = "could not find criteria file for {}"
+            message = message.format(sname)
+
+            if group:
+                message += ", group " + group
+
+            util.sprint(message, error=True)
+            sys.exit(util.ERR_CRITERIA_MISSING)
+
         criteria_object = _create_criteria_object(criteria_path)
 
         assignment_name, group = criteria_object.name, criteria_object.group
@@ -85,13 +96,27 @@ def _edit(args):
     import criteria
     from prompt import prompt
 
+    isfile = os.path.isfile
+
     short_name, group = _parse_assignment_name(args.assignment_with_group)
     existing_path = _form_criteria_path(short_name, group)
+
+    if not isfile(existing_path):
+        util.warn("the file {} does not exist".format(existing_path))
+
+        choices = ["create and edit this criteria file now",
+                   "exit without creating anything"]
+
+        selections = prompt(choices, mode='1')
+        if 1 in selections:
+            util.sprint("exiting without changing anything")
+            return
 
     temp_file, temp_path = tempfile.mkstemp(suffix='.yml')
 
     # copy contents of existing file into temp file
-    shutil.copyfile(existing_path, temp_path)
+    if isfile(existing_path):
+        shutil.copyfile(existing_path, temp_path)
 
     while True:
         # try to open editor with file
@@ -100,10 +125,12 @@ def _edit(args):
         try:
             _ = criteria.Criteria.from_yaml(temp_path)
         except Exception as e:
+            import traceback
+
             util.sprint("proposed criteria file produced an error",
                         color=util.COLOR_RED)
 
-            print("{} ({})".format(e, type(e).__name__))
+            traceback.print_exc()
 
             choices = ["return to the editor to fix the problem",
                        "abort the change (existing file will not change)"]
@@ -113,8 +140,7 @@ def _edit(args):
             if 0 in selections:
                 continue
             else:
-                util.sprint("exiting without changing anything",
-                            color=util.COLOR_YELLOW)
+                util.sprint("exiting without changing anything")
                 break
 
         else:
@@ -122,7 +148,8 @@ def _edit(args):
             # if the temporary file is any different, we will copy it over
             # the old file
 
-            if filecmp.cmp(temp_path, existing_path, shallow=False):
+            if isfile(existing_path) and \
+               filecmp.cmp(temp_path, existing_path, shallow=False):
                 # files seem to be the same
                 util.sprint("no changes made; exiting without " +
                             "changing original", color=util.COLOR_YELLOW)
@@ -286,6 +313,7 @@ def _parse_assignment_name(short_name_with_group):
     return the assignment's short name ("ps4") and the group
     ("a") in a tuple.
     """
+    # TODO use regex here
     if short_name_with_group[-1] not in util.ALPHABET:
         raise ValueError("group not specified")
 
@@ -304,16 +332,6 @@ def _form_criteria_path(short_name, group):
         criteria_path += os.sep + short_name + group + '.yml'
     else:
         criteria_path += '.yml'
-
-    if not os.path.isfile(criteria_path):
-        message = "could not find criteria file for {}"
-        message = message.format(short_name)
-
-        if group:
-            message += ", group " + group
-
-        util.sprint(message, error=True)
-        sys.exit(util.ERR_CRITERIA_MISSING)
 
     return criteria_path
 
