@@ -187,9 +187,6 @@ def run() :
         pc = pc+1           # increment pc
         try :
             execute(ir)         # execute instruction
-        except KeyboardInterrupt :
-            print("\n\nInterrupted by user, halting program execution...\n")
-            sys.exit()
         except EOFError :
             print("\n\nEnd of input, halting program execution...\n")
             sys.exit()
@@ -494,9 +491,6 @@ def main ( argList=None ) :
 
     try :
         run()
-    except KeyboardInterrupt :
-        print("\n\nInterrupted by user, halting program execution...\n")
-        sys.exit()
     except EOFError :
         print("\n\nEnd of input, halting program execution...\n")
         sys.exit()

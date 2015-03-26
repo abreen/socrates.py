@@ -2,7 +2,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
-from util import sprint, warn
+from util import sprint, warn, COLOR_RED, COLOR_GREEN
 import hmc                              # for HMMM assembler and simulator
 
 
@@ -40,7 +40,7 @@ class HMMMEvalTest(BaseTest):
         import io
         import sys
 
-        sprint("running HMMM test...")
+        sprint("running HMMM test... ", end='')
 
         if self.input is not None:
             in_buf = io.StringIO(self.input)
@@ -52,8 +52,24 @@ class HMMMEvalTest(BaseTest):
 
         try:
             hmc.run(self.file.binary_name, debug=False)
+        except KeyboardInterrupt:
+            sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+
+            sprint("failed", color=COLOR_RED)
+
+            desc = "test failed because the grader halted the program"
+            warn(desc)
+
+            err = filter(_not_boring, out_buf.getvalue().split('\n')[-5:-1])
+
+            return {'deduction': self.deduction,
+                    'description': self.description,
+                    'notes': [desc] + list(err)}
+
         except SystemExit:
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
+
+            sprint("failed", color=COLOR_RED)
 
             warn("failing test because the simulator exited uncleanly")
 
@@ -74,18 +90,24 @@ class HMMMEvalTest(BaseTest):
             passed = passed and self.__output_matches(output)
 
         if passed:
+            sprint("passed", color=COLOR_GREEN)
             return None
         else:
-            result =  {'deduction': self.deduction,
-                       'description': self.description,
-                       'notes': []}
+            sprint("failed", color=COLOR_RED)
+
+            result = {'deduction': self.deduction,
+                      'description': self.description,
+                      'notes': []}
 
             if self.output is not None and type(self.output) is str:
                 import util
-                eo, po = util.escape(self.output), util.escape(output)
+                eo = self.output.split('\n')
+                po = output.split('\n')
 
-                result['notes'].append("expected output: " + eo)
-                result['notes'].append("produced output: " + po)
+                result['notes'].append("expected output:")
+                result['notes'] += eo
+                result['notes'].append("produced output:")
+                result['notes'] += po
 
             return result
 
