@@ -132,6 +132,7 @@ def _edit(args):
 
         try:
             _ = criteria.Criteria.from_yaml(temp_path)
+
         except Exception as e:
             import traceback
 
@@ -211,6 +212,9 @@ def _grade(args, criteria_object, grade_filename):
 
         if 0 in selections:
             _edit_file(grade_filename)
+
+    # TODO this may not actually run if the functions above exit themselves
+    hooks.run_hooks_for('before_exit')
 
     if any_missing:
         sys.exit(util.EXIT_WITH_MISSING)

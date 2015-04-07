@@ -1,7 +1,7 @@
 import util
 import config
 
-_triggers = ['before_file_search']
+_triggers = ['before_file_search', 'before_exit']
 _hooks = {}
 
 for t in _triggers:
