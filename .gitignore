@@ -2,6 +2,7 @@
 socrates.ini
 static
 dropbox
+hooks/*
 
 # Sublime Text stuff
 *.sublime*
