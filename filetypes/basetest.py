@@ -4,7 +4,7 @@ class BaseTest:
 
     def __init__(self, dict_, file_type=None):
         if 'description' in dict_:
-            self.description = dict_['description']
+            self.description = dict_['description'].strip()
         else:
             self.description = None
 
