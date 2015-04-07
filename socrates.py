@@ -12,6 +12,7 @@ import cmdline
 import util
 import criteria
 import config
+import hooks
 
 # conditions that are deemed "okay" to be returned by a subprocess when
 # socrates is run in batch mode
@@ -190,6 +191,8 @@ def _grade(args, criteria_object, grade_filename):
     if not args.submission_files:
         util.sprint("warning: no submission files specified",
                     color=util.COLOR_RED)
+
+    hooks.run_hooks_for('before_file_search')
 
     any_missing = grader.grade(criteria_object, args.submission_files,
                                grade_filename,

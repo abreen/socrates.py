@@ -23,6 +23,8 @@ if os.path.isfile(SOCRATES_CONFIG):
     if len(_parser) < 2:
         util.sprint("warning: found config file, but it looks incomplete")
 
+hooks_dir = _parser.get('socrates', 'hooks_dir',
+                        fallback=SOCRATES_DIR + os.sep + 'hooks')
 static_dir = _parser.get('socrates', 'static_dir',
                          fallback=SOCRATES_DIR + os.sep + 'static')
 dropbox_dir = _parser.get('socrates', 'dropbox_dir',
@@ -40,6 +42,11 @@ else:
 
 
 _f = False
+if not os.path.isdir(hooks_dir):
+    _f = True
+    util.sprint("hooks directory does not exist or cannot be accessed",
+                error=True)
+
 if not os.path.isdir(static_dir):
     _f = True
     util.sprint("static directory does not exist or cannot be accessed",

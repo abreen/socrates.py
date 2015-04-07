@@ -102,7 +102,6 @@ class Criteria:
 
         self._files = new_files
 
-
     def get_late_penalty(self, mdate):
         """Given a datetime object representing the date and time that
         a file was last modified, return the deduction multiplier
@@ -124,6 +123,11 @@ class Criteria:
         """Given a path to a .criteria.yml file, create and return a new
         Criteria object matching the specifications of the YAML file.
         """
+        import hooks
+
         file = open(path, 'r')
         crit_dict = yaml.load(file)
+
+        hooks.load_from_dict(crit_dict)
+
         return Criteria(crit_dict)
