@@ -2,6 +2,7 @@
 socrates.ini
 static
 dropbox
+criteria
 hooks/*
 
 # Sublime Text stuff
