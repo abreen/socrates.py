@@ -31,6 +31,52 @@ def crit_obj_constructor(loader, suffix, node):
 yaml.add_multi_constructor(u'!object', crit_obj_constructor)
 
 
+class ScriptTest(BaseTest):
+    """A special test that runs a custom-written Python script."""
+
+    yaml_type = 'script'
+
+    def __init__(self, dict_, file_type=None):
+        BaseTest.__init__(self, dict_, file_type)
+        self.name = dict_['name']
+
+        # note: self.target should also be set after __init__ runs
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        if type(new_name) is not str:
+            raise ValueError("script names must be strings")
+
+        self._name = new_name
+
+    def run(self, module):
+        from os import sep
+        from imp import reload
+        import config
+
+        globals = {module.__name__: module, 'config': config}
+        locals = {}
+
+        with open(config.scripts_dir + sep + self.name, 'r') as f:
+            code = f.read()
+
+        try:
+            exec(code, globals, locals)
+        except:
+            from util import exit, ERR_SCRIPT_RUNTIME_ERROR
+            exit(ERR_SCRIPT_RUNTIME_ERROR)
+
+        if '_socrates_result' not in locals:
+            from util import exit, ERR_SCRIPT_RUNTIME_ERROR
+            exit(ERR_SCRIPT_RUNTIME_ERROR)
+
+        return locals['_socrates_result']
+
+
 class EvalTest(BaseTest):
     yaml_type = 'eval'
 
@@ -556,6 +602,7 @@ class PythonFile(PlainFile):
     supported_tests = PlainFile.supported_tests.copy()
     supported_tests.append(PythonReviewTest)
     supported_tests.append(EvalTest)
+    supported_tests.append(ScriptTest)
 
 
     def __init__(self, dict_):

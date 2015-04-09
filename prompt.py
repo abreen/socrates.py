@@ -43,9 +43,10 @@ def prompt(choices, mode='*'):
             sel = input(COLOR_CYAN + "make a selection (or ! "
                         "to commit): " + COLOR_RESET)
         except KeyboardInterrupt:
+            from util import exit, ERR_INTERRUPTED
             print()
             sprint("exiting due to a keyboard interrupt", error=True)
-            sys.exit(ERR_INTERRUPTED)
+            exit(ERR_INTERRUPTED)
 
         if sel == '!':
             if num_selections < min:

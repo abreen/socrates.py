@@ -25,6 +25,8 @@ if os.path.isfile(SOCRATES_CONFIG):
 
 hooks_dir = _parser.get('socrates', 'hooks_dir',
                         fallback=SOCRATES_DIR + os.sep + 'hooks')
+scripts_dir = _parser.get('socrates', 'scripts_dir',
+                          fallback=SOCRATES_DIR + os.sep + 'scripts')
 static_dir = _parser.get('socrates', 'static_dir',
                          fallback=SOCRATES_DIR + os.sep + 'static')
 dropbox_dir = _parser.get('socrates', 'dropbox_dir',
@@ -45,6 +47,11 @@ _f = False
 if not os.path.isdir(hooks_dir):
     _f = True
     util.sprint("hooks directory does not exist or cannot be accessed",
+                error=True)
+
+if not os.path.isdir(scripts_dir):
+    _f = True
+    util.sprint("scripts directory does not exist or cannot be accessed",
                 error=True)
 
 if not os.path.isdir(static_dir):

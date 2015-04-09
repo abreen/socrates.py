@@ -24,6 +24,7 @@ ERR_BAD_DROPBOX = 10
 ERR_BAD_ASSIGNMENT = 11
 ERR_NO_EDITOR = 12
 ERR_ABNORMAL_HOOK_EXIT = 14
+ERR_SCRIPT_RUNTIME_ERROR = 15
 
 EXIT_WITH_MISSING = 100
 EXIT_WITH_DEFER = 101
@@ -125,3 +126,20 @@ def plural(str_, num):
     pluralized.
     """
     return str_ + ("s" if num != 1 else "")
+
+
+def exit(exit_code):
+    """The safe way to cause socrates to exit immediately.
+    This function tries to run hooks attached to 'before_exit'
+    before actually exiting.
+    """
+    from sys import exc_info, exit
+    from traceback import print_exception
+    from hooks import run_hooks_for
+
+    run_hooks_for('before_exit')
+    type, value, traceback = exc_info()
+    if traceback is not None:
+        print_exception(type, value, traceback)
+
+    exit(exit_code)

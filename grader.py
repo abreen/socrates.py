@@ -114,24 +114,17 @@ def grade(criteria, submissions, filename, assume_missing=False):
         out.write("\nTotal: {}\n".format(total))
 
     except KeyboardInterrupt:
-        sprint("\nstopping (received interrupt)")
-
         out.close()
-        sys.exit(ERR_INTERRUPTED)
+
+        warn("\nstopping (received interrupt)")
+        from util import exit, ERR_INTERRUPTED
+        exit(ERR_INTERRUPTED)
 
     except:
-        import traceback
-
-        err = sys.exc_info()
-        sprint("encountered an error while "
-               "grading: {}".format(err[0].__name__), error=True)
-        traceback.print_exc()
-        sprint("you might have to grade the old-fashioned "
-               "way (sorry)")
-
         out.close()
-        sys.exit(ERR_GRADING_MISC)
 
+        from util import exit, ERR_GRADING_MISC
+        exit(ERR_GRADING_MISC)
 
     with open(filename, 'w') as f:
         out.seek(0)

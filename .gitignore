@@ -4,6 +4,7 @@ static
 dropbox
 criteria
 hooks/*
+scripts/*
 
 # Sublime Text stuff
 *.sublime*
