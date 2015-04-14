@@ -53,8 +53,10 @@ def grade(criteria, submissions, filename, assume_missing=False):
                     continue
 
                 elif got == len(choices) - 2:
+                    from util import exit, EXIT_WITH_DEFER
+
                     sprint("skipping this submission; no grade file written")
-                    sys.exit(EXIT_WITH_DEFER)
+                    exit(EXIT_WITH_DEFER)
 
                 else:
                     # get absolute path to the old and new files
