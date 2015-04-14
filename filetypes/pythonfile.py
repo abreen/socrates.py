@@ -296,11 +296,10 @@ class EvalTest(BaseTest):
                                        _safe_str(return_value))
 
             if self.output is not None and type(self.output) is str:
-                import util
-                eo, po = util.escape(self.output), util.escape(output)
-
-                result['notes'].append("expected output: " + eo)
-                result['notes'].append("produced output: " + po)
+                result['notes'].append("expected output:")
+                result['notes'].extend(self.output.split('\n'))
+                result['notes'].append("produced output:")
+                result['notes'].extend(output.split('\n'))
 
             if testing_method and self.after is not None:
                 result['notes'].append("expected object after "
@@ -501,11 +500,10 @@ class EvalTest(BaseTest):
                        'notes': []}
 
             if self.output is not None and type(self.output) is str:
-                import util
-                eo, po = util.escape(self.output), util.escape(output)
-
-                result['notes'].append("expected output: " + eo)
-                result['notes'].append("produced output: " + po)
+                result['notes'].append("expected output:")
+                result['notes'].extend(self.output.split('\n'))
+                result['notes'].append("produced output:")
+                result['notes'].extend(output.split('\n'))
 
             return result
 
