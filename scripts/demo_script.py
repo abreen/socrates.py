@@ -13,7 +13,7 @@ from os import listdir
 _socrates_result = None
 
 print("Hello, world!")
-print(str(listdir('.')))
+print(str(listdir()))
 
 if False:
     # do the following to tell socrates to take a deduction
