@@ -13,7 +13,6 @@ def get_args():
                           "socrates submit -h)"}
 
     top_parser = argparse.ArgumentParser(**top_opts)
-    top_parser.add_argument('-q', '--quiet', action='store_true')
     top_parser.add_argument('-l', '--log', action='store_true')
 
     subparsers = top_parser.add_subparsers(dest='mode')

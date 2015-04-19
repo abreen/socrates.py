@@ -24,9 +24,6 @@ CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
-    if args.quiet:
-        util.quiet_mode = True
-
     if args.log:
         util.log_file = open("socrates-log.txt", 'a')
         now = datetime.datetime.today()

@@ -28,7 +28,6 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
 terminal = blessed.Terminal()
-quiet_mode = False
 log_file = None
 
 
