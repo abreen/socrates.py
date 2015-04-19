@@ -2,6 +2,8 @@
 
 import sys
 
+import blessed
+
 ERR_ARGS = 1
 ERR_INTERRUPTED = 2
 ERR_CRITERIA_MISSING = 3
@@ -25,34 +27,21 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
-# TODO these should go to config?
+terminal = blessed.Terminal()
 quiet_mode = False
 log_file = None
 
 
-def info(string, error=False, end='\n'):
-    """A utility function for printing messages to the standard out
-    or standard error.
-    """
-    err = "error: " if error else ""
-
-    stream = sys.stderr if error else sys.stdout
-
-    if log_file:
-        print(err + string, file=log_file, end=end)
-
-    if not quiet_mode:
-        print(err + string, file=stream, end=end)
+def info(string):
+    print(terminal.blue(string))
 
 
 def warning(string):
-    # TODO print in yellow
-    print(string)
+    print(terminal.yellow(string))
 
 
 def error(string):
-    # TODO print in red
-    print(string)
+    print(terminal.red(string))
 
 
 def heading(string, level=1):
