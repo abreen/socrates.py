@@ -21,7 +21,7 @@ _parser = configparser.ConfigParser()
 if os.path.isfile(SOCRATES_CONFIG):
     _parser.read(SOCRATES_CONFIG)
     if len(_parser) < 2:
-        util.sprint("warning: found config file, but it looks incomplete")
+        util.warning("found config file, but it looks incomplete")
 
 hooks_dir = _parser.get('socrates', 'hooks_dir',
                         fallback=SOCRATES_DIR + os.sep + 'hooks')
@@ -46,27 +46,22 @@ else:
 _f = False
 if not os.path.isdir(hooks_dir):
     _f = True
-    util.sprint("hooks directory does not exist or cannot be accessed",
-                error=True)
+    util.error("hooks directory does not exist or cannot be accessed")
 
 if not os.path.isdir(scripts_dir):
     _f = True
-    util.sprint("scripts directory does not exist or cannot be accessed",
-                error=True)
+    util.error("scripts directory does not exist or cannot be accessed")
 
 if not os.path.isdir(static_dir):
     _f = True
-    util.sprint("static directory does not exist or cannot be accessed",
-                error=True)
+    util.error("static directory does not exist or cannot be accessed")
 
 if not os.path.isdir(dropbox_dir):
     _f = True
-    util.sprint("dropbox directory does not exist or cannot be accessed",
-                error=True)
+    util.error("dropbox directory does not exist or cannot be accessed")
 
 if not os.path.isdir(criteria_dir):
     _f = True
-    util.sprint("criteria directory does not exist or cannot be accessed",
-                error=True)
+    util.error("criteria directory does not exist or cannot be accessed")
 
-if _f: sys.exit(util.ERR_BAD_CONFIG)
+if _f: util.exit(util.ERR_BAD_CONFIG)

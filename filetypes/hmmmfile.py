@@ -2,7 +2,7 @@ from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
 import filetypes
-from util import sprint, warn, COLOR_RED, COLOR_GREEN
+import util
 import hmc                              # for HMMM assembler and simulator
 
 
@@ -40,7 +40,7 @@ class HMMMEvalTest(BaseTest):
         import io
         import sys
 
-        sprint("running HMMM test... ", end='')
+        util.info("running HMMM test")
 
         if self.input is not None:
             in_buf = io.StringIO(self.input)
@@ -55,10 +55,8 @@ class HMMMEvalTest(BaseTest):
         except KeyboardInterrupt:
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
-            sprint("failed", color=COLOR_RED)
-
             desc = "test failed because the grader halted the program"
-            warn(desc)
+            util.warning(desc)
 
             err = filter(_not_boring, out_buf.getvalue().split('\n')[-5:-1])
 
@@ -69,9 +67,7 @@ class HMMMEvalTest(BaseTest):
         except SystemExit:
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
-            sprint("failed", color=COLOR_RED)
-
-            warn("failing test because the simulator exited uncleanly")
+            util.warning("failing test because the simulator exited uncleanly")
 
             err = filter(_not_boring, out_buf.getvalue().split('\n')[-5:-1])
 
@@ -90,11 +86,8 @@ class HMMMEvalTest(BaseTest):
             passed = passed and self.__output_matches(output)
 
         if passed:
-            sprint("passed", color=COLOR_GREEN)
             return None
         else:
-            sprint("failed", color=COLOR_RED)
-
             result = {'deduction': self.deduction,
                       'description': self.description,
                       'notes': []}

@@ -1,13 +1,12 @@
 from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
+
 import filetypes
 import prompt
-
-from util import sprint, plural, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, \
-                 COLOR_INVERTED, COLOR_RESET
-
+import util
 
 DEDUCTION_MODE_TYPES = prompt.PROMPT_MODES
+
 
 def _print_file(path):
     f = open(path, 'rb')
@@ -25,7 +24,7 @@ def _print_file(path):
         try:
             print(c.decode('utf-8'), end='')
         except UnicodeDecodeError:
-            print(COLOR_INVERTED + '?' + COLOR_RESET, end='')
+            print('?', end='')
 
 
 
@@ -67,7 +66,7 @@ class ReviewTest(BaseTest):
         if print_file:
             _print_file(path)
 
-        sprint("description: " + self.description)
+        util.info("description: " + self.description)
 
         if type(self.deduction) is int:
             choices = ["do not take this deduction",
@@ -79,11 +78,11 @@ class ReviewTest(BaseTest):
                 return {'deduction': self.deduction,
                         'description': self.description}
             else:
-                sprint("taking no points")
+                util.info("taking no points")
                 return None
 
         elif type(self.deduction) is list:
-            choices = ["{} (-{} {})".format(y, x, plural("point", x)) for
+            choices = ["{} (-{} {})".format(y, x, util.plural("point", x)) for
                        x, y in self.deduction]
             got = prompt.prompt(choices, self.deduction_mode)
 
@@ -100,7 +99,7 @@ class ReviewTest(BaseTest):
                 return {'description': self.description + ':',
                         'subresults': deductions}
             else:
-                sprint("taking no points")
+                util.info("taking no points")
                 return None
 
 

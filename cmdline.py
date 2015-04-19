@@ -85,7 +85,7 @@ def get_args():
 
     if not args.mode:
         top_parser.parse_args(['-h'])
-        sys.exit(util.ERR_ARGS)
+        util.exit(util.ERR_ARGS)
 
     return args
 

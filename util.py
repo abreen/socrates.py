@@ -37,13 +37,11 @@ ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 # TODO these should go to config?
 quiet_mode = False
 log_file = None
-sprint_prefix = ""
 
 
-def sprint(string, error=False, color=COLOR_BLUE, end='\n'):
+def info(string, error=False, end='\n'):
     """A utility function for printing messages to the standard out
-    or standard error. Implementation note: always use this function
-    for printing, unless "raw" output from a file is being displayed.
+    or standard error.
     """
     pre = COLOR_RED if error else color
     post = COLOR_RESET
@@ -56,11 +54,16 @@ def sprint(string, error=False, color=COLOR_BLUE, end='\n'):
         print(err + string, file=log_file, end=end)
 
     if not quiet_mode:
-        print(pre + sprint_prefix + err + string + post, file=stream, end=end)
+        print(pre + err + string + post, file=stream, end=end)
 
 
-def warn(string):
-    sprint(string, color=COLOR_YELLOW)
+def warning(string):
+    # TODO print in yellow
+    print(string)
+
+def error(string):
+    # TODO print in red
+    print(string)
 
 
 def heading(string, level=1):

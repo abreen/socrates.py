@@ -39,16 +39,15 @@ def run_hooks_for(trigger):
     num_hooks = len(_hooks[trigger])
 
     if num_hooks > 0:
-        util.sprint("running hooks for trigger '" + str(trigger) + "'...")
+        util.info("running hooks for trigger '" + str(trigger) + "'...")
 
         for fname in _hooks[trigger]:
             if call(config.hooks_dir + sep + fname, env=_create_env()) != 0:
-                util.sprint("hook '" + str(fname) + "' exited abnormally",
-                            error=True)
-                exit(util.ERR_ABNORMAL_HOOK_EXIT)
+                util.error("hook '" + str(fname) + "' exited abnormally")
+                util.exit(util.ERR_ABNORMAL_HOOK_EXIT)
 
-        util.sprint("successfully ran " + str(num_hooks) + " " + \
-                    util.plural('hook', num_hooks), color=util.COLOR_GREEN)
+        util.info("successfully ran " + str(num_hooks) + " " + \
+                    util.plural('hook', num_hooks))
 
 
 def _create_env():

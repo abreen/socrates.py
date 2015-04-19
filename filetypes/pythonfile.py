@@ -5,8 +5,7 @@ import filetypes
 from filetypes.plainfile import PlainFile, ReviewTest
 from filetypes.basefile import TestSet, BaseFile
 from filetypes.basetest import BaseTest
-from util import sprint, add_to, warn, COLOR_GREEN, \
-                 COLOR_RED, COLOR_RESET, ALPHABET, plural
+import util
 
 MAX_STACK_SIZE = sys.getrecursionlimit()
 BASIC_TYPES = [str, int, float, bool, list, dict, type(None)]
@@ -153,7 +152,7 @@ class EvalTest(BaseTest):
 
 
     def run(self, cxt):
-        sprint("running eval test on {}... ".format(self.target), end='')
+        util.info("running eval test on {}".format(self.target))
 
         result = None
         if type(self.target) in [PythonFunction, PythonMethod]:
@@ -164,11 +163,6 @@ class EvalTest(BaseTest):
             result = self.__run_module(cxt)
         else:
             raise ValueError("invalid target type")
-
-        if result:
-            sprint("failed", color=COLOR_RED)
-        else:
-            sprint("passed", color=COLOR_GREEN)
 
         return result
 
@@ -198,7 +192,7 @@ class EvalTest(BaseTest):
                               args[0], args[1])]}
 
         locals = {mod_name: context}
-        vars = ALPHABET[:len(args)]
+        vars = util.ALPHABET[:len(args)]
         args_strings = []
 
         for i in range(len(vars)):
@@ -236,7 +230,7 @@ class EvalTest(BaseTest):
         except KeyboardInterrupt:
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
-            sprint(COLOR_RED + "interrupting a test" + COLOR_RESET)
+            util.warning("interrupting a test")
 
             return {'deduction': self.deduction,
                     'description': self.description,
@@ -247,7 +241,7 @@ class EvalTest(BaseTest):
 
             sys.stdin, sys.stdout = sys.__stdin__, sys.__stdout__
 
-            warn("failing a test due to an error ({})".format(err[1]))
+            util.warning("failing a test due to an error ({})".format(err[1]))
 
             return {'deduction': self.deduction,
                     'description': self.description,
@@ -325,12 +319,12 @@ class EvalTest(BaseTest):
         from grader import write_results
         from prompt import prompt
 
-        warn("about to fail a test with the following reasoning:")
+        util.warning("about to fail a test")
 
         write_results(sys.stdout, [result])
 
         points = result['deduction']
-        s = plural("point", points)
+        s = util.plural("point", points)
         fail_msg = "fail this test (-{} {})".format(points, s)
 
         choices = [fail_msg, "do not fail this test"]
@@ -655,17 +649,17 @@ class PythonFile(PlainFile):
         actual_setrecursionlimit = sys.setrecursionlimit
 
         def intercept_stacksize_change(new_val):
-            sprint("intercepting call to sys.setrecursionlimit()")
+            util.info("intercepting call to sys.setrecursionlimit()")
             old_val = sys.getrecursionlimit()
             if new_val < old_val:
-                sprint("keeping stack size at " + str(old_val))
+                util.info("keeping stack size at " + str(old_val))
                 return
             if new_val > MAX_STACK_SIZE:
-                sprint("code wants to set stack size too large")
-                sprint("keeping stack size at " + str(old_val))
+                util.info("code wants to set stack size too large")
+                util.info("keeping stack size at " + str(old_val))
                 return
             else:
-                sprint("growing stack size to " + str(new_val))
+                util.info("growing stack size to " + str(new_val))
                 actual_setrecursionlimit(new_val)
 
         sys.setrecursionlimit = intercept_stacksize_change
@@ -676,16 +670,14 @@ class PythonFile(PlainFile):
 
             sys.path.append(directory)
 
-            sprint(COLOR_GREEN + "importing module '{}'".format(mod_name) + \
-                   COLOR_RESET)
+            util.info("importing module '{}'".format(mod_name))
 
             # redirect standard out to empty buffer to "mute" the program
             #sys.stdout = io.StringIO()
             module_context = __import__(mod_name)
             #sys.stdout = sys.__stdout__
 
-            sprint(COLOR_GREEN + "finished importing "
-                   "module".format(mod_name) + COLOR_RESET)
+            util.info("finished importing module".format(mod_name))
 
         except:
             # "un-mute" the program and give socrates access to stdout
@@ -695,7 +687,7 @@ class PythonFile(PlainFile):
 
             err = sys.exc_info()
 
-            sprint("encountered an error importing "
+            util.error("encountered an error importing "
                    "'{}' module ({})".format(mod_name, err[0].__name__))
 
             traceback.print_exc()
@@ -705,7 +697,8 @@ class PythonFile(PlainFile):
             else:
                 deduction = self.point_value
 
-            warn("deducting {} points for import error".format(deduction))
+            util.warning("deducting {} points for import "
+                         "error".format(deduction))
 
             return [{'deduction': deduction,
                      'description': "error importing '{}'".format(self.path),
@@ -718,7 +711,7 @@ class PythonFile(PlainFile):
         for test in self.tests:
             result = test.run(module_context)
             if result is not None:
-                add_to(result, results[self])
+                util.add_to(result, results[self])
 
         for func in self.functions:
             results[func] = []
@@ -736,7 +729,7 @@ class PythonFile(PlainFile):
 
                 result = test.run(module_context)
                 if result is not None:
-                    add_to(result, results[func])
+                    util.add_to(result, results[func])
 
         for cls in self.classes:
             results[cls] = []
@@ -774,7 +767,7 @@ class PythonFile(PlainFile):
 
                     result = test.run(module_context)
                     if result is not None:
-                        add_to(result, results[method])
+                        util.add_to(result, results[method])
 
         for var in self.variables:
             results[var] = []
@@ -792,7 +785,7 @@ class PythonFile(PlainFile):
 
                 result = test.run(module_context)
                 if result is not None:
-                    add_to(result, results[var])
+                    util.add_to(result, results[var])
 
         for target, failures in results.items():
             sum = 0

@@ -1,4 +1,4 @@
-from util import *
+import util
 
 PROMPT_MODES = [1, '1', '*', '+', '?']
 
@@ -31,34 +31,30 @@ def prompt(choices, mode='*'):
     selections = []     # unique indices into choices list
 
     while num_selections < min or num_selections < max:
-        sprint(COLOR_GREEN + header + COLOR_RESET)
+        print(header)
 
         for i in range(len(choices)):
             if i in selections:
-                sprint(" × {}. {}".format(letters[i], choices[i]))
+                print(" × {}. {}".format(letters[i], choices[i]))
             else:
-                sprint("   {}. {}".format(letters[i], choices[i]))
+                print("   {}. {}".format(letters[i], choices[i]))
 
         try:
-            sel = input(COLOR_CYAN + "make a selection (or ! "
-                        "to commit): " + COLOR_RESET)
+            sel = input("make a selection (or ! to commit): ")
         except KeyboardInterrupt:
-            from util import exit, ERR_INTERRUPTED
-            print()
-            sprint("exiting due to a keyboard interrupt", error=True)
-            exit(ERR_INTERRUPTED)
+            util.error("exiting due to a keyboard interrupt")
+            util.exit(util.ERR_INTERRUPTED)
 
         if sel == '!':
             if num_selections < min:
-                sprint("can't stop now; you must make {} {}".format(
-                       min, plural("selection", min)), error=True)
+                print("can't stop now; you must make {} {}".format(
+                      min, util.plural("selection", min)))
                 continue
             else:
                 break
 
         try:
             if letters.index(sel) in selections:
-                sprint("removing selection of " + sel)
                 selections.remove(letters.index(sel))
                 continue
 
@@ -67,9 +63,9 @@ def prompt(choices, mode='*'):
 
         except ValueError:
             if sel == '':
-                sprint("make a selection (or ! to commit)", error=True)
+                print("make a selection (or ! to commit)")
             else:
-                sprint("invalid selection: not in list", error=True)
+                print("invalid selection: not in list")
             continue
 
     return selections
