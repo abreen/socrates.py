@@ -2,15 +2,6 @@
 
 import sys
 
-
-COLOR_RED = '\033[31m'
-COLOR_GREEN = '\033[32m'
-COLOR_YELLOW = '\033[33m'
-COLOR_BLUE = '\033[34m'
-COLOR_CYAN = '\033[36m'
-COLOR_INVERTED = '\033[7m'
-COLOR_RESET = '\033[0m'
-
 ERR_ARGS = 1
 ERR_INTERRUPTED = 2
 ERR_CRITERIA_MISSING = 3
@@ -43,9 +34,6 @@ def info(string, error=False, end='\n'):
     """A utility function for printing messages to the standard out
     or standard error.
     """
-    pre = COLOR_RED if error else color
-    post = COLOR_RESET
-
     err = "error: " if error else ""
 
     stream = sys.stderr if error else sys.stdout
@@ -54,12 +42,13 @@ def info(string, error=False, end='\n'):
         print(err + string, file=log_file, end=end)
 
     if not quiet_mode:
-        print(pre + err + string + post, file=stream, end=end)
+        print(err + string, file=stream, end=end)
 
 
 def warning(string):
     # TODO print in yellow
     print(string)
+
 
 def error(string):
     # TODO print in red
