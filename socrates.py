@@ -24,11 +24,6 @@ CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
-    if args.log:
-        util.log_file = open("socrates-log.txt", 'a')
-        now = datetime.datetime.today()
-        util.log_file.write(str(now) + '\n')
-
     if args.mode == 'config':
         _config()
 
@@ -281,7 +276,7 @@ def _batch(args):
 
         util.info("running socrates in '{}'".format(subdir))
 
-        sub_args = [proc, '--log', 'grade']
+        sub_args = [proc, 'grade']
 
         if args.no_edit:
             sub_args.append("--no-edit")

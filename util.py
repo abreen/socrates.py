@@ -28,7 +28,6 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
 terminal = blessed.Terminal()
-log_file = None
 
 
 def info(string):
