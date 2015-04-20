@@ -59,22 +59,21 @@ class ScriptTest(BaseTest):
         import config
 
         globals = {module.__name__: module, 'config': config}
-        locals = {}
 
         with open(config.scripts_dir + sep + self.name, 'r') as f:
             code = f.read()
 
         try:
-            exec(code, globals, locals)
+            exec(code, globals)
         except:
             from util import exit, ERR_SCRIPT_RUNTIME_ERROR
             exit(ERR_SCRIPT_RUNTIME_ERROR)
 
-        if '_socrates_result' not in locals:
+        if '_socrates_result' not in globals:
             from util import exit, ERR_SCRIPT_RUNTIME_ERROR
             exit(ERR_SCRIPT_RUNTIME_ERROR)
 
-        return locals['_socrates_result']
+        return globals['_socrates_result']
 
 
 class EvalTest(BaseTest):
