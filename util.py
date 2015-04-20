@@ -1,6 +1,7 @@
 """Various utility functions and variables."""
 
 import sys
+import os
 
 import blessed
 
@@ -28,18 +29,23 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
 terminal = blessed.Terminal()
+title = os.path.basename(os.getcwd())
+_ui_started = False
 
 
 def info(string):
     print(terminal.blue(string))
+    ui_redraw()
 
 
 def warning(string):
     print(terminal.yellow(string))
+    ui_redraw()
 
 
 def error(string):
     print(terminal.red(string))
+    ui_redraw()
 
 
 def heading(string, level=1):
@@ -112,13 +118,37 @@ def exit(exit_code):
     This function tries to run hooks attached to 'before_exit'
     before actually exiting.
     """
-    from sys import exc_info, exit
+    import sys
     from traceback import print_exception
     from hooks import run_hooks_for
 
     run_hooks_for('before_exit')
-    type, value, traceback = exc_info()
+
+    ui_stop()
+
+    type, value, traceback = sys.exc_info()
     if traceback is not None:
         print_exception(type, value, traceback)
 
-    exit(exit_code)
+    sys.exit(exit_code)
+
+
+def ui_start():
+    global _ui_started
+
+    _ui_started = True
+    print(terminal.clear(), end='\n')
+
+
+def ui_stop():
+    pass
+
+
+def ui_redraw():
+    if not _ui_started:
+        return
+
+    with terminal.location(x=0, y=0):
+        print(terminal.clear_eol(), end='')
+        t = title + (' ' * (terminal.width - len(title)))
+        print(terminal.blue_reverse(t), end='')

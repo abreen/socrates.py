@@ -24,6 +24,7 @@ CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
+
     if args.mode == 'config':
         _config()
 
@@ -176,6 +177,8 @@ def _grade(args, criteria_object, grade_filename):
         util.error("refusing to overwrite existing grade file")
         util.exit(util.ERR_GRADE_FILE_EXISTS)
 
+    util.ui_start()
+
     if not args.submission_files:
         util.warning("no submission files specified")
 
@@ -199,6 +202,8 @@ def _grade(args, criteria_object, grade_filename):
             _edit_file(grade_filename)
 
     hooks.run_hooks_for('before_exit')
+
+    util.ui_stop()
 
     if any_missing:
         util.exit(util.EXIT_WITH_MISSING)
