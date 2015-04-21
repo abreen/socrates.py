@@ -175,7 +175,7 @@ def _grade(args, criteria_object, grade_filename):
 
     if os.path.isfile(grade_filename):
         util.error("refusing to overwrite existing grade file")
-        util.exit(util.ERR_GRADE_FILE_EXISTS)
+        util.exit(util.ERR_GRADE_FILE_EXISTS, hooks=False)
 
     util.ui_start()
 

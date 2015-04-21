@@ -113,16 +113,17 @@ def plural(str_, num):
     return str_ + ("s" if num != 1 else "")
 
 
-def exit(exit_code):
+def exit(exit_code, hooks=True):
     """The safe way to cause socrates to exit immediately.
-    This function tries to run hooks attached to 'before_exit'
-    before actually exiting.
+    If the 'hooks' argument is True, this function will try to
+    run hooks attached to 'before_exit' before actually exiting.
     """
     import sys
     from traceback import print_exception
     from hooks import run_hooks_for
 
-    run_hooks_for('before_exit')
+    if hooks:
+        run_hooks_for('before_exit')
 
     ui_stop()
 
