@@ -28,27 +28,34 @@ def prompt(choices, mode='*'):
     letters = list(map(lambda x: chr(ord('a') + x), range(len(choices))))
 
     num_selections = 0
-    selections = []     # unique indices into choices list
+    selections = []         # unique indices into choices list
 
     while num_selections < min or num_selections < max:
-        print(header)
+        util.print(util.green(header))
 
         for i in range(len(choices)):
             if i in selections:
-                print(" × {}. {}".format(letters[i], choices[i]))
+                choice = " × "
             else:
-                print("   {}. {}".format(letters[i], choices[i]))
+                choice = "   "
+
+            choice += str(letters[i]) + '. ' + str(choices[i])
+
+            if i in selections:
+                choice = util.yellow(choice)
+
+            util.print(choice)
 
         try:
-            sel = input("make a selection (or ! to commit): ")
+            sel = input(util.green("make a selection (or ! to commit): "))
         except KeyboardInterrupt:
-            util.error("exiting due to a keyboard interrupt")
             util.exit(util.ERR_INTERRUPTED)
 
         if sel == '!':
             if num_selections < min:
-                print("can't stop now; you must make {} {}".format(
-                      min, util.plural("selection", min)))
+                util.error("can't stop now; you must make "
+                           "{} {}".format(min,
+                                          util.plural("selection", min)))
                 continue
             else:
                 break
@@ -63,9 +70,9 @@ def prompt(choices, mode='*'):
 
         except ValueError:
             if sel == '':
-                print("make a selection (or ! to commit)")
+                util.print("make a selection (or ! to commit)")
             else:
-                print("invalid selection: not in list")
+                util.error("invalid selection: not in list")
             continue
 
     return selections

@@ -24,6 +24,7 @@ CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
+    util.set_mode(args.mode)
 
     if args.mode == 'config':
         _config()
@@ -74,7 +75,7 @@ def _config():
 
     for member_name, member_val in getmembers(config):
         if member_name[0] != '_' and not ismodule(member_val):
-            print("{}: {}".format(member_name, member_val))
+            util.print("{}: {}".format(member_name, member_val))
 
 
 def _edit(args):
@@ -126,11 +127,8 @@ def _edit(args):
             _ = criteria.Criteria.from_yaml(temp_path)
 
         except Exception as e:
-            import traceback
-
             util.error("proposed criteria file produced an error")
-
-            traceback.print_exc()
+            util.print_traceback()
 
             choices = ["return to the editor to fix the problem",
                        "abort the change (existing file will not change)"]
@@ -193,7 +191,7 @@ def _grade(args, criteria_object, grade_filename):
                   "for issues".format(grade_filename))
 
         with open(grade_filename) as f:
-            print(f.read())
+            util.print(f.read())
 
         choices = ["edit the grade file now", "do not edit the grade file"]
         selections = prompt(choices, mode='1')

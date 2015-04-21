@@ -2,6 +2,8 @@
 
 import sys
 import os
+import builtins
+import signal
 
 import blessed
 
@@ -29,23 +31,47 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
 terminal = blessed.Terminal()
-title = os.path.basename(os.getcwd())
-_ui_started = False
+
+_bar_left = ''
+_bar_center = 'socrates'
+_bar_right = os.path.basename(os.getcwd())
+
+_ui = False
+
+
+def set_mode(mode):
+    global _bar_left
+    _bar_left = mode.upper()
+
+
+def green(string):
+    return terminal.green(string)
+
+def yellow(string):
+    return terminal.yellow(string)
+
+
+def print(string, end='\n'):
+    builtins.print(string)
+    if _ui: ui_redraw()
 
 
 def info(string):
     print(terminal.blue(string))
-    ui_redraw()
 
 
 def warning(string):
     print(terminal.yellow(string))
-    ui_redraw()
 
 
 def error(string):
     print(terminal.red(string))
-    ui_redraw()
+
+
+def print_traceback():
+    from traceback import print_exc
+    print_exc()
+    if _ui: ui_redraw()
 
 
 def heading(string, level=1):
@@ -118,39 +144,46 @@ def exit(exit_code, hooks=True):
     If the 'hooks' argument is True, this function will try to
     run hooks attached to 'before_exit' before actually exiting.
     """
-    import sys
-    from traceback import print_exception
     from hooks import run_hooks_for
 
     if hooks:
         run_hooks_for('before_exit')
 
-    ui_stop()
+    if _ui:
+        ui_stop()
 
     type, value, traceback = sys.exc_info()
     if traceback is not None:
-        print_exception(type, value, traceback)
+        print_traceback()
 
     sys.exit(exit_code)
 
 
 def ui_start():
-    global _ui_started
-
-    _ui_started = True
-    print(terminal.enter_fullscreen(), end='')
-    print(terminal.clear(), end='\n')
+    global _ui
+    builtins.print(terminal.enter_fullscreen(), end='')
+    builtins.print(terminal.clear(), end='\n')
+    _ui = True
 
 
 def ui_stop():
-    print(terminal.exit_fullscreen(), end='')
+    global _ui
+    builtins.print('\n' + terminal.exit_fullscreen(), end='')
+    _ui = False
 
 
 def ui_redraw():
-    if not _ui_started:
+    if not _ui:
         return
 
-    with terminal.location(x=0, y=0):
-        print(terminal.clear_eol(), end='')
-        t = title + (' ' * (terminal.width - len(title)))
-        print(terminal.blue_reverse(t), end='')
+    t = terminal
+
+    chars = len(_bar_left) + len(_bar_center) + len(_bar_right)
+    spaces = t.width - chars
+
+    bar = t.green_reverse(_bar_left + (' ' * (spaces // 2)))
+    bar += t.bold_green_reverse(_bar_center)
+    bar += t.green_reverse((' ' * (spaces // 2)) + _bar_right)
+
+    with t.location(y=0):
+        builtins.print(bar, end='')

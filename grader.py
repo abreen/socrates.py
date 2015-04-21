@@ -66,11 +66,8 @@ def grade(criteria, submissions, filename, assume_missing=False):
                     try:
                         os.rename(opath, npath)
                     except:
-                        import traceback
-
                         util.error("error renaming incorrectly named file")
-
-                        traceback.print_exc()
+                        util.print_traceback()
                         util.exit(util.ERR_GRADING_MISC)
 
                     found.append(f)
