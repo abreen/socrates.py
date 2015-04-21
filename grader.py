@@ -127,7 +127,6 @@ def grade(criteria, submissions, filename, assume_missing=False):
         out.seek(0)
         f.write(out.read())
 
-    util.info("grading completed")
     return num_missing
 
 

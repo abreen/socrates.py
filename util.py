@@ -138,11 +138,12 @@ def ui_start():
     global _ui_started
 
     _ui_started = True
+    print(terminal.enter_fullscreen(), end='')
     print(terminal.clear(), end='\n')
 
 
 def ui_stop():
-    pass
+    print(terminal.exit_fullscreen(), end='')
 
 
 def ui_redraw():

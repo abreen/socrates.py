@@ -205,6 +205,8 @@ def _grade(args, criteria_object, grade_filename):
 
     util.ui_stop()
 
+    util.info("grading completed")
+
     if any_missing:
         util.exit(util.EXIT_WITH_MISSING)
 
