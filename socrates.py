@@ -24,8 +24,6 @@ CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
-    util.set_mode(args.mode)
-
     if args.mode == 'config':
         _config()
 

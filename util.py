@@ -32,20 +32,10 @@ ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
 terminal = blessed.Terminal()
 
-_bar_left = ''
-_bar_center = 'socrates'
-_bar_right = os.path.basename(os.getcwd())
-
-_ui = False
-
-
-def set_mode(mode):
-    global _bar_left
-    _bar_left = mode.upper()
-
 
 def green(string):
     return terminal.green(string)
+
 
 def yellow(string):
     return terminal.yellow(string)
@@ -53,7 +43,6 @@ def yellow(string):
 
 def print(string, end='\n'):
     builtins.print(string)
-    if _ui: ui_redraw()
 
 
 def info(string):
@@ -71,7 +60,6 @@ def error(string):
 def print_traceback():
     from traceback import print_exc
     print_exc()
-    if _ui: ui_redraw()
 
 
 def heading(string, level=1):
@@ -149,8 +137,7 @@ def exit(exit_code, hooks=True):
     if hooks:
         run_hooks_for('before_exit')
 
-    if _ui:
-        ui_stop()
+    ui_stop()
 
     type, value, traceback = sys.exc_info()
     if traceback is not None:
@@ -160,30 +147,8 @@ def exit(exit_code, hooks=True):
 
 
 def ui_start():
-    global _ui
     builtins.print(terminal.enter_fullscreen(), end='')
-    builtins.print(terminal.clear(), end='\n')
-    _ui = True
 
 
 def ui_stop():
-    global _ui
     builtins.print('\n' + terminal.exit_fullscreen(), end='')
-    _ui = False
-
-
-def ui_redraw():
-    if not _ui:
-        return
-
-    t = terminal
-
-    chars = len(_bar_left) + len(_bar_center) + len(_bar_right)
-    spaces = t.width - chars
-
-    bar = t.green_reverse(_bar_left + (' ' * (spaces // 2)))
-    bar += t.bold_green_reverse(_bar_center)
-    bar += t.green_reverse((' ' * (spaces // 2)) + _bar_right)
-
-    with t.location(y=0):
-        builtins.print(bar, end='')
