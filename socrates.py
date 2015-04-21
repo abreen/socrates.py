@@ -24,14 +24,6 @@ CRITERIA_FILE_PATTERN = r'^[a-z]+\d+[a-z]$'
 
 def main(args):
     """The function invoked when socrates starts from the command line."""
-    if args.quiet:
-        util.quiet_mode = True
-
-    if args.log:
-        util.log_file = open("socrates-log.txt", 'a')
-        now = datetime.datetime.today()
-        util.log_file.write(str(now) + '\n')
-
     if args.mode == 'config':
         _config()
 
@@ -42,9 +34,8 @@ def main(args):
         try:
             sname, group = _parse_assignment_name(args.assignment_with_group)
         except ValueError as err:
-            util.sprint(str(err) + ': ' + args.assignment_with_group,
-                        error=True)
-            sys.exit(util.ERR_BAD_ASSIGNMENT)
+            util.error(str(err) + ': ' + args.assignment_with_group)
+            util.exit(util.ERR_BAD_ASSIGNMENT)
 
         criteria_path = _form_criteria_path(sname, group)
 
@@ -55,8 +46,8 @@ def main(args):
             if group:
                 message += ", group " + group
 
-            util.sprint(message, error=True)
-            sys.exit(util.ERR_CRITERIA_MISSING)
+            util.error(message)
+            util.exit(util.ERR_CRITERIA_MISSING)
 
         criteria_object = _create_criteria_object(criteria_path)
 
@@ -82,7 +73,7 @@ def _config():
 
     for member_name, member_val in getmembers(config):
         if member_name[0] != '_' and not ismodule(member_val):
-            print("{}: {}".format(member_name, member_val))
+            util.print("{}: {}".format(member_name, member_val))
 
 
 def _edit(args):
@@ -104,20 +95,20 @@ def _edit(args):
     try:
         short_name, group = _parse_assignment_name(args.assignment_with_group)
     except ValueError as err:
-        util.sprint(str(err) + ': ' + args.assignment_with_group, error=True)
-        sys.exit(util.ERR_BAD_ASSIGNMENT)
+        util.error(str(err) + ': ' + args.assignment_with_group)
+        util.exit(util.ERR_BAD_ASSIGNMENT)
 
     existing_path = _form_criteria_path(short_name, group)
 
     if not isfile(existing_path):
-        util.warn("the file '{}' does not exist".format(existing_path))
+        util.warning("the file '{}' does not exist".format(existing_path))
 
         choices = ["create and edit this criteria file now",
                    "exit without creating anything"]
 
         selections = prompt(choices, mode='1')
         if 1 in selections:
-            util.sprint("exiting without changing anything")
+            util.info("exiting without changing anything")
             return
 
     temp_file, temp_path = tempfile.mkstemp(suffix='.yml')
@@ -134,12 +125,8 @@ def _edit(args):
             _ = criteria.Criteria.from_yaml(temp_path)
 
         except Exception as e:
-            import traceback
-
-            util.sprint("proposed criteria file produced an error",
-                        color=util.COLOR_RED)
-
-            traceback.print_exc()
+            util.error("proposed criteria file produced an error")
+            util.print_traceback()
 
             choices = ["return to the editor to fix the problem",
                        "abort the change (existing file will not change)"]
@@ -149,7 +136,7 @@ def _edit(args):
             if 0 in selections:
                 continue
             else:
-                util.sprint("exiting without changing anything")
+                util.info("exiting without changing anything")
                 break
 
         else:
@@ -160,8 +147,7 @@ def _edit(args):
             if isfile(existing_path) and \
                filecmp.cmp(temp_path, existing_path, shallow=False):
                 # files seem to be the same
-                util.sprint("no changes made; exiting without " +
-                            "changing original", color=util.COLOR_YELLOW)
+                util.info("no changes made; exiting without changing original")
                 os.remove(temp_path)
 
             else:
@@ -171,8 +157,7 @@ def _edit(args):
                 # remove temporary file
                 os.remove(temp_path)
 
-                util.sprint("{} updated".format(existing_path),
-                            color=util.COLOR_YELLOW)
+                util.info("{} updated".format(existing_path))
 
             break
 
@@ -185,13 +170,13 @@ def _grade(args, criteria_object, grade_filename):
     from prompt import prompt
 
     if os.path.isfile(grade_filename):
-        util.sprint("refusing to overwrite existing grade file",
-                    color=util.COLOR_RED)
-        sys.exit(util.ERR_GRADE_FILE_EXISTS)
+        util.error("refusing to overwrite existing grade file")
+        util.exit(util.ERR_GRADE_FILE_EXISTS, hooks=False)
+
+    util.ui_start()
 
     if not args.submission_files:
-        util.sprint("warning: no submission files specified",
-                    color=util.COLOR_RED)
+        util.warning("no submission files specified")
 
     hooks.run_hooks_for('before_file_search')
 
@@ -200,12 +185,11 @@ def _grade(args, criteria_object, grade_filename):
                                assume_missing=args.assume_missing)
 
     if not args.no_edit:
-        util.sprint("please review the following grade file ({}) "
-                    "for issues:".format(grade_filename),
-                    color=util.COLOR_GREEN)
+        util.info("please review the following grade file ({}) "
+                  "for issues".format(grade_filename))
 
         with open(grade_filename) as f:
-            print(f.read())
+            util.print(f.read())
 
         choices = ["edit the grade file now", "do not edit the grade file"]
         selections = prompt(choices, mode='1')
@@ -213,11 +197,14 @@ def _grade(args, criteria_object, grade_filename):
         if 0 in selections:
             _edit_file(grade_filename)
 
-    # TODO this may not actually run if the functions above exit themselves
     hooks.run_hooks_for('before_exit')
 
+    util.ui_stop()
+
+    util.info("grading completed")
+
     if any_missing:
-        sys.exit(util.EXIT_WITH_MISSING)
+        util.exit(util.EXIT_WITH_MISSING)
 
 
 def _submit(args, criteria_object, grade_filename, umask=0o002):
@@ -238,14 +225,13 @@ def _submit(args, criteria_object, grade_filename, umask=0o002):
 
         # check if specified file is a directory
         if not os.path.isdir(username):
-            util.sprint("'{}' is not a directory".format(username),
-                        error=True)
+            util.error("'{}' is not a directory".format(username))
             continue
 
         grade_file_path = username + os.sep + grade_filename
         if not os.path.isfile(grade_file_path):
-            util.sprint("not submitting '{}': directory has no "
-                        "grade file".format(username))
+            util.error("not submitting '{}': directory has no "
+                       "grade file".format(username))
             continue
 
         # TODO check if directory name is a valid student name
@@ -258,8 +244,8 @@ def _submit(args, criteria_object, grade_filename, umask=0o002):
             os.umask(0o000)
             util.makedirs(dest_path)
         except OSError:
-            util.sprint("error making user directory in dropbox", error=True)
-            sys.exit(util.ERR_DROPBOX_MAKEDIRS)
+            util.error("error making user directory in dropbox")
+            util.exit(util.ERR_DROPBOX_MAKEDIRS)
 
         dest_path += os.sep + grade_filename
         shutil.copyfile(grade_file_path, dest_path)
@@ -267,10 +253,10 @@ def _submit(args, criteria_object, grade_filename, umask=0o002):
 
         num_submitted += 1
 
-        util.sprint("wrote '{}' to dropbox".format(dest_path))
+        util.info("wrote '{}' to dropbox".format(dest_path))
 
-    util.sprint("submitted {} {}".format(num_submitted,
-                                         util.plural('grade', num_submitted)))
+    util.info("submitted {} {}".format(num_submitted,
+                                       util.plural('grade', num_submitted)))
 
 
 def _batch(args):
@@ -283,8 +269,7 @@ def _batch(args):
 
     for subdir in args.submission_dirs:
         if not os.path.isdir(subdir):
-            util.sprint("invalid submission directory "
-                        "'{}'".format(subdir), error=True)
+            util.error("invalid submission directory '{}'".format(subdir))
             continue
 
         os.chdir(subdir)
@@ -292,9 +277,9 @@ def _batch(args):
         # this will simulate a user executing socrates grade * at a shell
         files_here = os.listdir(os.curdir)
 
-        util.sprint("running socrates in '{}'".format(subdir))
+        util.info("running socrates in '{}'".format(subdir))
 
-        sub_args = [proc, '--log', 'grade']
+        sub_args = [proc, 'grade']
 
         if args.no_edit:
             sub_args.append("--no-edit")
@@ -308,17 +293,17 @@ def _batch(args):
             return_val = subprocess.call(sub_args + files_here)
 
         except KeyboardInterrupt:
-            util.sprint("\nparent stopping (received interrupt)")
-            util.sprint("stopped while grading '{}'".format(subdir))
+            util.warning("parent stopping (received interrupt)")
+            util.warning("stopped while grading '{}'".format(subdir))
             os.chdir(os.pardir)
-            sys.exit(util.ERR_INTERRUPTED)
+            util.exit(util.ERR_INTERRUPTED)
 
         if return_val != 0 and return_val not in OKAY_CONDITIONS:
-            util.sprint("child process encountered an error", error=True)
+            util.error("child process encountered an error")
             os.chdir(os.pardir)
-            sys.exit(return_val)
+            util.exit(return_val)
 
-        util.sprint("completed subdirectory '{}'".format(subdir))
+        util.info("completed subdirectory '{}'".format(subdir))
         os.chdir(os.pardir)
 
 
@@ -362,12 +347,12 @@ def _create_criteria_object(criteria_path):
         criteria_object = criteria.Criteria.from_yaml(criteria_path)
 
     except FileNotFoundError:
-        util.sprint("criteria file does not exist", error=True)
-        sys.exit(util.ERR_CRITERIA_MISSING)
+        util.error("criteria file does not exist")
+        util.exit(util.ERR_CRITERIA_MISSING)
 
     except IsADirectoryError:
-        util.sprint("specified criteria is a directory", error=True)
-        sys.exit(util.ERR_CRITERIA_IMPORT)
+        util.error("specified criteria is a directory")
+        util.exit(util.ERR_CRITERIA_IMPORT)
 
     return criteria_object
 
@@ -383,9 +368,8 @@ def _get_dropbox_path(args):
     dropbox_path = config.dropbox_dir + os.sep + short_name
 
     if not os.path.isdir(dropbox_path):
-        util.sprint("no dropbox for assignment '{}'".format(short_name),
-                    error=True)
-        sys.exit(util.ERR_BAD_DROPBOX)
+        util.error("no dropbox for assignment '{}'".format(short_name))
+        util.exit(util.ERR_BAD_DROPBOX)
 
     return dropbox_path
 
@@ -407,13 +391,12 @@ def _edit_file(path):
     elif shutil.which('nano') is not None:
         # try to run nano
         subprocess.call(['nano', path])
-        util.sprint("your $EDITOR environment variable is not set")
-        util.sprint("if you set $EDITOR, socrates will use that editor")
+        util.info("your $EDITOR environment variable is not set")
+        util.info("if you set $EDITOR, socrates will use that editor")
 
     else:
-        util.sprint("could not open your favorite text editor or nano",
-                    color=util.COLOR_RED)
-        sys.exit(util.ERR_NO_EDITOR)
+        util.error("could not open your favorite text editor or nano")
+        util.exit(util.ERR_NO_EDITOR)
 
 
 if __name__ == '__main__':

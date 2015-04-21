@@ -257,7 +257,7 @@ class MapTest(BaseTest):
         try:
             coverage, num_steps = self.__simulate(path)
 
-            util.sprint("finished Picobot simulation "
+            util.info("finished Picobot simulation "
                         "in {:,} steps".format(num_steps))
 
         except PicobotSyntaxError as err:

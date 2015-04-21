@@ -2,7 +2,7 @@ from filetypes.basefile import BaseFile
 from filetypes.basetest import BaseTest
 from filetypes.plainfile import ReviewTest, PlainFile
 import filetypes
-from util import sprint, warn, COLOR_RED, COLOR_GREEN
+import util
 import logisim                          # for parsing Logisim .circ files
 
 
@@ -79,13 +79,11 @@ class EvalTest(BaseTest):
         """
         from logisim.errors import NoInputsError
 
-        sprint("running eval test on '{}'... ".format(circuit.name), end='')
+        util.info("running eval test on '{}'".format(circuit.name))
 
         try:
             output_vals = circuit.eval(self.input)
         except NoInputsError as e:
-            sprint("failed", color=COLOR_RED)
-
             desc = "a component is missing an input value"
 
             return {'deduction': self.deduction,
@@ -101,8 +99,6 @@ class EvalTest(BaseTest):
                 break
 
         if failed:
-            sprint("failed", color=COLOR_RED)
-
             desc = _build_description(self.input, self.output).split('\n')
             desc += ["your circuit produced:"]
             desc += _build_description({}, output_vals).split('\n')
@@ -110,8 +106,6 @@ class EvalTest(BaseTest):
             return {'deduction': self.deduction,
                     'description': "did not produce the correct output",
                     'notes': desc}
-        else:
-            sprint("passed", color=COLOR_GREEN)
 
 
 class LogisimFile(BaseFile):
@@ -144,7 +138,7 @@ class LogisimFile(BaseFile):
             if c.name in broken:
                 desc = str(c) + " has major wiring issues"
 
-                warn(desc)
+                util.warning(desc)
 
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc})
@@ -154,7 +148,7 @@ class LogisimFile(BaseFile):
 
             # check if circuit is missing
             if circuit is None:
-                warn("missing " + str(c))
+                util.warning("missing " + str(c))
 
                 results[c].append({'deduction': c.point_value,
                                    'description': "missing " + str(c)})
@@ -168,7 +162,7 @@ class LogisimFile(BaseFile):
                 desc = "output pins of " + str(c) + " are not connected " + \
                        "to anything"
 
-                warn(desc)
+                util.warning(desc)
 
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc})
@@ -186,7 +180,7 @@ class LogisimFile(BaseFile):
                 else:
                     desc = "pins are missing labels in " + str(c)
 
-                warn(desc)
+                util.warning(desc)
 
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
@@ -198,7 +192,7 @@ class LogisimFile(BaseFile):
             if label_errors:
                 desc = str(c) + " is missing required pins"
 
-                warn(desc)
+                util.warning(desc)
 
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,
@@ -217,8 +211,6 @@ class LogisimFile(BaseFile):
                         results[c].append(outer_result)
 
             except NoValueGivenError as e:
-                sprint("failed", color=COLOR_RED)
-
                 desc = str(c) + " could not be tested"
                 results[c].append({'deduction': c.error_deduction,
                                    'description': desc,

@@ -1,15 +1,11 @@
 """Various utility functions and variables."""
 
 import sys
+import os
+import builtins
+import signal
 
-
-COLOR_RED = '\033[31m'
-COLOR_GREEN = '\033[32m'
-COLOR_YELLOW = '\033[33m'
-COLOR_BLUE = '\033[34m'
-COLOR_CYAN = '\033[36m'
-COLOR_INVERTED = '\033[7m'
-COLOR_RESET = '\033[0m'
+import blessed
 
 ERR_ARGS = 1
 ERR_INTERRUPTED = 2
@@ -34,33 +30,36 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
-# TODO these should go to config?
-quiet_mode = False
-log_file = None
-sprint_prefix = ""
+terminal = blessed.Terminal()
 
 
-def sprint(string, error=False, color=COLOR_BLUE, end='\n'):
-    """A utility function for printing messages to the standard out
-    or standard error. Implementation note: always use this function
-    for printing, unless "raw" output from a file is being displayed.
-    """
-    pre = COLOR_RED if error else color
-    post = COLOR_RESET
-
-    err = "error: " if error else ""
-
-    stream = sys.stderr if error else sys.stdout
-
-    if log_file:
-        print(err + string, file=log_file, end=end)
-
-    if not quiet_mode:
-        print(pre + sprint_prefix + err + string + post, file=stream, end=end)
+def green(string):
+    return terminal.green(string)
 
 
-def warn(string):
-    sprint(string, color=COLOR_YELLOW)
+def yellow(string):
+    return terminal.yellow(string)
+
+
+def print(string, end='\n'):
+    builtins.print(string)
+
+
+def info(string):
+    print(terminal.blue(string))
+
+
+def warning(string):
+    print(terminal.yellow(string))
+
+
+def error(string):
+    print(terminal.red(string))
+
+
+def print_traceback():
+    from traceback import print_exc
+    print_exc()
 
 
 def heading(string, level=1):
@@ -128,18 +127,28 @@ def plural(str_, num):
     return str_ + ("s" if num != 1 else "")
 
 
-def exit(exit_code):
+def exit(exit_code, hooks=True):
     """The safe way to cause socrates to exit immediately.
-    This function tries to run hooks attached to 'before_exit'
-    before actually exiting.
+    If the 'hooks' argument is True, this function will try to
+    run hooks attached to 'before_exit' before actually exiting.
     """
-    from sys import exc_info, exit
-    from traceback import print_exception
     from hooks import run_hooks_for
 
-    run_hooks_for('before_exit')
-    type, value, traceback = exc_info()
-    if traceback is not None:
-        print_exception(type, value, traceback)
+    if hooks:
+        run_hooks_for('before_exit')
 
-    exit(exit_code)
+    ui_stop()
+
+    type, value, traceback = sys.exc_info()
+    if traceback is not None:
+        print_traceback()
+
+    sys.exit(exit_code)
+
+
+def ui_start():
+    builtins.print(terminal.enter_fullscreen(), end='')
+
+
+def ui_stop():
+    builtins.print('\n' + terminal.exit_fullscreen(), end='')

@@ -1,7 +1,7 @@
 import yaml
 from datetime import datetime, timedelta
 
-from util import warn
+import util
 import filetypes
 import config
 
@@ -92,7 +92,7 @@ class Criteria:
     @files.setter
     def files(self, new_files):
         if len(new_files) == 0:
-            warn("warning: criteria contains no files")
+            util.warning("criteria contains no files")
 
         def valid_file(f):
             return isinstance(f, filetypes.basefile.BaseFile)

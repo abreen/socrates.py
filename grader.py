@@ -3,7 +3,7 @@ import os
 import io
 import datetime
 
-from util import *
+import util
 from prompt import prompt
 
 
@@ -23,7 +23,7 @@ def grade(criteria, submissions, filename, assume_missing=False):
                 break
         else:
 
-            warn("could not find file '{}'".format(f.path))
+            util.warning("could not find file '{}'".format(f.path))
 
             if len(submissions) < 1:
                 continue
@@ -41,7 +41,7 @@ def grade(criteria, submissions, filename, assume_missing=False):
                 choices.append("skip grading this submission now")
                 choices.append("mark the file as missing")
 
-                sprint("this student may have named the file incorrectly...")
+                util.info("this student may have named the file incorrectly")
 
                 # we prompt the grader for zero or one choice
                 got = prompt(choices, '1')
@@ -53,10 +53,8 @@ def grade(criteria, submissions, filename, assume_missing=False):
                     continue
 
                 elif got == len(choices) - 2:
-                    from util import exit, EXIT_WITH_DEFER
-
-                    sprint("skipping this submission; no grade file written")
-                    exit(EXIT_WITH_DEFER)
+                    util.info("skipping this submission")
+                    util.exit(util.EXIT_WITH_DEFER)
 
                 else:
                     # get absolute path to the old and new files
@@ -68,13 +66,9 @@ def grade(criteria, submissions, filename, assume_missing=False):
                     try:
                         os.rename(opath, npath)
                     except:
-                        import traceback
-
-                        sprint("error renaming incorrectly named file",
-                               error=True)
-
-                        traceback.print_exc()
-                        sys.exit(ERR_GRADING_MISC)
+                        util.error("error renaming incorrectly named file")
+                        util.print_traceback()
+                        util.exit(util.ERR_GRADING_MISC)
 
                     found.append(f)
 
@@ -82,8 +76,8 @@ def grade(criteria, submissions, filename, assume_missing=False):
 
     try:
         for f in criteria.files:
-            out.write(heading("{} [{} points]".format(f, f.point_value),
-                              level=2))
+            out.write(util.heading("{} [{} points]".format(f, f.point_value),
+                                   level=2))
 
             if f not in found:
                 total -= f.point_value
@@ -91,7 +85,7 @@ def grade(criteria, submissions, filename, assume_missing=False):
                 out.write("\n\n")
                 continue
 
-            sprint("running tests for " + str(f))
+            util.info("running tests for " + str(f))
 
             points_taken = 0
             points_taken += write_results(out, f.run_tests())
@@ -99,11 +93,11 @@ def grade(criteria, submissions, filename, assume_missing=False):
             file_stat = os.stat(f.path)
             mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
 
-            multiplier = criteria.get_late_penalty(mtime)
-            late_penalty = f.point_value * multiplier
+            mult = criteria.get_late_penalty(mtime)
+            late_penalty = f.point_value * mult
 
             if late_penalty != 0:
-                warn("taking {}% late penalty".format(multiplier * 100))
+                util.warning("taking {}% late penalty".format(mult * 100))
 
                 adjusted = min(f.point_value - points_taken, late_penalty)
                 out.write("-{}\tsubmitted late\n".format(adjusted))
@@ -118,21 +112,18 @@ def grade(criteria, submissions, filename, assume_missing=False):
     except KeyboardInterrupt:
         out.close()
 
-        warn("\nstopping (received interrupt)")
-        from util import exit, ERR_INTERRUPTED
-        exit(ERR_INTERRUPTED)
+        util.warning("stopping (received interrupt)")
+        util.exit(util.ERR_INTERRUPTED)
 
     except:
         out.close()
 
-        from util import exit, ERR_GRADING_MISC
-        exit(ERR_GRADING_MISC)
+        util.exit(util.ERR_GRADING_MISC)
 
     with open(filename, 'w') as f:
         out.seek(0)
         f.write(out.read())
 
-    sprint("grading completed")
     return num_missing
 
 

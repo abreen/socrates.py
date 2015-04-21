@@ -3,9 +3,11 @@ import config
 
 _triggers = ['before_file_search', 'before_exit']
 _hooks = {}
+_hooks_done = {}
 
 for t in _triggers:
     _hooks[t] = []
+    _hooks_done[t] = []
 
 
 def load_from_dict(dict_):
@@ -20,9 +22,12 @@ def load_from_dict(dict_):
             raise ValueError("unknown trigger: '" + str(trigger) + "'")
 
         for fname in fnames:
+            if fname in _hooks[trigger]:
+                raise ValueError("duplicate hook: '" + str(fname) + "'")
+
             if not isfile(config.hooks_dir + sep + fname):
-                raise ValueError("could not find hook file: '" + \
-                                 str(fname) + "'")
+                util.warning("could not find hook file: '" + \
+                             str(fname) + "'")
 
             _hooks[trigger].append(fname)
 
@@ -36,19 +41,23 @@ def run_hooks_for(trigger):
     if trigger not in _triggers:
         raise ValueError("unknown trigger: '" + str(trigger) + "'")
 
-    num_hooks = len(_hooks[trigger])
+    hooks = list(set(_hooks[trigger]) - set(_hooks_done[trigger]))
+    num_done = 0
 
-    if num_hooks > 0:
-        util.sprint("running hooks for trigger '" + str(trigger) + "'...")
+    if len(hooks) > 0:
+        util.info("running hooks for trigger '" + str(trigger) + "'")
 
-        for fname in _hooks[trigger]:
-            if call(config.hooks_dir + sep + fname, env=_create_env()) != 0:
-                util.sprint("hook '" + str(fname) + "' exited abnormally",
-                            error=True)
-                exit(util.ERR_ABNORMAL_HOOK_EXIT)
+        for fname in hooks:
+            rv = call(config.hooks_dir + sep + fname, env=_create_env())
+            _hooks_done[trigger].append(fname)
+            num_done += 1
 
-        util.sprint("successfully ran " + str(num_hooks) + " " + \
-                    util.plural('hook', num_hooks), color=util.COLOR_GREEN)
+            if rv != 0:
+                util.error("hook '" + str(fname) + "' exited abnormally")
+                util.exit(util.ERR_ABNORMAL_HOOK_EXIT)
+
+        util.info("successfully ran " + str(num_done) + " " + \
+                  util.plural('hook', num_done))
 
 
 def _create_env():

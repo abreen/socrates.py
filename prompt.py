@@ -1,4 +1,4 @@
-from util import *
+import util
 
 PROMPT_MODES = [1, '1', '*', '+', '?']
 
@@ -28,37 +28,40 @@ def prompt(choices, mode='*'):
     letters = list(map(lambda x: chr(ord('a') + x), range(len(choices))))
 
     num_selections = 0
-    selections = []     # unique indices into choices list
+    selections = []         # unique indices into choices list
 
     while num_selections < min or num_selections < max:
-        sprint(COLOR_GREEN + header + COLOR_RESET)
+        util.print(util.green(header))
 
         for i in range(len(choices)):
             if i in selections:
-                sprint(" × {}. {}".format(letters[i], choices[i]))
+                choice = " × "
             else:
-                sprint("   {}. {}".format(letters[i], choices[i]))
+                choice = "   "
+
+            choice += str(letters[i]) + '. ' + str(choices[i])
+
+            if i in selections:
+                choice = util.yellow(choice)
+
+            util.print(choice)
 
         try:
-            sel = input(COLOR_CYAN + "make a selection (or ! "
-                        "to commit): " + COLOR_RESET)
+            sel = input(util.green("make a selection (or ! to commit): "))
         except KeyboardInterrupt:
-            from util import exit, ERR_INTERRUPTED
-            print()
-            sprint("exiting due to a keyboard interrupt", error=True)
-            exit(ERR_INTERRUPTED)
+            util.exit(util.ERR_INTERRUPTED)
 
         if sel == '!':
             if num_selections < min:
-                sprint("can't stop now; you must make {} {}".format(
-                       min, plural("selection", min)), error=True)
+                util.error("can't stop now; you must make "
+                           "{} {}".format(min,
+                                          util.plural("selection", min)))
                 continue
             else:
                 break
 
         try:
             if letters.index(sel) in selections:
-                sprint("removing selection of " + sel)
                 selections.remove(letters.index(sel))
                 continue
 
@@ -67,9 +70,9 @@ def prompt(choices, mode='*'):
 
         except ValueError:
             if sel == '':
-                sprint("make a selection (or ! to commit)", error=True)
+                util.print("make a selection (or ! to commit)")
             else:
-                sprint("invalid selection: not in list", error=True)
+                util.error("invalid selection: not in list")
             continue
 
     return selections
