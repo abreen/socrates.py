@@ -31,6 +31,7 @@ ALPHABET = [chr(ord('a') + i) for i in range(26)] + \
 ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 
 terminal = blessed.Terminal()
+_ui = False
 
 
 def green(string):
@@ -137,7 +138,8 @@ def exit(exit_code, hooks=True):
     if hooks:
         run_hooks_for('before_exit')
 
-    ui_stop()
+    if _ui:
+        ui_stop()
 
     type, value, traceback = sys.exc_info()
     if traceback is not None:
@@ -147,8 +149,12 @@ def exit(exit_code, hooks=True):
 
 
 def ui_start():
+    global _ui
+    _ui = True
     builtins.print(terminal.enter_fullscreen(), end='')
 
 
 def ui_stop():
+    global _ui
+    _ui = False
     builtins.print('\n' + terminal.exit_fullscreen(), end='')
