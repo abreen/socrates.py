@@ -151,10 +151,8 @@ def exit(exit_code, hooks=True):
 def ui_start():
     global _ui
     _ui = True
-    builtins.print(terminal.enter_fullscreen(), end='')
 
 
 def ui_stop():
     global _ui
     _ui = False
-    builtins.print('\n' + terminal.exit_fullscreen(), end='')
