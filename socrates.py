@@ -30,12 +30,12 @@ def main(args):
     if args.mode == 'edit':
         _edit(args)
 
-    if args.mode in ['grade', 'submit']:
+    if args.mode in ['grade', 'submit', 'batch']:
         try:
             sname, group = _parse_assignment_name(args.assignment_with_group)
         except ValueError as err:
-            util.error(str(err) + ': ' + args.assignment_with_group)
-            util.exit(util.ERR_BAD_ASSIGNMENT)
+            util.error(str(err))
+            util.exit(util.ERR_BAD_ASSIGNMENT, traceback=False)
 
         criteria_path = _form_criteria_path(sname, group)
 
@@ -63,8 +63,8 @@ def main(args):
         elif args.mode == 'submit':
             _submit(args, criteria_object, grade_filename)
 
-    elif args.mode == 'batch':
-        _batch(args)
+        elif args.mode == 'batch':
+            _batch(args)
 
 
 def _config():
@@ -95,8 +95,8 @@ def _edit(args):
     try:
         short_name, group = _parse_assignment_name(args.assignment_with_group)
     except ValueError as err:
-        util.error(str(err) + ': ' + args.assignment_with_group)
-        util.exit(util.ERR_BAD_ASSIGNMENT)
+        util.error(str(err))
+        util.exit(util.ERR_BAD_ASSIGNMENT, traceback=False)
 
     existing_path = _form_criteria_path(short_name, group)
 
@@ -267,6 +267,9 @@ def _batch(args):
     # absolute path of the current running Python script
     proc = os.path.abspath(inspect.getfile(inspect.currentframe()))
 
+    if not args.submission_dirs:
+        util.warning("no submissions specified")
+
     for subdir in args.submission_dirs:
         if not os.path.isdir(subdir):
             util.error("invalid submission directory '{}'".format(subdir))
@@ -314,9 +317,11 @@ def _parse_assignment_name(short_name_with_group):
     """
     from re import match
 
-    m = match(CRITERIA_FILE_PATTERN, short_name_with_group)
+    sng = short_name_with_group
+
+    m = match(CRITERIA_FILE_PATTERN, sng)
     if not m:
-        raise ValueError("invalid assignment name")
+        raise ValueError("invalid assignment name '{}'".format(sng))
 
     return short_name_with_group[:-1], short_name_with_group[-1]
 
