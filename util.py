@@ -33,6 +33,8 @@ ALPHANUMERICS = ALPHABET + [str(i) for i in range(10)]
 terminal = blessed.Terminal()
 _ui = False
 
+_prog_name = os.path.basename(sys.argv[0])
+
 
 def green(string):
     return terminal.green(string)
@@ -47,15 +49,15 @@ def print(string, end='\n'):
 
 
 def info(string):
-    print(terminal.blue(string))
+    print(_prog_name + ': ' + terminal.blue(string))
 
 
 def warning(string):
-    print(terminal.yellow(string))
+    print(_prog_name + ': ' + terminal.yellow(string))
 
 
 def error(string):
-    print(terminal.red(string))
+    print(_prog_name + ': ' + terminal.red(string))
 
 
 def print_traceback():
@@ -128,7 +130,7 @@ def plural(str_, num):
     return str_ + ("s" if num != 1 else "")
 
 
-def exit(exit_code, hooks=True):
+def exit(exit_code, hooks=True, traceback=True):
     """The safe way to cause socrates to exit immediately.
     If the 'hooks' argument is True, this function will try to
     run hooks attached to 'before_exit' before actually exiting.
@@ -141,9 +143,10 @@ def exit(exit_code, hooks=True):
     if _ui:
         ui_stop()
 
-    type, value, traceback = sys.exc_info()
-    if traceback is not None:
-        print_traceback()
+    if traceback:
+        type, value, tb = sys.exc_info()
+        if tb is not None:
+            print_traceback()
 
     sys.exit(exit_code)
 
