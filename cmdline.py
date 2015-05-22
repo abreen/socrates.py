@@ -8,8 +8,8 @@ import util
 
 def get_args():
     top_opts = {'description': "Grade student work from the command line",
-                'epilog': "(try socrates generate -h, "
-                          "socrates grade -h, or "
+                'epilog': "(try socrates grade -h, "
+                          "socrates batch -h, or "
                           "socrates submit -h)"}
 
     top_parser = argparse.ArgumentParser(**top_opts)
