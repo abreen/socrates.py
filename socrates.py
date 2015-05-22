@@ -169,7 +169,7 @@ def _grade(args, criteria_object, grade_filename):
     import grader
     from prompt import prompt
 
-    if os.path.isfile(grade_filename):
+    if not args.overwrite and os.path.isfile(grade_filename):
         util.error("refusing to overwrite existing grade file")
         util.exit(util.ERR_GRADE_FILE_EXISTS, hooks=False)
 
