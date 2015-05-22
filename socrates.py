@@ -182,7 +182,8 @@ def _grade(args, criteria_object, grade_filename):
 
     any_missing = grader.grade(criteria_object, args.submission_files,
                                grade_filename,
-                               assume_missing=args.assume_missing)
+                               assume_missing=args.assume_missing,
+                               late_check=False if args.no_late else True)
 
     if not args.no_edit:
         util.info("please review the following grade file ({}) "
@@ -289,6 +290,9 @@ def _batch(args):
 
         if args.assume_missing:
             sub_args.append("--assume-missing")
+
+        if args.no_late:
+            sub_args.append("--no-late")
 
         sub_args.append(args.assignment_with_group)
 

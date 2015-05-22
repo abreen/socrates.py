@@ -7,7 +7,8 @@ import util
 from prompt import prompt
 
 
-def grade(criteria, submissions, filename, assume_missing=False):
+def grade(criteria, submissions, filename,
+          assume_missing=False, late_check=True):
     found = []
     num_missing = 0
     total = criteria.total_points
@@ -90,18 +91,19 @@ def grade(criteria, submissions, filename, assume_missing=False):
             points_taken = 0
             points_taken += write_results(out, f.run_tests())
 
-            file_stat = os.stat(f.path)
-            mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
+            if late_check:
+                file_stat = os.stat(f.path)
+                mtime = datetime.datetime.fromtimestamp(file_stat.st_mtime)
 
-            mult = criteria.get_late_penalty(mtime)
-            late_penalty = f.point_value * mult
+                mult = criteria.get_late_penalty(mtime)
+                late_penalty = f.point_value * mult
 
-            if late_penalty != 0:
-                util.warning("taking {}% late penalty".format(mult * 100))
+                if late_penalty != 0:
+                    util.warning("taking {}% late penalty".format(mult * 100))
 
-                adjusted = min(f.point_value - points_taken, late_penalty)
-                out.write("-{}\tsubmitted late\n".format(adjusted))
-                points_taken += adjusted
+                    adjusted = min(f.point_value - points_taken, late_penalty)
+                    out.write("-{}\tsubmitted late\n".format(adjusted))
+                    points_taken += adjusted
 
             total -= min(f.point_value, points_taken)
 

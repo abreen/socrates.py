@@ -36,6 +36,9 @@ def get_args():
     norm_mode_parser.add_argument('--overwrite',
                                   help="overwrite the grade file if it exists",
                                   action='store_true')
+    norm_mode_parser.add_argument('--no-late',
+                                  help="do not check for late submissions",
+                                  action='store_true')
 
 
     # parser for batch mode
@@ -54,6 +57,9 @@ def get_args():
                                    action='store_true')
     batch_mode_parser.add_argument('--no-edit',
                                    help="do not ask to edit grade file",
+                                   action='store_true')
+    batch_mode_parser.add_argument('--no-late',
+                                   help="do not check for late submissions",
                                    action='store_true')
 
 
