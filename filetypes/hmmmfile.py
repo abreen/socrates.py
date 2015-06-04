@@ -93,7 +93,6 @@ class HMMMEvalTest(BaseTest):
                       'notes': []}
 
             if self.output is not None and type(self.output) is str:
-                import util
                 eo = self.output.split('\n')
                 po = output.split('\n')
 
