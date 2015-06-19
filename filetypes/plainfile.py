@@ -53,6 +53,11 @@ class ReviewTest(BaseTest):
         else:
             self.deduction = dict_['deduction']
 
+        if 'print_file' in dict_:
+            self.print_file = dict_['print_file']
+        else:
+            self.print_file = True
+
 
     def __str__(self):
         return "review of {} ({} pts.)".format(self.target,
@@ -63,7 +68,7 @@ class ReviewTest(BaseTest):
         from functools import reduce
         import prompt
 
-        if print_file:
+        if print_file and self.print_file:
             _print_file(path)
 
         util.info("description: " + self.description)
